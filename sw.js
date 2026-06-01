@@ -1,4 +1,4 @@
-const CACHE = 'eng-workbook-v2';
+const CACHE = 'eng-workbook-v5';
 const FILES = [
   './',
   './Engineering_Workbook.html',
@@ -7,7 +7,8 @@ const FILES = [
   './interference_fit_calc.html',
   './lee_plug_calculator.html',
   './iso_tolerance_calculator.html',
-  './manifest.json'
+  './manifest.json',
+  './icon.png'
 ];
 
 self.addEventListener('install', e => {

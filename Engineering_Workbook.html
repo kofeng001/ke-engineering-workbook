@@ -6,6 +6,7 @@
 <title>Engineering Workbook</title>
 <meta name="theme-color" content="#1e1e22">
 <link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.png" type="image/png">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <style>
@@ -51,7 +52,6 @@ thead th:first-child,thead th:nth-child(2),thead th:nth-child(11){text-align:lef
 tbody td{padding:7px 6px;font-family:var(--mono);font-size:11px;text-align:right;border-bottom:1px solid var(--border);color:var(--text)}
 tbody td:first-child{text-align:left;color:var(--bright);font-weight:500;font-family:var(--sans);font-size:12px;white-space:nowrap}
 tbody td:nth-child(2){text-align:left;color:var(--dim);font-size:10px;font-family:var(--sans)}
-tbody td:nth-child(11){text-align:left;font-size:10px;color:var(--dim);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--sans)}
 tbody tr{transition:background .1s}tbody tr:hover{background:var(--surface2)}
 .mf{background:var(--accent-dim);border:1px solid var(--accent-border);border-radius:10px;padding:18px;margin-bottom:16px}
 .mf .mt{font-size:10px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px}
@@ -77,14 +77,55 @@ tbody tr{transition:background .1s}tbody tr:hover{background:var(--surface2)}
 .lightbox.show{opacity:1;pointer-events:auto}
 .lightbox img{max-width:92vw;max-height:92vh;border-radius:10px}
 #viewer3d{width:100%;height:320px;border-radius:10px;background:var(--bg);border:1px solid var(--border);overflow:hidden;position:relative}
-@media print{.topbar,.tabs,.add-row,.btn,.chip,.legend,.drop-zone{display:none!important}.content{padding:12px}.card,.ir{break-inside:avoid}#viewer3d{display:none}}
-@media(max-width:700px){.content{padding:16px 14px}.topbar{padding:12px 14px}.tabs{padding:0 14px}}
+/* Library cards */
+.lib-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin-top:20px}
+.lib-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;cursor:pointer;transition:all .15s;position:relative}
+.lib-card:hover{border-color:var(--accent-border);background:var(--surface2);transform:translateY(-1px)}
+.lib-card .lc-title{font-size:15px;font-weight:600;color:var(--bright);margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lib-card .lc-author{font-size:11px;color:var(--dim);margin-bottom:8px}
+.lib-card .lc-meta{font-size:10px;color:var(--muted);display:flex;gap:12px}
+.lib-card .lc-del{position:absolute;top:10px;right:10px;background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:4px;border-radius:4px;transition:all .12s;opacity:0}
+.lib-card:hover .lc-del{opacity:1}
+.lib-card .lc-del:hover{color:var(--danger);background:rgba(212,80,80,.1)}
+.lib-new{background:transparent;border:1.5px dashed var(--border2);display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:120px}
+.lib-new:hover{border-color:var(--accent);background:rgba(107,138,255,.04)}
+.lib-new .plus{font-size:28px;color:var(--muted);margin-bottom:4px}
+.lib-new span{font-size:12px;color:var(--dim);font-weight:500}
+@media print{.topbar,.tabs,.add-row,.btn,.chip,.legend,.drop-zone,.lib-grid{display:none!important}.content{padding:12px}.card,.ir{break-inside:avoid}#viewer3d{display:none}}
+@media(max-width:700px){.content{padding:16px 14px}.topbar{padding:12px 14px}.tabs{padding:0 14px}.lib-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 <div id="app"></div>
 <div class="lightbox" id="lb" onclick="this.classList.remove('show')"></div>
 <script>
+// ═══════════════════════════════════════════════════════════════
+// MULTI-WORKBOOK LAYER
+// ═══════════════════════════════════════════════════════════════
+function getIndex(){try{return JSON.parse(localStorage.getItem('eng_wb_idx'))||[]}catch(e){return[]}}
+function saveIndex(idx){localStorage.setItem('eng_wb_idx',JSON.stringify(idx))}
+function getActiveId(){return localStorage.getItem('eng_wb_active')||null}
+function setActiveId(id){if(id)localStorage.setItem('eng_wb_active',id);else localStorage.removeItem('eng_wb_active')}
+function loadWBData(id){try{return JSON.parse(localStorage.getItem('eng_wb_'+id))}catch(e){return null}}
+function saveWBData(id,data){try{localStorage.setItem('eng_wb_'+id,JSON.stringify(data))}catch(e){}}
+function deleteWBData(id){localStorage.removeItem('eng_wb_'+id)}
+
+// Migrate old single-workbook data if present
+(function migrate(){
+  var old=localStorage.getItem('eng_wb');
+  if(old&&!localStorage.getItem('eng_wb_idx')){
+    try{
+      var d=JSON.parse(old);var id='wb_'+Date.now();
+      saveWBData(id,d);
+      saveIndex([{id:id,name:d.project||'My Workbook',author:d.author||'',modified:new Date().toISOString(),items:d.calcs?d.calcs.length:0}]);
+      setActiveId(id);localStorage.removeItem('eng_wb');
+    }catch(e){}
+  }
+})();
+
+// ═══════════════════════════════════════════════════════════════
+// WORKBOOK STATE
+// ═══════════════════════════════════════════════════════════════
 var MATS=[
 {id:"s275",name:"S275 JR",cat:"Steel",E:210000,v:0.3,Ftu:410,Fty:275,Fsu:237,Fbru:635,Fbry:413,alpha:12e-6,ref:"EN 10025-2"},
 {id:"s355",name:"S355 J2",cat:"Steel",E:210000,v:0.3,Ftu:470,Fty:355,Fsu:271,Fbru:728,Fbry:533,alpha:12e-6,ref:"EN 10025-2"},
@@ -101,48 +142,34 @@ var MATS=[
 {id:"al6082",name:"Al 6082-T6",cat:"Aluminium",E:70000,v:0.33,Ftu:310,Fty:260,Fsu:186,Fbru:480,Fbry:400,alpha:23.1e-6,ref:"EN 755-2"},
 {id:"al7050",name:"Al 7050-T7451",cat:"Aluminium",E:71000,v:0.33,Ftu:510,Fty:441,Fsu:303,Fbru:786,Fbry:676,alpha:23.4e-6,ref:"AMS 4050"},
 ];
-
 function freshState(){return{author:'',project:'',calcs:[],materials:JSON.parse(JSON.stringify(MATS)),tab:'home',mf:'All',form:null,editing:null,_n:1}}
-var W=freshState();
-try{var s=localStorage.getItem('eng_wb');if(s){var d=JSON.parse(s);for(var k in d)W[k]=d[k]}}catch(e){}
-function sv(){try{localStorage.setItem('eng_wb',JSON.stringify(W))}catch(e){}}
+var W=freshState();var activeWBId=getActiveId();
+if(activeWBId){var ld=loadWBData(activeWBId);if(ld){for(var k in ld)W[k]=ld[k]}else{activeWBId=null;setActiveId(null)}}
+function sv(){if(!activeWBId)return;saveWBData(activeWBId,W);var idx=getIndex();var entry=idx.find(function(e){return e.id===activeWBId});if(entry){entry.name=W.project||'Untitled';entry.author=W.author||'';entry.modified=new Date().toISOString();entry.items=W.calcs?W.calcs.length:0;saveIndex(idx)}}
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
-
 var TAGS=['Design Decision','Issue','Action Item','Reference'];
-var TC={
-  bolt:{name:'Bolt',file:'bolt_calculator.html',hasRF:true,ext:true},
-  lug:{name:'Lug',file:'lug-calculator.html',hasRF:true,ext:true},
-  intfit:{name:'Int. Fit',file:'interference_fit_calc.html',hasRF:true,ext:true},
-  lee:{name:'Lee Plug',file:'lee_plug_calculator.html',hasRF:false,ext:true},
-  iso:{name:'Hole Fit',file:'iso_tolerance_calculator.html',hasRF:false,ext:true},
-  notes:{name:'Notes',hasRF:false,ext:false},
-  review:{name:'Review',hasRF:false,ext:false}
-};
+var TC={bolt:{name:'Bolt',file:'bolt_calculator.html',hasRF:true,ext:true},lug:{name:'Lug',file:'lug-calculator.html',hasRF:true,ext:true},intfit:{name:'Int. Fit',file:'interference_fit_calc.html',hasRF:true,ext:true},lee:{name:'Lee Plug',file:'lee_plug_calculator.html',hasRF:false,ext:true},iso:{name:'Hole Fit',file:'iso_tolerance_calculator.html',hasRF:false,ext:true},notes:{name:'Notes',hasRF:false,ext:false},review:{name:'Review',hasRF:false,ext:false}};
 var RF_KEYS={bolt:'eng_wb_rf_bolt',lug:'eng_wb_rf_lug',intfit:'eng_wb_rf_intfit'};
-
 function getRF(t){var k=RF_KEYS[t];if(!k)return null;try{var d=JSON.parse(localStorage.getItem(k));var v=d.rf||d.sf;return(v&&isFinite(v)&&v>0)?v:null}catch(e){return null}}
 function rfBadge(v){if(v==null)return'\u2014';var c=v<1?'var(--danger)':v<1.5?'var(--warn)':'var(--good)';return'<span style="padding:2px 9px;border-radius:5px;font-size:11px;font-weight:600;font-family:var(--mono);background:'+c+'12;color:'+c+';border:1px solid '+c+'25">'+v.toFixed(2)+'</span>'}
 function showLb(src){var lb=document.getElementById('lb');lb.innerHTML='<img src="'+src+'">';lb.classList.add('show')}
 
 // ═══════════════════════════════════════════════════════════════
+// MAIN RENDER
+// ═══════════════════════════════════════════════════════════════
 function R(){
+  if(!activeWBId){renderLibrary();return}
   sv();var a=document.getElementById('app'),h='';
-  h+='<div class="topbar"><h1>Engineering Workbook</h1>';
-  if(W.project||W.author)h+='<div class="sep"></div>';
-  if(W.project)h+='<span class="meta">'+esc(W.project)+'</span>';
+  h+='<div class="topbar"><button class="btn btn-s" onclick="goLibrary()" style="margin-right:4px">\u2190 All Workbooks</button><h1>'+esc(W.project||'Untitled Workbook')+'</h1>';
   if(W.author)h+='<span class="au">'+esc(W.author)+'</span>';
   h+='<div style="margin-left:auto;display:flex;gap:6px">';
-  h+='<button class="btn btn-s" onclick="newWB()">New</button>';
-  h+='<button class="btn btn-s" onclick="loadWB()">\ud83d\udcc2 Load</button>';
-  h+='<button class="btn btn-accent btn-s" onclick="saveWB()">\ud83d\udcbe Save</button>';
+  h+='<button class="btn btn-s" onclick="exportWB()">\ud83d\udcbe Export</button>';
   h+='<button class="btn btn-s" onclick="R()">\u21bb</button>';
   h+='<button class="btn btn-s" onclick="window.print()">\u2399 PDF</button></div></div>';
-  // Tabs
   h+='<div class="tabs"><button class="tab '+(W.tab==='home'?'on':'')+'" onclick="W.tab=\'home\';R()">Home</button>';
   h+='<button class="tab '+(W.tab==='mat'?'on':'')+'" onclick="W.tab=\'mat\';R()">Materials</button>';
   if(W.calcs.length)h+='<div style="width:1px;background:var(--border);margin:5px 8px"></div>';
-  W.calcs.forEach(function(c,i){var t=TC[c.type];
-    var act=W.tab===c.id;
+  W.calcs.forEach(function(c,i){var t=TC[c.type];var act=W.tab===c.id;
     h+='<button class="tab '+(act?'on':'')+'" onclick="'+(t.ext?'openCalc('+i+')':'W.tab=\''+c.id+'\';R()')+'" title="'+esc(c.title||t.name+' '+(i+1))+'">'+esc(c.title||t.name+' '+(i+1))+'</button>';
   });
   h+='</div><div class="content">';
@@ -154,105 +181,146 @@ function R(){
 }
 
 // ═══════════════════════════════════════════════════════════════
-// HOME
+// LIBRARY
+// ═══════════════════════════════════════════════════════════════
+function renderLibrary(){
+  var idx=getIndex();
+  var h='<div class="topbar"><h1>Engineering Workbook</h1><div style="margin-left:auto;display:flex;gap:6px">';
+  h+='<button class="btn btn-s" onclick="importWB()">\ud83d\udcc2 Import JSON</button></div></div>';
+  h+='<div class="content"><div class="card-t" style="margin-bottom:4px">Your Workbooks</div>';
+  h+='<div style="font-size:11px;color:var(--muted);margin-bottom:16px">Each workbook is a self-contained design package. Data saves automatically in this browser.</div>';
+  h+='<div class="lib-grid">';
+  h+='<div class="lib-card lib-new" onclick="createWB()"><div class="plus">+</div><span>New Workbook</span></div>';
+  idx.forEach(function(e){
+    var d=new Date(e.modified);var dateStr=d.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+    h+='<div class="lib-card" onclick="openWB(\''+e.id+'\')">';
+    h+='<button class="lc-del" onclick="event.stopPropagation();deleteWB(\''+e.id+'\')" title="Delete">\u00d7</button>';
+    h+='<div class="lc-title">'+(esc(e.name)||'Untitled')+'</div>';
+    h+='<div class="lc-author">'+(e.author?'by '+esc(e.author):'No author')+'</div>';
+    h+='<div class="lc-meta"><span>'+e.items+' item'+(e.items!==1?'s':'')+'</span><span>'+dateStr+'</span></div>';
+    h+='</div>';
+  });
+  h+='</div></div>';
+  document.getElementById('app').innerHTML=h;
+}
+
+function createWB(){
+  var name=prompt('Workbook name:','');if(name===null)return;
+  var id='wb_'+Date.now();var idx=getIndex();
+  idx.push({id:id,name:name||'Untitled',author:'',modified:new Date().toISOString(),items:0});
+  saveIndex(idx);var fresh=freshState();fresh.project=name||'';saveWBData(id,fresh);
+  openWB(id);
+}
+function openWB(id){
+  activeWBId=id;setActiveId(id);W=freshState();
+  var ld=loadWBData(id);if(ld){for(var k in ld)W[k]=ld[k]}
+  R();
+}
+function goLibrary(){activeWBId=null;setActiveId(null);renderLibrary()}
+function deleteWB(id){
+  var idx=getIndex();var e=idx.find(function(x){return x.id===id});
+  if(!confirm('Delete "'+(e?e.name:'this workbook')+'"? This cannot be undone.'))return;
+  idx=idx.filter(function(x){return x.id!==id});saveIndex(idx);deleteWBData(id);
+  if(activeWBId===id){activeWBId=null;setActiveId(null)}
+  renderLibrary();
+}
+function exportWB(){
+  var n=prompt('Export as:',W.project?W.project.replace(/\s+/g,'_'):'Engineering_Calcs');if(!n)return;
+  var d=JSON.parse(JSON.stringify(W));delete d.tab;delete d.form;delete d.editing;delete d.mf;
+  d.savedAt=new Date().toISOString();d.version='5.0';
+  var b=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=n.replace(/\s+/g,'_')+'.json';a.click();URL.revokeObjectURL(a.href);
+}
+function importWB(){
+  var inp=document.createElement('input');inp.type='file';inp.accept='.json';
+  inp.onchange=function(ev){var f=ev.target.files[0];if(!f)return;var r=new FileReader();
+    r.onload=function(e){try{
+      var d=JSON.parse(e.target.result);var id='wb_'+Date.now();var idx=getIndex();
+      idx.push({id:id,name:d.project||f.name.replace('.json',''),author:d.author||'',modified:new Date().toISOString(),items:d.calcs?d.calcs.length:0});
+      saveIndex(idx);saveWBData(id,d);openWB(id);
+    }catch(err){alert('Failed: '+err.message)}};r.readAsText(f)};inp.click();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// HOME PAGE
 // ═══════════════════════════════════════════════════════════════
 function homeHTML(){
   var h='<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">';
   h+='<div class="card"><div class="card-t">Author</div><input class="ti" value="'+esc(W.author)+'" placeholder="Your name" onchange="W.author=this.value;sv()"></div>';
   h+='<div class="card"><div class="card-t">Project</div><input class="ti" value="'+esc(W.project)+'" placeholder="e.g. Suspension Upright \u2014 Front Left" onchange="W.project=this.value;sv()"></div></div>';
   h+='<div class="card"><div class="card-t">3D Model</div><div id="viewer3d"><div id="v3dDrop" class="drop-zone" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:2;border:none;border-radius:10px"><div><div style="font-size:13px;color:var(--dim)">Drop STL file here</div><div style="font-size:10px;color:var(--muted);margin-top:4px">or click to browse \u00b7 Rotate: drag \u00b7 Pan: right-drag \u00b7 Zoom: scroll</div></div></div></div></div>';
-  // Add row — all types
   h+='<div class="add-row"><span>Add:</span>';
   ['bolt','lug','intfit','lee','iso','notes','review'].forEach(function(k){h+='<button class="btn btn-s" onclick="addC(\''+k+'\')">+ '+TC[k].name+'</button>'});
   h+='</div>';
-  if(!W.calcs.length){
-    h+='<div class="card" style="text-align:center;padding:40px"><div style="color:var(--dim)">No items yet</div><div style="font-size:11px;color:var(--muted);margin-top:4px">Add calculations, notes and design reviews to build your workbook</div></div>';
-  }else{
-    h+='<div class="ih"><span>#</span><span>Type</span><span>Title</span><span>RF / SF</span><span></span><span></span></div>';
+  if(!W.calcs.length){h+='<div class="card" style="text-align:center;padding:40px"><div style="color:var(--dim)">No items yet</div><div style="font-size:11px;color:var(--muted);margin-top:4px">Add calculations, notes and design reviews to build your workbook</div></div>'}
+  else{h+='<div class="ih"><span>#</span><span>Type</span><span>Title</span><span>RF / SF</span><span></span><span></span></div>';
     W.calcs.forEach(function(c,i){var t=TC[c.type];var rf=getRF(c.type);
-      h+='<div class="ir">';
-      h+='<span style="font-size:11px;color:var(--muted);font-family:var(--mono)">'+(i+1)+'</span>';
+      h+='<div class="ir"><span style="font-size:11px;color:var(--muted);font-family:var(--mono)">'+(i+1)+'</span>';
       h+='<span style="font-size:8px;font-weight:700;color:var(--dim);background:var(--surface2);padding:3px 7px;border-radius:4px;text-transform:uppercase;letter-spacing:.04em;text-align:center;white-space:nowrap;border:1px solid var(--border)">'+t.name+'</span>';
       h+='<span style="font-size:13px;color:var(--bright);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(c.title?esc(c.title):'<em style="color:var(--muted);font-weight:400">Untitled</em>')+'</span>';
       h+='<span style="font-size:10px">'+(t.hasRF?rfBadge(rf):'<span style="color:var(--muted)">\u2014</span>')+'</span>';
       h+='<button class="btn btn-s" onclick="'+(t.ext?'openCalc('+i+')':'W.tab=\''+c.id+'\';R()')+'">Open \u2192</button>';
-      h+='<button class="btn btn-danger btn-s" onclick="remC('+i+')">\u00d7</button></div>';
-    });
-  }
+      h+='<button class="btn btn-danger btn-s" onclick="remC('+i+')">\u00d7</button></div>'})}
   h+='<div style="display:flex;gap:10px;margin-top:24px;justify-content:space-between;align-items:center;flex-wrap:wrap">';
   h+='<div class="legend"><span class="dot" style="background:var(--good)"></span>\u2265 1.5 <span class="dot" style="background:var(--warn)"></span>1.0\u20131.5 <span class="dot" style="background:var(--danger)"></span>&lt; 1.0</div>';
-  h+='<div style="display:flex;gap:6px"><button class="btn btn-accent" onclick="saveWB()">\ud83d\udcbe Save</button><button class="btn" onclick="window.print()">\u2399 PDF</button></div></div>';
+  h+='<div style="display:flex;gap:6px"><button class="btn btn-accent" onclick="exportWB()">\ud83d\udcbe Export</button><button class="btn" onclick="window.print()">\u2399 PDF</button></div></div>';
   return h;
 }
 
 // ═══════════════════════════════════════════════════════════════
-// NOTES PAGE (inline, per-calc)
+// NOTES PAGE
 // ═══════════════════════════════════════════════════════════════
 function notesPageHTML(ci){
   var c=W.calcs[ci];if(!c.data)c.data={entries:[]};var d=c.data;
   var h='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">';
   h+='<div style="display:flex;align-items:center;gap:10px"><button class="btn btn-s" onclick="W.tab=\'home\';R()">\u2190 Contents</button>';
   h+='<input class="ti" style="font-size:16px;font-weight:600;padding:6px 10px;width:400px;max-width:60vw;background:transparent;border-color:transparent" value="'+esc(c.title)+'" onchange="W.calcs['+ci+'].title=this.value;sv()" placeholder="Note page title"></div>';
-  h+='<button class="btn btn-accent btn-s" onclick="addEntry('+ci+')">+ Add Entry</button></div>';
-  if(!d.entries.length){
-    h+='<div class="card" style="text-align:center;padding:40px;color:var(--dim)">No entries yet</div>';
-  }
+  h+='<button class="btn btn-accent btn-s" onclick="addEntry('+ci+')">+ Entry</button></div>';
+  if(!d.entries.length)h+='<div class="card" style="text-align:center;padding:40px;color:var(--dim)">No entries yet</div>';
   d.entries.forEach(function(e,ei){
     h+='<div class="card"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;gap:8px">';
     h+='<div style="display:flex;align-items:center;gap:8px;flex:1;flex-wrap:wrap">';
     h+='<select style="padding:3px 24px 3px 8px;font-size:10px;font-weight:600;background:var(--bg);border:1px solid var(--border2);border-radius:4px;color:var(--dim)" onchange="W.calcs['+ci+'].data.entries['+ei+'].tag=parseInt(this.value);R()">';
     TAGS.forEach(function(t,ti){h+='<option value="'+ti+'"'+(e.tag===ti?' selected':'')+'>'+t+'</option>'});
-    h+='</select>';
-    h+='<input class="ti" style="font-size:13px;font-weight:600;padding:4px 8px;flex:1;min-width:200px;background:transparent;border-color:transparent" value="'+esc(e.title)+'" onchange="W.calcs['+ci+'].data.entries['+ei+'].title=this.value;sv()" placeholder="Entry title"></div>';
+    h+='</select><input class="ti" style="font-size:13px;font-weight:600;padding:4px 8px;flex:1;min-width:200px;background:transparent;border-color:transparent" value="'+esc(e.title)+'" onchange="W.calcs['+ci+'].data.entries['+ei+'].title=this.value;sv()" placeholder="Entry title"></div>';
     h+='<button class="btn btn-danger btn-s" onclick="W.calcs['+ci+'].data.entries.splice('+ei+',1);R()">\u00d7</button></div>';
-    h+='<textarea class="ta" rows="3" onchange="W.calcs['+ci+'].data.entries['+ei+'].text=this.value;sv()" placeholder="Enter notes...">'+esc(e.text||'').replace(/<br>/g,'\n')+'</textarea>';
+    h+='<textarea class="ta" rows="3" onchange="W.calcs['+ci+'].data.entries['+ei+'].text=this.value;sv()" placeholder="Enter notes...">'+(e.text||'')+'</textarea>';
     h+='<div style="margin-top:8px;display:flex;flex-wrap:wrap;align-items:flex-start">';
-    if(e.images)e.images.forEach(function(img,ii){
-      h+='<div style="position:relative;display:inline-block;margin:0 4px 4px 0"><img class="img-thumb" src="'+img+'" onclick="showLb(this.src)"><button style="position:absolute;top:0;right:0;background:rgba(180,50,50,.7);color:#fff;border:none;border-radius:0 6px 0 4px;font-size:9px;padding:2px 5px;cursor:pointer" onclick="W.calcs['+ci+'].data.entries['+ei+'].images.splice('+ii+',1);R()">\u2715</button></div>';
-    });
-    h+='<div class="drop-zone" style="display:inline-flex;align-items:center;justify-content:center;width:80px;height:60px;padding:8px;font-size:9px;color:var(--muted);vertical-align:top" onclick="addImg('+ci+','+ei+')">+ Image</div>';
-    h+='</div></div>';
-  });
-  return h;
+    if(e.images)e.images.forEach(function(img,ii){h+='<div style="position:relative;display:inline-block;margin:0 4px 4px 0"><img class="img-thumb" src="'+img+'" onclick="showLb(this.src)"><button style="position:absolute;top:0;right:0;background:rgba(180,50,50,.7);color:#fff;border:none;border-radius:0 6px 0 4px;font-size:9px;padding:2px 5px;cursor:pointer" onclick="W.calcs['+ci+'].data.entries['+ei+'].images.splice('+ii+',1);R()">\u2715</button></div>'});
+    h+='<div class="drop-zone" style="display:inline-flex;align-items:center;justify-content:center;width:80px;height:60px;padding:8px;font-size:9px;color:var(--muted)" onclick="addImg('+ci+','+ei+')">+ Image</div></div></div>';
+  });return h;
 }
 function addEntry(ci){if(!W.calcs[ci].data)W.calcs[ci].data={entries:[]};W.calcs[ci].data.entries.push({title:'',text:'',tag:0,images:[]});R()}
 function addImg(ci,ei){var inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.multiple=true;inp.onchange=function(ev){Array.from(ev.target.files).forEach(function(f){var r=new FileReader();r.onload=function(re){if(!W.calcs[ci].data.entries[ei].images)W.calcs[ci].data.entries[ei].images=[];W.calcs[ci].data.entries[ei].images.push(re.target.result);R()};r.readAsDataURL(f)})};inp.click()}
 
 // ═══════════════════════════════════════════════════════════════
-// DESIGN REVIEW PAGE (inline, per-calc)
+// DESIGN REVIEW PAGE
 // ═══════════════════════════════════════════════════════════════
 function reviewPageHTML(ci){
-  var c=W.calcs[ci];if(!c.data)c.data={date:'',agenda:'',attendees:'',outcome:'',minutes:'',actions:[],images:[]};var d=c.data;
+  var c=W.calcs[ci];if(!c.data)c.data={date:'',agenda:'',attendees:'',minutes:'',actions:[],images:[]};var d=c.data;
   var h='<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px"><button class="btn btn-s" onclick="W.tab=\'home\';R()">\u2190 Contents</button>';
   h+='<input class="ti" style="font-size:16px;font-weight:600;padding:6px 10px;flex:1;background:transparent;border-color:transparent" value="'+esc(c.title)+'" onchange="W.calcs['+ci+'].title=this.value;sv()" placeholder="Review title (e.g. PDR \u2014 Upright)"></div>';
   h+='<div class="card"><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">';
   h+='<div><div class="card-t">Date</div><input type="date" class="ti" style="font-size:13px" value="'+esc(d.date)+'" onchange="W.calcs['+ci+'].data.date=this.value;sv()"></div>';
-  h+='<div><div class="card-t">Attendees</div><input class="ti" value="'+esc(d.attendees)+'" placeholder="Names" onchange="W.calcs['+ci+'].data.attendees=this.value;sv()"></div>';
-  h+='</div></div>';
-  h+='<div class="card"><div class="card-t">Agenda</div><textarea class="ta" rows="3" onchange="W.calcs['+ci+'].data.agenda=this.value;sv()" placeholder="Review agenda...">'+esc(d.agenda||'').replace(/<br>/g,'\n')+'</textarea></div>';
-  h+='<div class="card"><div class="card-t">Minutes</div><textarea class="ta" rows="8" onchange="W.calcs['+ci+'].data.minutes=this.value;sv()" placeholder="Meeting minutes...">'+esc(d.minutes||'').replace(/<br>/g,'\n')+'</textarea></div>';
-  // Actions
+  h+='<div><div class="card-t">Attendees</div><input class="ti" value="'+esc(d.attendees)+'" placeholder="Names" onchange="W.calcs['+ci+'].data.attendees=this.value;sv()"></div></div></div>';
+  h+='<div class="card"><div class="card-t">Agenda</div><textarea class="ta" rows="3" onchange="W.calcs['+ci+'].data.agenda=this.value;sv()" placeholder="Review agenda...">'+(d.agenda||'')+'</textarea></div>';
+  h+='<div class="card"><div class="card-t">Minutes</div><textarea class="ta" rows="8" onchange="W.calcs['+ci+'].data.minutes=this.value;sv()" placeholder="Meeting minutes...">'+(d.minutes||'')+'</textarea></div>';
   h+='<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div class="card-t" style="margin:0">Action Items</div><button class="btn btn-accent btn-s" onclick="addAct('+ci+')">+ Action</button></div>';
-  if(!d.actions||!d.actions.length){h+='<div style="color:var(--muted);font-size:12px;text-align:center;padding:12px">No actions</div>'}
+  if(!d.actions||!d.actions.length)h+='<div style="color:var(--muted);font-size:12px;text-align:center;padding:12px">No actions</div>';
   else{h+='<table><thead><tr><th style="text-align:left">#</th><th style="text-align:left">Action</th><th style="text-align:left">Owner</th><th style="text-align:left">Due</th><th style="text-align:left">Status</th><th></th></tr></thead><tbody>';
   d.actions.forEach(function(a,ai){
-    h+='<tr><td style="text-align:left;font-family:var(--mono)">'+(ai+1)+'</td>';
+    h+='<tr><td style="text-align:left">'+(ai+1)+'</td>';
     h+='<td style="text-align:left"><input class="ti" style="font-size:11px;padding:4px 6px;background:transparent;border-color:transparent" value="'+esc(a.text)+'" onchange="W.calcs['+ci+'].data.actions['+ai+'].text=this.value;sv()"></td>';
     h+='<td style="text-align:left"><input class="ti" style="font-size:11px;padding:4px 6px;width:100px;background:transparent;border-color:transparent" value="'+esc(a.owner)+'" onchange="W.calcs['+ci+'].data.actions['+ai+'].owner=this.value;sv()"></td>';
     h+='<td style="text-align:left"><input type="date" class="ti" style="font-size:11px;padding:4px 6px;width:120px;background:transparent;border-color:transparent" value="'+esc(a.due)+'" onchange="W.calcs['+ci+'].data.actions['+ai+'].due=this.value;sv()"></td>';
     h+='<td style="text-align:left"><select style="font-size:10px;padding:3px 20px 3px 6px;background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--dim)" onchange="W.calcs['+ci+'].data.actions['+ai+'].status=this.value;sv()">';
     ['Open','In Progress','Done'].forEach(function(s){h+='<option'+(a.status===s?' selected':'')+'>'+s+'</option>'});
-    h+='</select></td><td><button class="btn btn-danger btn-s" onclick="W.calcs['+ci+'].data.actions.splice('+ai+',1);R()">\u00d7</button></td></tr>';
-  });h+='</tbody></table>'}
-  h+='</div>';
-  // Images
+    h+='</select></td><td><button class="btn btn-danger btn-s" onclick="W.calcs['+ci+'].data.actions.splice('+ai+',1);R()">\u00d7</button></td></tr>'});
+  h+='</tbody></table>'}h+='</div>';
   h+='<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div class="card-t" style="margin:0">Reference Images</div><button class="btn btn-s" onclick="addRevImg('+ci+')">+ Image</button></div>';
   h+='<div style="display:flex;flex-wrap:wrap">';
-  if(d.images)d.images.forEach(function(img,ii){
-    h+='<div style="position:relative;display:inline-block;margin:0 6px 6px 0"><img class="img-thumb" src="'+img+'" onclick="showLb(this.src)" style="max-height:100px"><button style="position:absolute;top:0;right:0;background:rgba(180,50,50,.7);color:#fff;border:none;border-radius:0 6px 0 4px;font-size:9px;padding:2px 5px;cursor:pointer" onclick="W.calcs['+ci+'].data.images.splice('+ii+',1);R()">\u2715</button></div>';
-  });
-  h+='</div></div>';
-  return h;
+  if(d.images)d.images.forEach(function(img,ii){h+='<div style="position:relative;display:inline-block;margin:0 6px 6px 0"><img class="img-thumb" src="'+img+'" onclick="showLb(this.src)" style="max-height:100px"><button style="position:absolute;top:0;right:0;background:rgba(180,50,50,.7);color:#fff;border:none;border-radius:0 6px 0 4px;font-size:9px;padding:2px 5px;cursor:pointer" onclick="W.calcs['+ci+'].data.images.splice('+ii+',1);R()">\u2715</button></div>'});
+  h+='</div></div>';return h;
 }
 function addAct(ci){if(!W.calcs[ci].data.actions)W.calcs[ci].data.actions=[];W.calcs[ci].data.actions.push({text:'',owner:'',due:'',status:'Open'});R()}
 function addRevImg(ci){var inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.onchange=function(ev){var f=ev.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(re){if(!W.calcs[ci].data.images)W.calcs[ci].data.images=[];W.calcs[ci].data.images.push(re.target.result);R()};r.readAsDataURL(f)};inp.click()}
@@ -268,23 +336,19 @@ function matHTML(){
   var fl=W.mf==='All'?W.materials:W.materials.filter(function(m){return m.cat===W.mf});
   h+='<div style="overflow-x:auto"><table><thead><tr><th style="text-align:left">Material</th><th style="text-align:left">Cat.</th><th>E</th><th>\u03bd</th><th>Ftu</th><th>Fty</th><th>Fsu</th><th>Fbru</th><th>Fbry</th><th>\u03b1</th><th style="text-align:left">Ref</th><th></th></tr></thead><tbody>';
   fl.forEach(function(m){h+='<tr><td>'+esc(m.name)+'</td><td>'+m.cat+'</td><td>'+m.E.toLocaleString()+'</td><td>'+m.v+'</td><td>'+m.Ftu+'</td><td>'+m.Fty+'</td><td>'+m.Fsu+'</td><td>'+m.Fbru+'</td><td>'+m.Fbry+'</td><td>'+(m.alpha*1e6).toFixed(1)+'</td><td>'+esc(m.ref||'')+'</td><td style="white-space:nowrap"><a href="#" onclick="editMat(\''+m.id+'\');return false" style="color:var(--accent);font-size:10px;text-decoration:none">Edit</a>'+(m.custom?' <a href="#" onclick="delMat(\''+m.id+'\');return false" style="color:var(--danger);font-size:10px;text-decoration:none;margin-left:6px">Del</a>':'')+'</td></tr>'});
-  h+='</tbody></table></div><div style="font-size:10px;color:var(--muted);margin-top:12px">'+W.materials.length+' materials \u00b7 metric (MPa, /\u00b0C)</div>';
-  return h;
+  h+='</tbody></table></div><div style="font-size:10px;color:var(--muted);margin-top:12px">'+W.materials.length+' materials \u00b7 metric (MPa, /\u00b0C)</div>';return h;
 }
 
 // ═══════════════════════════════════════════════════════════════
-// ACTIONS
+// WORKBOOK ACTIONS
 // ═══════════════════════════════════════════════════════════════
-function addC(type){var t=TC[type];var title=prompt(t.name+' title:','');if(title===null)return;var c={id:'c_'+(W._n++),type:type,title:title||''};if(type==='notes')c.data={entries:[]};if(type==='review')c.data={date:'',agenda:'',attendees:'',outcome:'',minutes:'',actions:[],images:[]};W.calcs.push(c);sv();if(t.ext){R();openCalc(W.calcs.length-1)}else{W.tab=c.id;R()}}
+function addC(type){var t=TC[type];var title=prompt(t.name+' title:','');if(title===null)return;var c={id:'c_'+(W._n++),type:type,title:title||''};if(type==='notes')c.data={entries:[]};if(type==='review')c.data={date:'',agenda:'',attendees:'',minutes:'',actions:[],images:[]};W.calcs.push(c);sv();if(t.ext){R();openCalc(W.calcs.length-1)}else{W.tab=c.id;R()}}
 function remC(i){if(!confirm('Remove "'+(W.calcs[i].title||'this item')+'"?'))return;W.calcs.splice(i,1);R()}
 function openCalc(i){var c=W.calcs[i];if(!c)return;var t=TC[c.type];if(t.ext&&t.file)window.open(t.file,'_blank');else{W.tab=c.id;R()}}
 function startMat(){W.form={name:'',cat:'Steel',E:210000,v:0.3,Ftu:0,Fty:0,Fsu:0,Fbru:0,Fbry:0,alpha:12e-6,ref:'',custom:true};W.editing=null;R()}
 function editMat(id){var m=W.materials.find(function(x){return x.id===id});if(m){W.form=Object.assign({},m);W.editing=id;R()}}
 function delMat(id){if(!confirm('Delete?'))return;W.materials=W.materials.filter(function(m){return m.id!==id});W.form=null;W.editing=null;R()}
 function saveMat(){if(!W.form||!W.form.name.trim())return;if(W.editing){var i=W.materials.findIndex(function(m){return m.id===W.editing});if(i>=0)W.materials[i]=Object.assign({},W.form)}else{W.form.id='cust_'+Date.now();W.materials.push(Object.assign({},W.form))}W.form=null;W.editing=null;R()}
-function newWB(){if(!confirm('Start new workbook? All current data will be cleared.'))return;localStorage.removeItem('eng_wb');localStorage.removeItem('eng_wb_rf_bolt');localStorage.removeItem('eng_wb_rf_lug');localStorage.removeItem('eng_wb_rf_intfit');W=freshState();R()}
-function saveWB(){var n=prompt('Save as:',W.project?W.project.replace(/\s+/g,'_'):'Engineering_Calcs');if(!n)return;var d=JSON.parse(JSON.stringify(W));delete d.tab;delete d.form;delete d.editing;delete d.mf;d.savedAt=new Date().toISOString();d.version='4.0';var b=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=n.replace(/\s+/g,'_')+'.json';a.click();URL.revokeObjectURL(a.href)}
-function loadWB(){var inp=document.createElement('input');inp.type='file';inp.accept='.json';inp.onchange=function(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(ev){try{var d=JSON.parse(ev.target.result);W=freshState();for(var k in d)W[k]=d[k];W.tab='home';W._n=Math.max(W._n,Math.max.apply(null,W.calcs.map(function(c){return parseInt((c.id||'').split('_')[1])||0}).concat([0])))+1;R()}catch(err){alert('Failed: '+err.message)}};r.readAsText(f)};inp.click()}
 
 // ═══════════════════════════════════════════════════════════════
 // 3D VIEWER
@@ -294,42 +358,25 @@ function init3D(){var c=document.getElementById('viewer3d'),d=document.getElemen
   d.addEventListener('click',function(){var inp=document.createElement('input');inp.type='file';inp.accept='.stl';inp.onchange=function(e){if(e.target.files[0])loadSTL(e.target.files[0])};inp.click()});
   d.addEventListener('dragover',function(e){e.preventDefault();d.classList.add('drag')});
   d.addEventListener('dragleave',function(){d.classList.remove('drag')});
-  d.addEventListener('drop',function(e){e.preventDefault();d.classList.remove('drag');if(e.dataTransfer.files.length)loadSTL(e.dataTransfer.files[0])});
-}
+  d.addEventListener('drop',function(e){e.preventDefault();d.classList.remove('drag');if(e.dataTransfer.files.length)loadSTL(e.dataTransfer.files[0])});}
 function loadSTL(file){if(!file.name.toLowerCase().endsWith('.stl')){alert('Please use STL');return}
-  var reader=new FileReader();reader.onload=function(e){
-    var c=document.getElementById('viewer3d'),d=document.getElementById('v3dDrop');if(d)d.style.display='none';
-    while(c.querySelector('canvas'))c.querySelector('canvas').remove();
-    var w=c.clientWidth,h=c.clientHeight;scene3=new THREE.Scene();scene3.background=new THREE.Color(0x18181b);
-    cam3=new THREE.PerspectiveCamera(45,w/h,0.1,10000);ren3=new THREE.WebGLRenderer({antialias:true});ren3.setSize(w,h);ren3.setPixelRatio(window.devicePixelRatio);c.appendChild(ren3.domElement);
-    scene3.add(new THREE.AmbientLight(0xcccccc,0.5));var dl=new THREE.DirectionalLight(0xffffff,0.8);dl.position.set(1,1,1);scene3.add(dl);var dl2=new THREE.DirectionalLight(0x8888ff,0.3);dl2.position.set(-1,-0.5,0.5);scene3.add(dl2);
-    var geom=parseSTL(e.target.result);geom.computeVertexNormals();
-    var mat=new THREE.MeshPhongMaterial({color:0x8c8c96,specular:0x333333,shininess:60});
-    if(mesh3)scene3.remove(mesh3);mesh3=new THREE.Mesh(geom,mat);geom.computeBoundingBox();
-    var box=geom.boundingBox,ctr=new THREE.Vector3(),sz=new THREE.Vector3();box.getCenter(ctr);box.getSize(sz);var mx=Math.max(sz.x,sz.y,sz.z);
-    mesh3.position.sub(ctr);scene3.add(mesh3);cam3.position.set(0,0,mx*2);
-    var drag=false,rBtn=false,pX=0,pY=0,rX=0,rY=0,dist=mx*2,panX=0,panY=0;
-    ren3.domElement.addEventListener('mousedown',function(ev){drag=true;rBtn=ev.button===2;pX=ev.clientX;pY=ev.clientY});
-    ren3.domElement.addEventListener('contextmenu',function(ev){ev.preventDefault()});
-    window.addEventListener('mouseup',function(){drag=false});
-    window.addEventListener('mousemove',function(ev){if(!drag)return;var dx=ev.clientX-pX,dy=ev.clientY-pY;pX=ev.clientX;pY=ev.clientY;if(rBtn){panX+=dx*mx*.002;panY-=dy*mx*.002}else{rY+=dx*.01;rX+=dy*.01;rX=Math.max(-Math.PI/2,Math.min(Math.PI/2,rX))}});
-    ren3.domElement.addEventListener('wheel',function(ev){ev.preventDefault();dist*=1+ev.deltaY*.001;dist=Math.max(mx*.3,Math.min(mx*10,dist))},{passive:false});
-    var tch={};
-    ren3.domElement.addEventListener('touchstart',function(ev){ev.preventDefault();for(var i=0;i<ev.changedTouches.length;i++)tch[ev.changedTouches[i].identifier]={x:ev.changedTouches[i].clientX,y:ev.changedTouches[i].clientY}},{passive:false});
-    ren3.domElement.addEventListener('touchmove',function(ev){ev.preventDefault();if(ev.touches.length===1){var t=ev.touches[0],p=tch[t.identifier];if(p){rY+=(t.clientX-p.x)*.01;rX+=(t.clientY-p.y)*.01;rX=Math.max(-Math.PI/2,Math.min(Math.PI/2,rX));tch[t.identifier]={x:t.clientX,y:t.clientY}}}if(ev.touches.length===2){var d1=Math.hypot(ev.touches[0].clientX-ev.touches[1].clientX,ev.touches[0].clientY-ev.touches[1].clientY);var ks=Object.keys(tch);if(ks.length>=2){var d0=Math.hypot(tch[ks[0]].x-tch[ks[1]].x,tch[ks[0]].y-tch[ks[1]].y);if(d0>0)dist*=d0/d1;dist=Math.max(mx*.3,Math.min(mx*10,dist))}for(var i=0;i<ev.touches.length;i++)tch[ev.touches[i].identifier]={x:ev.touches[i].clientX,y:ev.touches[i].clientY}}},{passive:false});
-    ren3.domElement.addEventListener('touchend',function(ev){for(var i=0;i<ev.changedTouches.length;i++)delete tch[ev.changedTouches[i].identifier]});
-    (function anim(){requestAnimationFrame(anim);cam3.position.x=panX+dist*Math.sin(rY)*Math.cos(rX);cam3.position.y=panY+dist*Math.sin(rX);cam3.position.z=dist*Math.cos(rY)*Math.cos(rX);cam3.lookAt(panX,panY,0);ren3.render(scene3,cam3)})();
-    window.addEventListener('resize',function(){var w2=c.clientWidth,h2=c.clientHeight;cam3.aspect=w2/h2;cam3.updateProjectionMatrix();ren3.setSize(w2,h2)});
-  };reader.readAsArrayBuffer(file);
-}
-function parseSTL(buf){var dv=new DataView(buf),geom=new THREE.BufferGeometry();
-  if(buf.byteLength>84){var nt=dv.getUint32(80,true);if(84+nt*50===buf.byteLength){
-    var v=new Float32Array(nt*9),n=new Float32Array(nt*9);
-    for(var i=0;i<nt;i++){var o=84+i*50;var nx=dv.getFloat32(o,true),ny=dv.getFloat32(o+4,true),nz=dv.getFloat32(o+8,true);
-    for(var j=0;j<3;j++){var vo=o+12+j*12;v[i*9+j*3]=dv.getFloat32(vo,true);v[i*9+j*3+1]=dv.getFloat32(vo+4,true);v[i*9+j*3+2]=dv.getFloat32(vo+8,true);n[i*9+j*3]=nx;n[i*9+j*3+1]=ny;n[i*9+j*3+2]=nz}}
-    geom.setAttribute('position',new THREE.BufferAttribute(v,3));geom.setAttribute('normal',new THREE.BufferAttribute(n,3))}}
-  return geom;
-}
+  var reader=new FileReader();reader.onload=function(e){var c=document.getElementById('viewer3d'),d=document.getElementById('v3dDrop');if(d)d.style.display='none';while(c.querySelector('canvas'))c.querySelector('canvas').remove();
+  var w=c.clientWidth,h=c.clientHeight;scene3=new THREE.Scene();scene3.background=new THREE.Color(0x18181b);cam3=new THREE.PerspectiveCamera(45,w/h,0.1,10000);ren3=new THREE.WebGLRenderer({antialias:true});ren3.setSize(w,h);ren3.setPixelRatio(window.devicePixelRatio);c.appendChild(ren3.domElement);
+  scene3.add(new THREE.AmbientLight(0xcccccc,0.5));var dl=new THREE.DirectionalLight(0xffffff,0.8);dl.position.set(1,1,1);scene3.add(dl);var dl2=new THREE.DirectionalLight(0x8888ff,0.3);dl2.position.set(-1,-0.5,0.5);scene3.add(dl2);
+  var geom=parseSTL(e.target.result);geom.computeVertexNormals();var mat=new THREE.MeshPhongMaterial({color:0x8c8c96,specular:0x333333,shininess:60});
+  if(mesh3)scene3.remove(mesh3);mesh3=new THREE.Mesh(geom,mat);geom.computeBoundingBox();var box=geom.boundingBox,ctr=new THREE.Vector3(),sz=new THREE.Vector3();box.getCenter(ctr);box.getSize(sz);var mx=Math.max(sz.x,sz.y,sz.z);mesh3.position.sub(ctr);scene3.add(mesh3);
+  var drag=false,rBtn=false,pX=0,pY=0,rX=0,rY=0,dist=mx*2,panX=0,panY=0;
+  ren3.domElement.addEventListener('mousedown',function(ev){drag=true;rBtn=ev.button===2;pX=ev.clientX;pY=ev.clientY});
+  ren3.domElement.addEventListener('contextmenu',function(ev){ev.preventDefault()});
+  window.addEventListener('mouseup',function(){drag=false});window.addEventListener('mousemove',function(ev){if(!drag)return;var dx=ev.clientX-pX,dy=ev.clientY-pY;pX=ev.clientX;pY=ev.clientY;if(rBtn){panX+=dx*mx*.002;panY-=dy*mx*.002}else{rY+=dx*.01;rX+=dy*.01;rX=Math.max(-Math.PI/2,Math.min(Math.PI/2,rX))}});
+  ren3.domElement.addEventListener('wheel',function(ev){ev.preventDefault();dist*=1+ev.deltaY*.001;dist=Math.max(mx*.3,Math.min(mx*10,dist))},{passive:false});
+  var tch={};ren3.domElement.addEventListener('touchstart',function(ev){ev.preventDefault();for(var i=0;i<ev.changedTouches.length;i++)tch[ev.changedTouches[i].identifier]={x:ev.changedTouches[i].clientX,y:ev.changedTouches[i].clientY}},{passive:false});
+  ren3.domElement.addEventListener('touchmove',function(ev){ev.preventDefault();if(ev.touches.length===1){var t=ev.touches[0],p=tch[t.identifier];if(p){rY+=(t.clientX-p.x)*.01;rX+=(t.clientY-p.y)*.01;rX=Math.max(-Math.PI/2,Math.min(Math.PI/2,rX));tch[t.identifier]={x:t.clientX,y:t.clientY}}}if(ev.touches.length===2){var d1=Math.hypot(ev.touches[0].clientX-ev.touches[1].clientX,ev.touches[0].clientY-ev.touches[1].clientY);var ks=Object.keys(tch);if(ks.length>=2){var d0=Math.hypot(tch[ks[0]].x-tch[ks[1]].x,tch[ks[0]].y-tch[ks[1]].y);if(d0>0)dist*=d0/d1;dist=Math.max(mx*.3,Math.min(mx*10,dist))}for(var i=0;i<ev.touches.length;i++)tch[ev.touches[i].identifier]={x:ev.touches[i].clientX,y:ev.touches[i].clientY}}},{passive:false});
+  ren3.domElement.addEventListener('touchend',function(ev){for(var i=0;i<ev.changedTouches.length;i++)delete tch[ev.changedTouches[i].identifier]});
+  (function anim(){requestAnimationFrame(anim);cam3.position.x=panX+dist*Math.sin(rY)*Math.cos(rX);cam3.position.y=panY+dist*Math.sin(rX);cam3.position.z=dist*Math.cos(rY)*Math.cos(rX);cam3.lookAt(panX,panY,0);ren3.render(scene3,cam3)})();
+  window.addEventListener('resize',function(){var w2=c.clientWidth,h2=c.clientHeight;cam3.aspect=w2/h2;cam3.updateProjectionMatrix();ren3.setSize(w2,h2)});
+  };reader.readAsArrayBuffer(file);}
+function parseSTL(buf){var dv=new DataView(buf),geom=new THREE.BufferGeometry();if(buf.byteLength>84){var nt=dv.getUint32(80,true);if(84+nt*50===buf.byteLength){var v=new Float32Array(nt*9),n=new Float32Array(nt*9);for(var i=0;i<nt;i++){var o=84+i*50;var nx=dv.getFloat32(o,true),ny=dv.getFloat32(o+4,true),nz=dv.getFloat32(o+8,true);for(var j=0;j<3;j++){var vo=o+12+j*12;v[i*9+j*3]=dv.getFloat32(vo,true);v[i*9+j*3+1]=dv.getFloat32(vo+4,true);v[i*9+j*3+2]=dv.getFloat32(vo+8,true);n[i*9+j*3]=nx;n[i*9+j*3+1]=ny;n[i*9+j*3+2]=nz}}geom.setAttribute('position',new THREE.BufferAttribute(v,3));geom.setAttribute('normal',new THREE.BufferAttribute(n,3))}}return geom;}
 if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(function(){})}
 R();
 </script>
