@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lee Plug Selector Calculator</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{--bg:#0f1117;--surface:#1a1d27;--s2:#232735;--s3:#2c3040;--border:#363b4e;--text:#e8eaf0;--dim:#8b90a5;--muted:#5c6078;--accent:#4a7cff;--ag:rgba(74,124,255,.15);--a2:#22c997;--a2g:rgba(34,201,151,.15);--warn:#f5a623;--wg:rgba(245,166,35,.12);--r:10px;--rs:6px}
+  body{font-family:'DM Sans',-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.5}
+  .app{max-width:1100px;margin:0 auto;padding:32px 24px 80px}
+  .hdr{text-align:center;margin-bottom:40px;padding-bottom:32px;border-bottom:1px solid var(--border)}
+  .badge{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);background:var(--ag);border:1px solid rgba(74,124,255,.25);padding:5px 14px;border-radius:20px;margin-bottom:16px}
+  .hdr h1{font-size:32px;font-weight:700;letter-spacing:-.5px;margin-bottom:8px}
+  .hdr p{color:var(--dim);font-size:15px;max-width:640px;margin:0 auto}
+  .sec{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:28px;margin-bottom:24px}
+  .sec h2{font-size:16px;font-weight:600;margin-bottom:20px;display:flex;align-items:center;gap:10px}
+  .ico{width:28px;height:28px;border-radius:var(--rs);display:flex;align-items:center;justify-content:center;font-size:14px}
+  .ib{background:var(--ag);border:1px solid rgba(74,124,255,.2)}.ig2{background:var(--a2g);border:1px solid rgba(34,201,151,.2)}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px}
+  @media(max-width:700px){.grid3{grid-template-columns:1fr}}
+  .fld label{display:block;font-size:12px;font-weight:500;color:var(--dim);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px}
+  .fld select,.fld input{width:100%;padding:11px 14px;background:var(--s2);border:1px solid var(--border);border-radius:var(--rs);color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;outline:none;transition:border-color .2s,box-shadow .2s;appearance:none;-webkit-appearance:none}
+  .fld select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1.5l5 5 5-5' stroke='%238b90a5' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px;cursor:pointer}
+  .fld select:focus,.fld input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--ag)}
+  .fld input::placeholder{color:var(--muted)}
+  .hint{font-size:11px;color:var(--muted);margin-top:6px;font-family:'JetBrains Mono',monospace}
+  .rgrid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:24px}
+  @media(max-width:800px){.rgrid{grid-template-columns:1fr}}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+  .card.best{border-color:var(--accent);box-shadow:0 0 20px var(--ag),0 0 0 1px rgba(74,124,255,.15)}
+  .card.alt{border-color:var(--warn);box-shadow:0 0 20px var(--wg)}
+  .chdr{padding:16px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+  .tag{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;padding:4px 10px;border-radius:4px}
+  .best .tag{color:var(--accent);background:var(--ag);border:1px solid rgba(74,124,255,.2)}
+  .alt .tag{color:var(--warn);background:var(--wg);border:1px solid rgba(245,166,35,.2)}
+  .psz{font-size:22px;font-weight:700;font-family:'JetBrains Mono',monospace}
+  .cbody{padding:20px}
+  .pnr{font-family:'JetBrains Mono',monospace;font-size:12px;margin-bottom:14px;display:flex;flex-wrap:wrap;gap:6px}
+  .chip{color:var(--a2);background:var(--a2g);display:inline-block;padding:3px 10px;border-radius:4px}
+  .fn{font-size:12px;font-weight:500;margin-bottom:14px}
+  .dt{width:100%;border-collapse:collapse}
+  .dt tr{border-bottom:1px solid rgba(54,59,78,.5)}.dt tr:last-child{border-bottom:none}
+  .dt td{padding:7px 0;font-size:13px}.dt td:first-child{color:var(--dim);font-size:12px;width:55%}
+  .dt td:last-child{font-family:'JetBrains Mono',monospace;font-weight:500;text-align:right;font-size:13px}
+  .ss{margin-top:16px;padding-top:14px;border-top:1px solid var(--border)}
+  .ss h4{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--dim);margin-bottom:10px}
+  .rp{display:flex;justify-content:space-between;align-items:center;padding:5px 0;font-size:12px}
+  .rp .l{color:var(--dim);font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+  .rp .v{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500}
+  .dgrid{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+  @media(max-width:800px){.dgrid{grid-template-columns:1fr}}
+  .dbox{background:var(--s2);border:1px solid var(--border);border-radius:var(--rs);padding:20px;text-align:center}
+  .dbox h3{font-size:13px;font-weight:600;color:var(--dim);text-transform:uppercase;letter-spacing:.8px;margin-bottom:16px}
+  .dbox svg{width:100%;max-width:340px;height:auto}
+  .empty{text-align:center;padding:60px 20px;background:var(--surface);border:1px dashed var(--border);border-radius:var(--r);margin-bottom:24px}
+  .empty .big{font-size:40px;margin-bottom:16px;opacity:.5}
+  .empty p{color:var(--dim);font-size:15px}.empty .sm{font-size:12px;color:var(--muted);margin-top:8px}
+  .note{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--warn);border-radius:var(--rs);padding:14px 18px;font-size:13px;color:var(--dim);line-height:1.6}.note strong{color:var(--text)}
+  .fade{animation:fi .35s ease-out}@keyframes fi{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ══════════════════════════════════════════════════════════════════
+   ENGINEERING WORKBOOK · UNIFIED DESIGN SYSTEM
+   Greyscale + single accent (#6B8AFF) · Inter + JetBrains Mono
+   ══════════════════════════════════════════════════════════════════ */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+  /* ── Master palette ── */
+  --bg:#18181b !important; --bg2:#18181b !important; --bg3:#1e1e22 !important; --bg4:#222226 !important;
+  --panel:#1e1e22 !important; --surface:#222226 !important; --surface2:#2a2a2f !important;
+  --s2:#2a2a2f !important;
+  --border:#313138 !important; --border2:#3c3c44 !important; --border-focus:#6B8AFF !important;
+  --text:#d1d1d6 !important; --text2:#d1d1d6 !important; --text3:#6e6e78 !important;
+  --bright:#eeeef1 !important; --dim:#8c8c96 !important; --muted:#5a5a64 !important;
+  --accent:#6B8AFF !important; --accent2:#8aa4ff !important;
+  --a2:#8aa4ff !important; --ag:rgba(107,138,255,.10) !important; --a2g:rgba(138,164,255,.10) !important;
+  --good:#4aba78 !important; --warn:#d4993a !important; --danger:#d45050 !important;
+  --r:#d45050 !important; --rs:rgba(212,80,80,.12) !important;
+  --info:#6B8AFF !important; --blue:#6B8AFF !important; --green:#4aba78 !important;
+  --orange:#d4993a !important; --yellow:#d4993a !important; --red:#d45050 !important;
+  --cyan:#6B8AFF !important; --purple:#8c8c96 !important; --wg:rgba(212,153,58,.10) !important;
+
+  /* Lug-specific vars */
+  --bg-deep:#18181b !important; --bg-card:#222226 !important; --bg-input:#1e1e22 !important;
+  --text-primary:#eeeef1 !important; --text-secondary:#d1d1d6 !important;
+  --text-dim:#8c8c96 !important; --text-faint:#5a5a64 !important; --text-muted:#6e6e78 !important;
+  --accent-amber:#d4993a !important; --accent-green:#4aba78 !important;
+
+  /* Fonts */
+  --sans:'Inter',-apple-system,'SF Pro Display',system-ui,sans-serif !important;
+  --mono:'JetBrains Mono',ui-monospace,'SF Mono',monospace !important;
+}
+
+/* ── Global resets ── */
+body {
+  font-family: 'Inter',-apple-system,'SF Pro Display',system-ui,sans-serif !important;
+  background: #18181b !important;
+  color: #d1d1d6 !important;
+  -webkit-font-smoothing: antialiased !important;
+  background-image: none !important;
+}
+body::before { background-image: none !important; content: none !important; }
+
+/* ── Typography ── */
+h1,h2,h3,h4,h5,h6 { font-family: 'Inter',-apple-system,system-ui,sans-serif !important; }
+code, pre, .mono, [class*="result-val"], [class*="big-val"], [class*="res-val"],
+.v, .badge, .dt, .psz, td { font-family: 'JetBrains Mono',ui-monospace,monospace !important; }
+
+/* ── Cards / Panels ── */
+.card, .panel, .sec, [class*="big-card"] {
+  background: #222226 !important;
+  border: 1px solid #313138 !important;
+  border-radius: 10px !important;
+}
+.card-title, .card-label, .panel-title, [class*="card-title"], .pt, .chdr,
+[class*="pt"] > span {
+  font-family: 'Inter',-apple-system,system-ui,sans-serif !important;
+  font-size: 10px !important; font-weight: 600 !important;
+  color: #6e6e78 !important; text-transform: uppercase !important;
+  letter-spacing: 0.07em !important;
+}
+
+/* ── Inputs ── */
+input[type="number"], input[type="text"], select, textarea {
+  background: #1e1e22 !important;
+  border: 1px solid #3c3c44 !important;
+  border-radius: 6px !important;
+  color: #eeeef1 !important;
+  font-family: 'JetBrains Mono',ui-monospace,monospace !important;
+  transition: border-color .15s !important;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: #6B8AFF !important;
+  outline: none !important;
+}
+select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236e6e78'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 8px center !important;
+}
+
+/* ── Buttons ── */
+button, .btn, [class*="btn"] {
+  font-family: 'Inter',-apple-system,system-ui,sans-serif !important;
+  border-radius: 6px !important;
+  transition: all .12s !important;
+}
+.btn-amber, .btn-blue, .btn-green, .btn-red, .btn-dim,
+[class*="export"], [class*="save"] {
+  background: #2a2a2f !important;
+  border: 1px solid #3c3c44 !important;
+  color: #8c8c96 !important;
+}
+.btn-amber:hover, .btn-blue:hover, .btn-green:hover, .btn-dim:hover,
+[class*="export"]:hover, [class*="save"]:hover {
+  background: #313138 !important;
+  border-color: #4a4a54 !important;
+  color: #d1d1d6 !important;
+}
+/* Active/primary buttons get the accent */
+.btn.primary, [class*="btn primary"], .btn-accent {
+  background: rgba(107,138,255,.10) !important;
+  border: 1px solid rgba(107,138,255,.28) !important;
+  color: #6B8AFF !important;
+}
+
+/* ── Headers ── */
+.header, .hdr, [class*="topbar"] {
+  background: #1e1e22 !important;
+  border-bottom: 1px solid #313138 !important;
+}
+.header h1, .hdr h1 {
+  font-family: 'Inter',-apple-system,system-ui,sans-serif !important;
+  color: #eeeef1 !important;
+}
+.header .desc, .header .sub, .hdr .sub {
+  color: #6e6e78 !important;
+}
+
+/* ── Results / values ── */
+.result-val, .res-val, .big-val, .v, .badge {
+  color: #eeeef1 !important;
+}
+.result-label, .res-label, .big-label, .form-label, .row-label, .lbl, .l, .fl {
+  color: #8c8c96 !important;
+  font-family: 'Inter',-apple-system,system-ui,sans-serif !important;
+}
+.result-unit, .res-unit, .big-unit, .form-unit, .funit, .fu {
+  color: #5a5a64 !important;
+  font-family: 'JetBrains Mono',ui-monospace,monospace !important;
+}
+
+/* ── Tables ── */
+table { border-collapse: collapse !important; }
+thead th {
+  font-family: 'Inter',-apple-system,system-ui,sans-serif !important;
+  font-size: 9px !important; font-weight: 600 !important;
+  color: #6e6e78 !important; text-transform: uppercase !important;
+  letter-spacing: .06em !important;
+  border-bottom: 1px solid #3c3c44 !important;
+  background: transparent !important;
+}
+tbody td {
+  border-bottom: 1px solid #27272c !important;
+  font-size: 11px !important;
+}
+tbody tr:hover { background: #2a2a2f !important; }
+
+/* ── Notes / hints / info boxes ── */
+.note, .note-box, .info-box, .hint, .method, .fnote {
+  background: #1e1e22 !important;
+  border: 1px solid #313138 !important;
+  border-radius: 8px !important;
+  color: #8c8c96 !important;
+}
+.danger-box {
+  background: rgba(212,80,80,.06) !important;
+  border: 1px solid rgba(212,80,80,.2) !important;
+}
+
+/* ── Dividers ── */
+.divider, hr {
+  border-color: #313138 !important;
+  background: #313138 !important;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 5px !important; }
+::-webkit-scrollbar-track { background: #18181b !important; }
+::-webkit-scrollbar-thumb { background: #3c3c44 !important; border-radius: 3px !important; }
+
+/* ── Pill/chip elements ── */
+.chip, .tag, .pill-bar, [class*="quick-btn"], [class*="fit-type-badge"] {
+  font-family: 'Inter',-apple-system,system-ui,sans-serif !important;
+  border-radius: 6px !important;
+}
+
+/* ── Number formatting ── */
+input[type=number] { -moz-appearance: textfield !important; }
+input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none !important; }
+
+/* ── Canvas containers ── */
+canvas {
+  border-radius: 8px !important;
+}
+
+/* ── SVG diagrams ── */
+svg text {
+  font-family: 'JetBrains Mono',ui-monospace,monospace !important;
+}
+
+/* ── Grid containers ── */
+.grid-main, .grid-2, .grid-3, .g2, .grid3, .main-grid, .dgrid {
+  gap: 12px !important;
+}
+
+/* ── Toggle / knob switches ── */
+.knob { border-radius: 12px !important; }
+
+/* ── Modal overlays ── */
+.modal-overlay, .modal {
+  backdrop-filter: blur(6px) !important;
+}
+.modal {
+  background: #222226 !important;
+  border: 1px solid #313138 !important;
+  border-radius: 12px !important;
+}
+
+/* ── Workbook nav ── */
+.wb-back {
+  position: fixed; top: 12px; left: 12px; z-index: 9998;
+  padding: 7px 14px; border-radius: 8px; font-size: 12px; font-weight: 600;
+  font-family: 'Inter',-apple-system,system-ui,sans-serif;
+  background: #1e1e22; border: 1px solid #313138;
+  color: #8c8c96; cursor: pointer; text-decoration: none;
+  display: flex; align-items: center; gap: 6px;
+  transition: all .15s; backdrop-filter: blur(8px);
+}
+.wb-back:hover { color: #eeeef1; border-color: rgba(107,138,255,.3); background: #222226; }
+
+/* ── CAD image ── */
+.cad-zone { border: 1.5px dashed #3c3c44; border-radius: 10px; padding: 16px; text-align: center; cursor: pointer; transition: all .2s; position: relative; background: rgba(0,0,0,.12) }
+.cad-zone:hover { border-color: #5a5a64; background: rgba(0,0,0,.2) }
+.cad-zone.has-img { border: 1px solid #313138; padding: 4px; background: transparent }
+.cad-thumb { max-width: 100%; max-height: 140px; border-radius: 6px; cursor: pointer; display: block; margin: 0 auto }
+.cad-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.92); z-index: 99999; display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: 0; pointer-events: none; transition: opacity .25s }
+.cad-overlay.show { opacity: 1; pointer-events: auto }
+.cad-overlay img { max-width: 92vw; max-height: 92vh; border-radius: 10px; box-shadow: 0 8px 60px rgba(0,0,0,.5) }
+.cad-rm { position: absolute; top: 6px; right: 8px; background: rgba(180,50,50,.7); color: #fff; border: none; border-radius: 6px; font-size: 10px; padding: 3px 9px; cursor: pointer; z-index: 2 }
+.cad-rm:hover { background: rgba(210,60,60,.9) }
+
+/* ── PDF save ── */
+.pdf-btn { position: fixed; bottom: 14px; right: 14px; z-index: 9998; padding: 8px 16px; border-radius: 8px; font-size: 11px; font-weight: 600; border: 1px solid #313138; background: #1e1e22; color: #8c8c96; cursor: pointer; font-family: 'Inter',-apple-system,system-ui,sans-serif; display: flex; align-items: center; gap: 6px; transition: all .15s; backdrop-filter: blur(8px) }
+.pdf-btn:hover { color: #eeeef1; border-color: rgba(107,138,255,.3) }
+
+@media print { .wb-back, .pdf-btn, .cad-overlay { display: none !important; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="hdr">
+    <div class="badge">Engineering Tool</div>
+    <h1>Lee Plug Selector</h1>
+    <p>Enter the passage drill size (N Dia. Ref) in your design to find the correct Lee Plug to seal it. Based on The Lee Company Technical Hydraulic Handbook, 12th Edition. Metric ream tolerances computed from ISO 286-1:2010.</p>
+  </div>
+  <div class="sec">
+    <h2><span class="ico ib">&#9881;</span> Configuration</h2>
+    <div class="grid3">
+      <div class="fld"><label>Unit System</label>
+        <select id="unitSystem" onchange="go()"><option value="metric">Metric (mm)</option><option value="imperial">Imperial (inches)</option></select></div>
+      <div class="fld"><label>Plug Type</label>
+        <select id="plugType" onchange="go()"><option value="short">Short Plug</option><option value="long">Long Plug</option></select></div>
+      <div class="fld"><label>Passage Drill Size (N Dia.)</label>
+        <input type="number" id="holeSize" step="any" placeholder="e.g. 0.187" oninput="go()">
+        <div class="hint" id="uh">Enter passage hole diameter in inches</div></div>
+    </div>
+  </div>
+  <div id="out">
+    <div class="empty"><div class="big">&#8856;</div><p>Enter the passage hole diameter (N Dia. Ref) to find matching Lee Plugs</p><div class="sm">Returns the best-fit plug and one size smaller as an alternative</div></div>
+  </div>
+  <div class="sec"><h2>CAD Reference</h2><div id="leeCadZone" class="cad-zone"></div></div>
+  <div class="note">
+    <strong>Note:</strong> Metric ream tolerances are calculated from ISO 286-1:2010 IT grade tables to 3 d.p., replacing the rounded 2 d.p. values in the Lee catalogue. Imperial ream tolerances are as published. This tool covers standard Lee Plugs in Aluminium (2024-T4) and Stainless Steel (416 CRES). For R.F.O., A.F.O., High Strength, QIP, or Monel plugs, consult the full Lee catalogue.
+  </div>
+</div>
+<script>
+// ============================================================
+// ISO 286-1:2010 IT Grade Table (µm)
+// [maxDiam, IT6, IT7, IT8, IT9, IT10, IT11]
+// ============================================================
+const IT_TBL=[
+  [3,   6,10,14,25,40,60],
+  [6,   8,12,18,30,48,75],
+  [10,  9,15,22,36,58,90],
+  [18, 11,18,27,43,70,110],
+  [30, 13,21,33,52,84,130],
+  [50, 16,25,39,62,100,160],
+  [80, 19,30,46,74,120,190],
+  [120,22,35,54,87,140,220],
+  [180,25,40,63,100,160,250],
+  [250,29,46,72,115,185,290],
+  [315,32,52,81,130,210,320],
+  [400,36,57,89,140,230,360],
+  [500,40,63,97,155,250,400]
+];
+
+function getIT(d,grade){
+  // grade 6->idx0, 7->1, ..., 11->5
+  const gi=grade-6;
+  if(gi<0||gi>5)return null;
+  for(const r of IT_TBL) if(d<=r[0]) return r[1+gi];
+  return IT_TBL[IT_TBL.length-1][1+gi];
+}
+
+// For H-holes: fundamental deviation = 0, so min = nominal, max = nominal + IT
+function holeReam(nominal, grade){
+  const it=getIT(nominal, grade);
+  if(it===null) return [nominal, nominal];
+  return [nominal, +(nominal + it/1000).toFixed(4)];
+}
+
+// ============================================================
+// PLUG DATABASE
+// Metric plugs: ream stored as {c1grade, c2grade, c3grade} (IT grade numbers)
+// so we can compute exact limits at runtime
+// ============================================================
+const IMP=[
+{lee:"093",dMax:.0937,dMin:.0928,short:{pn:"PLGA0930010A",pnSS:"PLGA0930020A",C:.098,M:.078,K:.069,L:.062,wt:.03,wtSS:.07,proof:{c1:6,c2:8,c3:10},proofSS:{c1:10,c2:13,c3:15},A:.097,N:.062,W:.125},long:{pn:"PLGA0931010A",pnSS:"PLGA0931020A",C:.143,M:.123,K:.069,L:.095,wt:.04,wtSS:.11,proof:{c1:10,c2:13,c3:16},proofSS:{c1:18,c2:20,c3:24},A:.145,N:.062,W:.125},ream:{c1:[.0937,.0962],c2:[.0937,.0952],c3:[.0937,.0942]},WSS:.063},
+{lee:"125",dMax:.1250,dMin:.1241,short:{pn:"PLGA1250010A",pnSS:"PLGA1250020A",C:.128,M:.108,K:.095,L:.086,wt:.06,wtSS:.17,proof:{c1:6,c2:8,c3:10},proofSS:{c1:14,c2:16,c3:20},A:.125,N:.093,W:.125},long:{pn:"PLGA1251010A",pnSS:"PLGA1251020A",C:.193,M:.173,K:.095,L:.125,wt:.10,wtSS:.26,proof:{c1:10,c2:13,c3:16},proofSS:{c1:18,c2:20,c3:24},A:.195,N:.093,W:.125},ream:{c1:[.1250,.1275],c2:[.1250,.1265],c3:[.1250,.1255]},WSS:.063},
+{lee:"156",dMax:.1562,dMin:.1553,short:{pn:"PLGA1560010A",pnSS:"PLGA1560020A",C:.125,M:.110,K:.118,L:.078,wt:.10,wtSS:.28,proof:{c1:8,c2:9,c3:12},proofSS:{c1:12,c2:14,c3:16},A:.130,N:.125,W:.125},long:{pn:"PLGA1561010A",pnSS:"PLGA1561020A",C:.245,M:.215,K:.123,L:.165,wt:.20,wtSS:.56,proof:{c1:10,c2:13,c3:16},proofSS:{c1:18,c2:24,c3:28},A:.250,N:.125,W:.125},ream:{c1:[.1562,.1587],c2:[.1562,.1577],c3:[.1562,.1567]},WSS:.063},
+{lee:"187",dMax:.1875,dMin:.1866,short:{pn:"PLGA1870010A",pnSS:"PLGA1870020A",C:.160,M:.135,K:.154,L:.114,wt:.19,wtSS:.51,proof:{c1:8,c2:9,c3:10},proofSS:{c1:18,c2:24,c3:28},A:.152,N:.156,W:.125},long:{pn:"PLGA1871010A",pnSS:"PLGA1871020A",C:.260,M:.235,K:.154,L:.181,wt:.31,wtSS:.82,proof:{c1:10,c2:13,c3:15},proofSS:{c1:18,c2:24,c3:28},A:.253,N:.156,W:.125},ream:{c1:[.1875,.1900],c2:[.1875,.1890],c3:[.1875,.1880]},WSS:.063},
+{lee:"218",dMax:.2187,dMin:.2178,short:{pn:"PLGA2180010A",pnSS:"PLGA2180020A",C:.187,M:.167,K:.179,L:.145,wt:.30,wtSS:.83,proof:{c1:8,c2:9,c3:10},proofSS:{c1:10,c2:12,c3:14},A:.187,N:.187,W:.125},long:{pn:"PLGA2181010A",pnSS:"PLGA2181020A",C:.307,M:.277,K:.182,L:.218,wt:.51,wtSS:1.4,proof:{c1:9,c2:12,c3:15},proofSS:{c1:16,c2:22,c3:26},A:.312,N:.187,W:.125},ream:{c1:[.2187,.2212],c2:[.2187,.2202],c3:[.2187,.2192]},WSS:.063},
+{lee:"250",dMax:.2500,dMin:.2491,short:{pn:"PLGA2500010A",pnSS:"PLGA2500020A",C:.225,M:.193,K:.212,L:.160,wt:.46,wtSS:1.3,proof:{c1:8,c2:9,c3:10},proofSS:{c1:12,c2:14,c3:16},A:.212,N:.218,W:.125},long:{pn:"PLGA2501010A",pnSS:"PLGA2501020A",C:.365,M:.333,K:.212,L:.265,wt:.80,wtSS:2.2,proof:{c1:9,c2:12,c3:14},proofSS:{c1:16,c2:22,c3:25},A:.352,N:.218,W:.125},ream:{c1:[.2500,.2525],c2:[.2500,.2515],c3:[.2500,.2505]},WSS:.063},
+{lee:"281",dMax:.2812,dMin:.2803,short:{pn:"PLGA2810010A",pnSS:"PLGA2810020A",C:.255,M:.230,K:.245,L:.193,wt:.69,wtSS:1.9,proof:{c1:8,c2:9,c3:10},proofSS:{c1:12,c2:14,c3:16},A:.250,N:.250,W:.125},long:{pn:"PLGA2811010A",pnSS:"PLGA2811020A",C:.370,M:.340,K:.247,L:.280,wt:1.0,wtSS:2.7,proof:{c1:9,c2:12,c3:14},proofSS:{c1:18,c2:20,c3:24},A:.375,N:.250,W:.125},ream:{c1:[.2812,.2837],c2:[.2812,.2827],c3:[.2812,.2817]},WSS:.063},
+{lee:"312",dMax:.3124,dMin:.3115,short:{pn:"PLGA3120010A",pnSS:"PLGA3120020A",C:.282,M:.252,K:.268,L:.204,wt:.91,wtSS:2.5,proof:{c1:9,c2:12,c3:14},proofSS:{c1:18,c2:20,c3:24},A:.269,N:.281,W:.125},long:{pn:"PLGA3121010A",pnSS:"PLGA3121020A",C:.436,M:.406,K:.270,L:.308,wt:1.4,wtSS:3.9,proof:{c1:9,c2:12,c3:14},proofSS:{c1:18,c2:20,c3:24},A:.423,N:.281,W:.125},ream:{c1:[.3124,.3149],c2:[.3124,.3139],c3:[.3124,.3129]},WSS:.063},
+{lee:"343",dMax:.3437,dMin:.3428,short:{pn:"PLGA3430010A",pnSS:"PLGA3430020A",C:.307,M:.272,K:.290,L:.216,wt:1.2,wtSS:3.2,proof:{c1:6,c2:8,c3:10},proofSS:{c1:10,c2:12,c3:14},A:.295,N:.312,W:.125},long:{pn:"PLGA3431010A",pnSS:"PLGA3431020A",C:.500,M:.410,K:.294,L:.335,wt:2.0,wtSS:5.0,proof:{c1:8,c2:11,c3:14},proofSS:{c1:18,c2:20,c3:22},A:.437,N:.312,W:.125},ream:{c1:[.3437,.3462],c2:[.3437,.3452],c3:[.3437,.3442]},WSS:.063},
+{lee:"406",dMax:.4062,dMin:.4053,short:{pn:"PLGA4060010A",pnSS:"PLGA4060020A",C:.365,M:.305,K:.357,L:.256,wt:2.0,wtSS:5.4,proof:{c1:6,c2:8,c3:10},proofSS:{c1:10,c2:12,c3:14},A:.325,N:.375,W:.125},long:{pn:"PLGA4061010A",pnSS:"PLGA4061020A",C:.565,M:.465,K:.357,L:.397,wt:3.0,wtSS:7.9,proof:{c1:8,c2:10,c3:13},proofSS:{c1:16,c2:18,c3:21},A:.500,N:.375,W:.125},ream:{c1:[.4062,.4087],c2:[.4062,.4077],c3:[.4062,.4067]},WSS:.063},
+{lee:"468",dMax:.4687,dMin:.4678,short:{pn:"PLGA4680010A",pnSS:"PLGA4680020A",C:.390,M:.330,K:.427,L:.285,wt:2.9,wtSS:7.9,proof:{c1:6,c2:8,c3:10},proofSS:{c1:10,c2:12,c3:14},A:.350,N:.437,W:.125},long:{pn:"PLGA4681010A",pnSS:"PLGA4681020A",C:.620,M:.530,K:.419,L:.460,wt:4.5,wtSS:12.0,proof:{c1:7,c2:10,c3:12},proofSS:{c1:16,c2:18,c3:20},A:.562,N:.437,W:.125},ream:{c1:[.4687,.4712],c2:[.4687,.4702],c3:[.4687,.4692]},WSS:.063},
+{lee:"531",dMax:.5312,dMin:.5303,short:{pn:"PLGA5310010A",pnSS:"PLGA5310020A",C:.520,M:.460,K:.486,L:.375,wt:4.9,wtSS:13.0,proof:{c1:6,c2:8,c3:10},proofSS:{c1:10,c2:12,c3:14},A:.486,N:.500,W:.125},long:{pn:"PLGA5311010A",pnSS:"PLGA5311020A",C:.680,M:.590,K:.482,L:.522,wt:6.3,wtSS:17.0,proof:{c1:6,c2:8,c3:12},proofSS:{c1:14,c2:16,c3:18},A:.625,N:.500,W:.125},ream:{c1:[.5312,.5337],c2:[.5312,.5327],c3:[.5312,.5317]},WSS:.063},
+{lee:"656",dMax:.6562,dMin:.6553,short:{pn:"PLGA6560010A",pnSS:"PLGA6560020A",C:.550,M:.470,K:.598,L:.390,wt:7.8,wtSS:22.0,proof:{c1:3,c2:4,c3:5},proofSS:{c1:6,c2:8,c3:10},A:.490,N:.625,W:.125},long:{pn:"PLGA6561010A",pnSS:"PLGA6561020A",C:.750,M:.660,K:.601,L:.590,wt:11.0,wtSS:29.0,proof:{c1:4,c2:7,c3:10},proofSS:{c1:10,c2:14,c3:16},A:.685,N:.625,W:.125},ream:{c1:[.6562,.6587],c2:[.6562,.6577],c3:[.6562,.6567]},WSS:.063}
+];
+
+// Metric: store IT grade numbers per class; ream computed at runtime via ISO 286
+const MET=[
+{lee:"2.50",dMax:2.50,dMin:2.48,nom:2.50,rc:{c1:11,c2:9,c3:7},short:{pn:"PLGM0250010A",pnSS:"PLGM0250020A",C:2.75,M:2.24,K:1.88,L:1.89,wt:0.04,wtSS:0.11,proof:{c1:49,c2:59,c3:88},proofSS:{c1:98,c2:113,c3:137},A:2.7,N:1.7,W:3.2},long:null,WSS:1.6},
+{lee:"3.00",dMax:3.00,dMin:2.98,nom:3.00,rc:{c1:10,c2:9,c3:7},short:{pn:"PLGM0300010A",pnSS:"PLGM0300020A",C:3.20,M:2.65,K:2.26,L:2.27,wt:0.06,wtSS:0.16,proof:{c1:49,c2:59,c3:88},proofSS:{c1:98,c2:113,c3:137},A:3.1,N:2.2,W:3.2},long:null,WSS:1.6},
+{lee:"3.50",dMax:3.50,dMin:3.48,nom:3.50,rc:{c1:10,c2:9,c3:7},short:{pn:"PLGM0350010A",pnSS:"PLGM0350020A",C:3.66,M:3.00,K:2.56,L:2.66,wt:0.09,wtSS:0.24,proof:{c1:49,c2:59,c3:88},proofSS:{c1:98,c2:113,c3:137},A:3.4,N:2.7,W:3.2},long:null,WSS:1.6},
+{lee:"4.00",dMax:4.00,dMin:3.98,nom:4.00,rc:{c1:10,c2:9,c3:7},short:{pn:"PLGM0400010A",pnSS:"PLGM0400020A",C:4.09,M:3.40,K:3.08,L:2.96,wt:0.13,wtSS:0.36,proof:{c1:49,c2:59,c3:69},proofSS:{c1:83,c2:98,c3:113},A:3.9,N:3.2,W:3.2},long:{pn:"PLGM0401010A",pnSS:"PLGM0401020A",C:6.63,M:6.10,K:3.07,L:5.48,wt:0.22,wtSS:0.61,proof:{c1:69,c2:88,c3:102},proofSS:{c1:123,c2:167,c3:196},A:6.6,N:3.2,W:3.2},WSS:1.6},
+{lee:"4.50",dMax:4.50,dMin:4.48,nom:4.50,rc:{c1:10,c2:9,c3:7},short:{pn:"PLGM0450010A",pnSS:"PLGM0450020A",C:4.55,M:3.81,K:3.58,L:3.29,wt:0.18,wtSS:0.51,proof:{c1:49,c2:59,c3:83},proofSS:{c1:83,c2:98,c3:113},A:4.3,N:3.7,W:3.2},long:{pn:"PLGM0451010A",pnSS:"PLGM0451020A",C:7.19,M:6.61,K:3.57,L:6.03,wt:0.30,wtSS:0.84,proof:{c1:69,c2:88,c3:102},proofSS:{c1:123,c2:167,c3:196},A:7.1,N:3.7,W:3.2},WSS:1.6},
+{lee:"5.00",dMax:5.00,dMin:4.98,nom:5.00,rc:{c1:10,c2:9,c3:7},short:{pn:"PLGM0500010A",pnSS:"PLGM0500020A",C:4.98,M:4.22,K:4.08,L:3.72,wt:0.25,wtSS:0.71,proof:{c1:49,c2:59,c3:69},proofSS:{c1:83,c2:98,c3:113},A:4.7,N:4.2,W:3.2},long:{pn:"PLGM0501010A",pnSS:"PLGM0501020A",C:7.75,M:7.12,K:4.07,L:6.47,wt:0.39,wtSS:1.1,proof:{c1:69,c2:88,c3:102},proofSS:{c1:123,c2:167,c3:196},A:7.6,N:4.2,W:3.2},WSS:1.6},
+{lee:"5.50",dMax:5.50,dMin:5.48,nom:5.50,rc:{c1:10,c2:9,c3:7},short:{pn:"PLGM0550010A",pnSS:"PLGM0550020A",C:5.36,M:4.60,K:4.59,L:4.08,wt:0.33,wtSS:0.92,proof:{c1:49,c2:59,c3:69},proofSS:{c1:69,c2:83,c3:98},A:5.1,N:4.7,W:3.2},long:{pn:"PLGM0551010A",pnSS:"PLGM0551020A",C:8.31,M:7.62,K:4.57,L:6.87,wt:0.51,wtSS:1.4,proof:{c1:64,c2:83,c3:102},proofSS:{c1:108,c2:147,c3:177},A:8.1,N:4.7,W:3.2},WSS:1.6},
+{lee:"6.00",dMax:6.00,dMin:5.98,nom:6.00,rc:{c1:10,c2:9,c3:6},short:{pn:"PLGM0600010A",pnSS:"PLGM0600020A",C:5.77,M:5.01,K:5.08,L:4.28,wt:0.43,wtSS:1.2,proof:{c1:49,c2:59,c3:69},proofSS:{c1:69,c2:83,c3:98},A:5.5,N:5.2,W:3.2},long:{pn:"PLGM0601010A",pnSS:"PLGM0601020A",C:8.84,M:8.11,K:5.07,L:7.24,wt:0.64,wtSS:1.8,proof:{c1:64,c2:83,c3:98},proofSS:{c1:108,c2:147,c3:177},A:8.6,N:5.2,W:3.2},WSS:1.6},
+{lee:"6.50",dMax:6.50,dMin:6.48,nom:6.50,rc:{c1:10,c2:9,c3:6},short:{pn:"PLGM0650010A",pnSS:"PLGM0650020A",C:6.30,M:5.52,K:5.59,L:4.69,wt:0.53,wtSS:1.5,proof:{c1:49,c2:59,c3:69},proofSS:{c1:69,c2:83,c3:98},A:6.0,N:5.7,W:3.2},long:{pn:"PLGM0651010A",pnSS:"PLGM0651020A",C:9.40,M:8.62,K:5.57,L:7.49,wt:0.81,wtSS:2.3,proof:{c1:64,c2:83,c3:98},proofSS:{c1:108,c2:147,c3:172},A:9.1,N:5.7,W:3.2},WSS:1.6},
+{lee:"7.00",dMax:7.00,dMin:6.98,nom:7.00,rc:{c1:10,c2:9,c3:6},short:{pn:"PLGM0700010A",pnSS:"PLGM0700020A",C:6.73,M:5.92,K:6.06,L:5.04,wt:0.66,wtSS:1.8,proof:{c1:49,c2:59,c3:69},proofSS:{c1:69,c2:83,c3:98},A:6.4,N:6.2,W:3.2},long:{pn:"PLGM0701010A",pnSS:"PLGM0701020A",C:9.93,M:9.12,K:6.06,L:8.13,wt:1.0,wtSS:2.8,proof:{c1:64,c2:83,c3:98},proofSS:{c1:98,c2:137,c3:167},A:9.6,N:6.2,W:3.2},WSS:1.6},
+{lee:"7.50",dMax:7.50,dMin:7.48,nom:7.50,rc:{c1:10,c2:9,c3:6},short:{pn:"PLGM0750010A",pnSS:"PLGM0750020A",C:7.19,M:6.30,K:6.53,L:5.39,wt:0.81,wtSS:2.2,proof:{c1:39,c2:54,c3:69},proofSS:{c1:69,c2:83,c3:98},A:6.8,N:6.7,W:3.2},long:{pn:"PLGM0751010A",pnSS:"PLGM0751020A",C:10.49,M:9.61,K:6.53,L:8.51,wt:1.2,wtSS:3.4,proof:{c1:64,c2:83,c3:98},proofSS:{c1:98,c2:137,c3:167},A:10.1,N:6.7,W:3.2},WSS:1.6},
+{lee:"8.00",dMax:8.00,dMin:7.98,nom:8.00,rc:{c1:10,c2:9,c3:6},short:{pn:"PLGM0800010A",pnSS:"PLGM0800020A",C:7.62,M:6.74,K:7.05,L:5.69,wt:0.99,wtSS:2.8,proof:{c1:39,c2:54,c3:69},proofSS:{c1:69,c2:83,c3:98},A:7.2,N:7.2,W:3.2},long:{pn:"PLGM0801010A",pnSS:"PLGM0801020A",C:11.05,M:10.11,K:7.05,L:9.02,wt:1.5,wtSS:4.1,proof:{c1:59,c2:79,c3:98},proofSS:{c1:98,c2:123,c3:152},A:10.6,N:7.2,W:3.2},WSS:1.6}
+];
+
+// Compute metric ream ranges at load time using ISO 286
+MET.forEach(p=>{
+  const n=p.nom;
+  p.ream={
+    c1:holeReam(n, p.rc.c1),
+    c2:holeReam(n, p.rc.c2),
+    c3:holeReam(n, p.rc.c3)
+  };
+  p.rcLabels={c1:'H'+p.rc.c1, c2:'H'+p.rc.c2, c3:'H'+p.rc.c3};
+});
+
+// ============================================================
+function go(){
+  const u=document.getElementById('unitSystem').value;
+  document.getElementById('uh').textContent=u==='imperial'?'Enter passage hole diameter in inches (e.g. 0.187)':'Enter passage hole diameter in mm (e.g. 5.0)';
+  const v=parseFloat(document.getElementById('holeSize').value);
+  if(isNaN(v)||v<=0){document.getElementById('out').innerHTML='<div class="empty"><div class="big">&#8856;</div><p>Enter passage hole diameter (N Dia.) to find matching Lee Plugs</p><div class="sm">Returns the best-fit plug and one size smaller as an alternative</div></div>';return}
+  calc(v);
+}
+
+function gN(p,t){const d=p[t];return d?d.N:(p.short||p.long).N}
+
+function calc(hole){
+  const u=document.getElementById('unitSystem').value,pt=document.getElementById('plugType').value;
+  const db=u==='imperial'?IMP:MET,isM=u==='metric',uL=isM?'mm':'"',pU=isM?'MPa':'psi \u00d71000';
+  let bi=-1;
+  for(let i=0;i<db.length;i++){if(gN(db[i],pt)>=hole){bi=i;break}}
+  if(bi===-1)bi=db.length-1;
+  const ai=bi>0?bi-1:null;
+  let h='<div class="rgrid fade">'+bCard(db[bi],pt,isM,uL,pU,'best','Best Fit',hole);
+  if(ai!==null)h+=bCard(db[ai],pt,isM,uL,pU,'alt','One Size Down',hole);
+  h+='</div>'+bDia(db[bi],ai!==null?db[ai]:null,pt,isM,uL);
+  document.getElementById('out').innerHTML=h;
+}
+
+function bCard(p,pt,isM,uL,pU,cls,label,hole){
+  let d=p[pt],tl=pt==='short'?'Short':'Long';
+  if(!d){d=p.short||p.long;tl=p.short?'Short (Long N/A)':'Long (Short N/A)'}
+  const f=(v,dp)=>isM?v.toFixed(dp||2):v.toFixed(4);
+  const fR=v=>isM?v.toFixed(3):v.toFixed(4);
+  const N=d.N,tol=isM?0.15:0.005;
+  const match=Math.abs(hole-N)<tol;
+  const fn=cls==='best'?(match?'\u2713 Exact match for your passage drill':'\u26A0 Your drill '+f(hole)+uL+' \u2192 plug needs \u00D8'+f(N)+uL+' passage'):'\u2193 Smaller alternative \u2014 reduce passage to \u00D8'+f(N)+uL;
+  const rcL=c=>p.rcLabels&&p.rcLabels[c]?' ('+p.rcLabels[c]+')':'';
+  const itInfo=c=>{
+    if(!isM)return '';
+    const grade=p.rc[c];
+    const it=getIT(p.nom,grade);
+    return it!==null?' \u2014 IT='+it+'\u00B5m':'';
+  };
+  return '<div class="card '+cls+'"><div class="chdr"><span class="tag">'+label+'</span><span class="psz">'+(isM?'\u00D8':'')+p.lee+(isM?' mm':'')+'</span></div><div class="cbody">'
+  +'<div class="pnr"><span class="chip">AL: '+d.pn+'</span><span class="chip">SS: '+d.pnSS+'</span></div>'
+  +'<div class="fn" style="color:'+(match&&cls==='best'?'var(--a2)':'var(--warn)')+'">'+fn+' &nbsp;('+tl+')</div>'
+  +'<table class="dt">'
+  +'<tr><td>D Max (Plug OD)</td><td>'+f(p.dMax)+uL+'</td></tr>'
+  +'<tr><td>D Min</td><td>'+f(p.dMin)+uL+'</td></tr>'
+  +'<tr><td>C Nom (Overall Length)</td><td>'+f(d.C)+uL+'</td></tr>'
+  +'<tr><td>M Nom (Body Length)</td><td>'+f(d.M)+uL+'</td></tr>'
+  +'<tr><td>K Nom (Expansion \u00D8)</td><td>'+f(d.K)+uL+'</td></tr>'
+  +'<tr><td>L Nom (Pin Length)</td><td>'+f(d.L)+uL+'</td></tr>'
+  +'<tr><td>N Dia. Ref (Passage \u00D8)</td><td style="color:var(--a2)">'+f(N)+uL+'</td></tr>'
+  +'<tr><td>Weight (AL / SS)</td><td>'+d.wt+'g / '+d.wtSS+'g</td></tr></table>'
+  +'<div class="ss"><h4>Ream Diameters (Counterbore for plug)</h4>'
+  +'<div class="rp"><span class="l">Class 1'+rcL('c1')+itInfo('c1')+'</span><span class="v">'+fR(p.ream.c1[0])+' \u2013 '+fR(p.ream.c1[1])+uL+'</span></div>'
+  +'<div class="rp"><span class="l">Class 2'+rcL('c2')+itInfo('c2')+'</span><span class="v">'+fR(p.ream.c2[0])+' \u2013 '+fR(p.ream.c2[1])+uL+'</span></div>'
+  +'<div class="rp"><span class="l">Class 3'+rcL('c3')+itInfo('c3')+'</span><span class="v">'+fR(p.ream.c3[0])+' \u2013 '+fR(p.ream.c3[1])+uL+'</span></div></div>'
+  +'<div class="ss"><h4>Installation Hole</h4>'
+  +'<div class="rp"><span class="l">A Min (Ream Depth)</span><span class="v">'+f(d.A)+uL+'</span></div>'
+  +'<div class="rp"><span class="l">N Dia. Ref (Passage)</span><span class="v">'+f(N)+uL+'</span></div>'
+  +'<div class="rp"><span class="l">W Min (Boss Wall)</span><span class="v">'+f(d.W)+uL+'</span></div></div>'
+  +'<div class="ss"><h4>Proof Pressure \u2014 Aluminium ('+pU+')</h4>'
+  +'<div class="rp"><span class="l">Class 1 / 2 / 3</span><span class="v">'+d.proof.c1+' / '+d.proof.c2+' / '+d.proof.c3+'</span></div>'
+  +'<h4 style="margin-top:10px">Proof Pressure \u2014 Stainless Steel ('+pU+')</h4>'
+  +'<div class="rp"><span class="l">Class 1 / 2 / 3</span><span class="v">'+d.proofSS.c1+' / '+d.proofSS.c2+' / '+d.proofSS.c3+'</span></div></div>'
+  +'</div></div>';
+}
+
+// SVG diagrams
+function bDia(best,alt,pt,isM,uL){
+  function gD(p){let d=p[pt];if(!d)d=p.short||p.long;return d}
+  const f=v=>isM?v.toFixed(2):v.toFixed(3);
+  function draw(p,label,col){
+    const d=gD(p);if(!d)return '';
+    const D=p.dMax,C=d.C,M=d.M,K=d.K,N=d.N,A=d.A;
+    const ref=isM?9:.7,sX=140/ref,sY=100/ref;
+    const pW=D*sX,pH=C*sY,mH=M*sY,nW=N*sX,aH=Math.max(A*sY,pH*.6);
+    const svgW=320,cx=svgW/2,pT=40,pL=cx-pW/2,pR=cx+pW/2;
+    const gN=Math.max(3,Math.min(Math.round(pH/7),14)),gS=pH/(gN+1);
+    let gr='';for(let i=1;i<=gN;i++){const y=pT+i*gS;gr+='<line x1="'+pL+'" y1="'+y+'" x2="'+(pL+3)+'" y2="'+y+'" stroke="'+col+'" stroke-width="1.2" opacity="0.5"/><line x1="'+pR+'" y1="'+y+'" x2="'+(pR-3)+'" y2="'+y+'" stroke="'+col+'" stroke-width="1.2" opacity="0.5"/>';}
+    const htW=pW*.38,hbW=pW*.12,hD=mH*.65,ch=Math.min(pW*.1,5);
+    const gap=20,hT=pT+pH+gap,wW=Math.max(pW*.16,8),passH=40;
+    const dc='#8b90a5',vc='#e8eaf0',af='font-family="JetBrains Mono,monospace" font-size="8"',afs='font-family="JetBrains Mono,monospace" font-size="7"',mk='a'+label.replace(/\W/g,'');
+    const svgH=hT+aH+passH+30;
+    return '<div class="dbox"><h3>'+label+'</h3><svg viewBox="0 0 '+svgW+' '+svgH+'" xmlns="http://www.w3.org/2000/svg">'
+    +'<defs><marker id="'+mk+'" markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" orient="auto"><path d="M0,1 L2.5,2.5 L0,4" fill="none" stroke="'+dc+'" stroke-width="0.6"/></marker></defs>'
+    +'<text x="'+cx+'" y="22" text-anchor="middle" fill="'+col+'" '+af+' font-weight="600" letter-spacing="1.5">PLUG</text>'
+    +'<rect x="'+pL+'" y="'+pT+'" width="'+pW+'" height="'+pH+'" rx="1" fill="none" stroke="'+col+'" stroke-width="2"/>'+gr
+    +'<path d="M'+(cx-htW/2)+','+(pT+3)+' L'+(cx-hbW/2)+','+(pT+hD)+' L'+(cx+hbW/2)+','+(pT+hD)+' L'+(cx+htW/2)+','+(pT+3)+'" fill="none" stroke="'+col+'" stroke-width="0.8" stroke-dasharray="3,2" opacity="0.45"/>'
+    +'<line x1="'+pL+'" y1="'+(pT+pH)+'" x2="'+(pL+ch)+'" y2="'+(pT+pH+ch)+'" stroke="'+col+'" stroke-width="1" opacity="0.5"/>'
+    +'<line x1="'+pR+'" y1="'+(pT+pH)+'" x2="'+(pR-ch)+'" y2="'+(pT+pH+ch)+'" stroke="'+col+'" stroke-width="1" opacity="0.5"/>'
+    +'<text x="'+(pR+5)+'" y="'+(pT+pH+ch)+'" fill="'+dc+'" '+afs+'>45\u00B0</text>'
+    +'<line x1="'+pL+'" y1="'+(pT-7)+'" x2="'+pR+'" y2="'+(pT-7)+'" stroke="'+dc+'" stroke-width="0.5" marker-start="url(#'+mk+')" marker-end="url(#'+mk+')"/>'
+    +'<line x1="'+pL+'" y1="'+(pT-11)+'" x2="'+pL+'" y2="'+pT+'" stroke="'+dc+'" stroke-width="0.3" stroke-dasharray="2,1"/>'
+    +'<line x1="'+pR+'" y1="'+(pT-11)+'" x2="'+pR+'" y2="'+pT+'" stroke="'+dc+'" stroke-width="0.3" stroke-dasharray="2,1"/>'
+    +'<text x="'+cx+'" y="'+(pT-12)+'" text-anchor="middle" fill="'+vc+'" '+af+'>\u00D8D '+f(D)+uL+'</text>'
+    +'<line x1="'+(pR+16)+'" y1="'+pT+'" x2="'+(pR+16)+'" y2="'+(pT+pH)+'" stroke="'+dc+'" stroke-width="0.5" marker-start="url(#'+mk+')" marker-end="url(#'+mk+')"/>'
+    +'<line x1="'+pR+'" y1="'+pT+'" x2="'+(pR+20)+'" y2="'+pT+'" stroke="'+dc+'" stroke-width="0.3" stroke-dasharray="2,1"/>'
+    +'<line x1="'+pR+'" y1="'+(pT+pH)+'" x2="'+(pR+20)+'" y2="'+(pT+pH)+'" stroke="'+dc+'" stroke-width="0.3" stroke-dasharray="2,1"/>'
+    +'<text x="'+(pR+20)+'" y="'+(pT+pH/2+3)+'" fill="'+vc+'" '+afs+'>C '+f(C)+uL+'</text>'
+    +'<line x1="'+(pL-16)+'" y1="'+pT+'" x2="'+(pL-16)+'" y2="'+(pT+mH)+'" stroke="'+dc+'" stroke-width="0.5" marker-start="url(#'+mk+')" marker-end="url(#'+mk+')"/>'
+    +'<line x1="'+(pL-20)+'" y1="'+pT+'" x2="'+pL+'" y2="'+pT+'" stroke="'+dc+'" stroke-width="0.3" stroke-dasharray="2,1"/>'
+    +'<line x1="'+(pL-20)+'" y1="'+(pT+mH)+'" x2="'+pL+'" y2="'+(pT+mH)+'" stroke="'+dc+'" stroke-width="0.3" stroke-dasharray="2,1"/>'
+    +'<text x="'+(pL-20)+'" y="'+(pT+mH/2+3)+'" text-anchor="end" fill="'+dc+'" '+afs+'>M '+f(M)+uL+'</text>'
+    +'<text x="'+cx+'" y="'+(hT-6)+'" text-anchor="middle" fill="'+col+'" '+af+' font-weight="600" letter-spacing="1">INSTALLATION HOLE</text>'
+    +'<rect x="'+(pL-wW)+'" y="'+hT+'" width="'+wW+'" height="'+(aH+passH)+'" fill="'+col+'" opacity="0.08" stroke="'+col+'" stroke-width="1.5"/>'
+    +'<rect x="'+pR+'" y="'+hT+'" width="'+wW+'" height="'+(aH+passH)+'" fill="'+col+'" opacity="0.08" stroke="'+col+'" stroke-width="1.5"/>'
+    +'<line x1="'+pL+'" y1="'+hT+'" x2="'+pL+'" y2="'+(hT+aH)+'" stroke="'+col+'" stroke-width="1.5"/>'
+    +'<line x1="'+pR+'" y1="'+hT+'" x2="'+pR+'" y2="'+(hT+aH)+'" stroke="'+col+'" stroke-width="1.5"/>'
+    +'<line x1="'+pL+'" y1="'+(hT+aH)+'" x2="'+(cx-nW/2)+'" y2="'+(hT+aH)+'" stroke="'+col+'" stroke-width="1.5"/>'
+    +'<line x1="'+pR+'" y1="'+(hT+aH)+'" x2="'+(cx+nW/2)+'" y2="'+(hT+aH)+'" stroke="'+col+'" stroke-width="1.5"/>'
+    +'<line x1="'+(cx-nW/2)+'" y1="'+(hT+aH)+'" x2="'+(cx-nW/2)+'" y2="'+(hT+aH+passH)+'" stroke="'+col+'" stroke-width="1.5"/>'
+    +'<line x1="'+(cx+nW/2)+'" y1="'+(hT+aH)+'" x2="'+(cx+nW/2)+'" y2="'+(hT+aH+passH)+'" stroke="'+col+'" stroke-width="1.5"/>'
+    +'<line x1="'+pL+'" y1="'+hT+'" x2="'+(pL+4)+'" y2="'+(hT+4)+'" stroke="'+col+'" stroke-width="0.8" opacity="0.6"/>'
+    +'<line x1="'+pR+'" y1="'+hT+'" x2="'+(pR-4)+'" y2="'+(hT+4)+'" stroke="'+col+'" stroke-width="0.8" opacity="0.6"/>'
+    +'<path d="M'+(pL+3)+','+(hT+6)+' l1.5,-3 l1.5,3" fill="none" stroke="'+dc+'" stroke-width="0.6"/>'
+    +'<line x1="'+(pL-wW)+'" y1="'+hT+'" x2="'+pL+'" y2="'+hT+'" stroke="'+col+'" stroke-width="1.5"/>'
+    +'<line x1="'+pR+'" y1="'+hT+'" x2="'+(pR+wW)+'" y2="'+hT+'" stroke="'+col+'" stroke-width="1.5"/>'
+    +'<line x1="'+(pR+wW+10)+'" y1="'+hT+'" x2="'+(pR+wW+10)+'" y2="'+(hT+aH)+'" stroke="'+dc+'" stroke-width="0.5" marker-start="url(#'+mk+')" marker-end="url(#'+mk+')"/>'
+    +'<line x1="'+(pR+wW)+'" y1="'+hT+'" x2="'+(pR+wW+14)+'" y2="'+hT+'" stroke="'+dc+'" stroke-width="0.3" stroke-dasharray="2,1"/>'
+    +'<line x1="'+(pR+wW)+'" y1="'+(hT+aH)+'" x2="'+(pR+wW+14)+'" y2="'+(hT+aH)+'" stroke="'+dc+'" stroke-width="0.3" stroke-dasharray="2,1"/>'
+    +'<text x="'+(pR+wW+14)+'" y="'+(hT+aH/2+3)+'" fill="'+vc+'" '+afs+'>A '+f(A)+uL+'</text>'
+    +'<line x1="'+pR+'" y1="'+(hT+12)+'" x2="'+(pR+wW)+'" y2="'+(hT+12)+'" stroke="'+dc+'" stroke-width="0.4" marker-start="url(#'+mk+')" marker-end="url(#'+mk+')"/>'
+    +'<text x="'+(pR+wW/2)+'" y="'+(hT+22)+'" text-anchor="middle" fill="'+dc+'" '+afs+'>W</text>'
+    +'<line x1="'+pL+'" y1="'+(hT+aH*.5)+'" x2="'+pR+'" y2="'+(hT+aH*.5)+'" stroke="'+dc+'" stroke-width="0.4" stroke-dasharray="2,2"/>'
+    +'<text x="'+(pL-4)+'" y="'+(hT+aH*.5+3)+'" text-anchor="end" fill="'+dc+'" '+afs+'>\u00D8 REAM</text>'
+    +'<line x1="'+(cx-nW/2)+'" y1="'+(hT+aH+passH*.55)+'" x2="'+(cx+nW/2)+'" y2="'+(hT+aH+passH*.55)+'" stroke="'+dc+'" stroke-width="0.5" marker-start="url(#'+mk+')" marker-end="url(#'+mk+')"/>'
+    +'<text x="'+cx+'" y="'+(hT+aH+passH*.55+14)+'" text-anchor="middle" fill="'+vc+'" '+af+' font-weight="500">\u00D8(N) '+f(N)+uL+'</text>'
+    +'<text x="'+(cx+nW/2+5)+'" y="'+(hT+aH+5)+'" fill="'+dc+'" '+afs+'>R .003</text>'
+    +'<text x="'+(cx+nW/2+5)+'" y="'+(hT+aH+13)+'" fill="'+dc+'" '+afs+'>MAX</text>'
+    +'</svg></div>';
+  }
+  let h='<div class="sec fade"><h2><span class="ico ig2">&#9998;</span> Plug &amp; Installation Hole Diagrams</h2><div class="dgrid">';
+  h+=draw(best,'Best Fit \u2014 '+best.lee,'#4a7cff');
+  if(alt)h+=draw(alt,'Alt \u2014 '+alt.lee,'#f5a623');
+  return h+'</div></div>';
+}
+
+var _cadKey='';
+function initCadImage(key,id){_cadKey=key;var c=document.getElementById(id);if(!c)return;var s=null;try{s=localStorage.getItem(_cadKey)}catch(e){}renderCad(c,s)}
+function renderCad(c,url){
+  if(url){c.className='cad-zone has-img';c.innerHTML='<button class="cad-rm" onclick="event.stopPropagation();rmCad(this.parentNode)">\u2715</button><img class="cad-thumb" src="'+url+'" onclick="showCad(this.src)" title="Click to enlarge">';}
+  else{c.className='cad-zone';c.innerHTML='<div style="font-size:12px;color:#5a5a64;font-weight:500;letter-spacing:.3px">Drop CAD image here</div><div style="font-size:10px;color:#5a5a64;opacity:.6;margin-top:3px">or click to browse</div>';}
+}
+function rmCad(c){try{localStorage.removeItem(_cadKey)}catch(e){}renderCad(c,null)}
+function showCad(src){var o=document.getElementById('cadOv');if(!o){o=document.createElement('div');o.id='cadOv';o.className='cad-overlay';o.onclick=function(){this.classList.remove('show')};document.body.appendChild(o)}o.innerHTML='<img src="'+src+'">';o.classList.add('show')}
+function setupCad(id){var c=document.getElementById(id);if(!c)return;
+  c.addEventListener('click',function(e){if(e.target.tagName==='IMG'||e.target.classList.contains('cad-rm'))return;var inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.onchange=function(ev){loadCadFile(ev.target.files[0],c)};inp.click()});
+  c.addEventListener('dragover',function(e){e.preventDefault();c.style.borderColor='#6B8AFF'});
+  c.addEventListener('dragleave',function(){c.style.borderColor=''});
+  c.addEventListener('drop',function(e){e.preventDefault();c.style.borderColor='';if(e.dataTransfer.files.length)loadCadFile(e.dataTransfer.files[0],c)});
+}
+function loadCadFile(f,c){if(!f||!f.type.startsWith('image/'))return;var r=new FileReader();r.onload=function(e){try{localStorage.setItem(_cadKey,e.target.result)}catch(ex){}renderCad(c,e.target.result)};r.readAsDataURL(f)}
+
+setupCad("leeCadZone");initCadImage("eng_wb_img_lee","leeCadZone");
+</script>
+<a class="wb-back" href="Engineering_Workbook.html">← Workbook</a>
+<button class="pdf-btn" onclick="window.print()">⎙ Save as PDF</button>
+<div id="cadOv" class="cad-overlay" onclick="this.classList.remove('show')"></div>
+</body>
+</html>

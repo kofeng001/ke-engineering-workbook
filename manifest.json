@@ -1,0 +1,24 @@
+{
+  "name": "Engineering Workbook",
+  "short_name": "Eng Workbook",
+  "description": "Engineering calculation suite — bolt joints, lug analysis, interference fits, Lee Plug selection, ISO 286 tolerances",
+  "start_url": "./Engineering_Workbook.html",
+  "display": "standalone",
+  "background_color": "#13161e",
+  "theme_color": "#1a1e28",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='80' fill='%23191d28'/%3E%3Ctext x='256' y='320' text-anchor='middle' font-size='280' font-family='sans-serif' fill='%23f0a840'%3E%E2%9A%99%3C/text%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='30' fill='%23191d28'/%3E%3Ctext x='96' y='125' text-anchor='middle' font-size='110' font-family='sans-serif' fill='%23f0a840'%3E%E2%9A%99%3C/text%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

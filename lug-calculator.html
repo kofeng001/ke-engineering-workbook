@@ -1,0 +1,1128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lug Analysis Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-deep: #0f150f;
+  --bg-card: #141c14;
+  --bg-input: #0d120d;
+  --border: #2a3a2a;
+  --border-focus: #6a8a6a;
+  --text-primary: #d0e0c0;
+  --text-secondary: #b0c0a0;
+  --text-muted: #6a7a6a;
+  --text-dim: #4a5a4a;
+  --text-faint: #3a4a3a;
+  --accent-green: #40c040;
+  --accent-amber: #e0c040;
+  --accent-orange: #e0a030;
+  --accent-red: #ff3030;
+  --accent-red-soft: #ff4040;
+  --accent-load: #ff6040;
+  --mono: 'JetBrains Mono', monospace;
+  --sans: 'IBM Plex Sans', 'Segoe UI', sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+::selection { background: #4a6a3a; color: #fff; }
+html { font-size: 14px; }
+body { background: var(--bg-deep); color: var(--text-primary); font-family: var(--sans); min-height: 100vh; }
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-deep); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+@keyframes pulse-bar { 0%,100%{opacity:.3} 50%{opacity:1} }
+@keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+
+.header { background: linear-gradient(180deg, #1a241a 0%, var(--bg-deep) 100%); border-bottom: 1px solid var(--border); padding: 18px 24px 14px; }
+.header h1 { font-family: var(--mono); font-size: 1.5rem; font-weight: 700; letter-spacing: 1.5px; color: #d0e8c0; text-shadow: 0 0 20px rgba(100,180,80,.15); display: inline; }
+.header .subtitle { font-family: var(--mono); font-size: .78rem; color: var(--text-muted); letter-spacing: 2px; margin-left: 12px; }
+.header .method { font-family: var(--mono); font-size: .7rem; color: var(--text-faint); margin-top: 4px; letter-spacing: .5px; }
+
+.container { padding: 16px 20px 40px; max-width: 1040px; margin: 0 auto; }
+.grid-main { display: grid; grid-template-columns: minmax(290px, 360px) 1fr; gap: 18px; align-items: start; }
+@media (max-width: 780px) { .grid-main { grid-template-columns: 1fr; } }
+
+.card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 14px; animation: fadeIn .35s ease both; }
+.card + .card { margin-top: 14px; }
+.card-label { font-family: var(--mono); font-size: .6rem; letter-spacing: 2px; color: var(--text-muted); font-weight: 600; margin-bottom: 8px; }
+
+.input-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.input-row label { width: 38px; font-size: .85rem; font-weight: 600; color: var(--text-secondary); font-family: var(--mono); text-align: right; flex-shrink: 0; }
+.input-row input[type=number], .input-row input[type=text] { flex: 1; max-width: 120px; padding: 5px 8px; font-size: .92rem; background: var(--bg-input); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary); font-family: var(--mono); outline: none; transition: border-color .2s; }
+.input-row input:focus { border-color: var(--border-focus); }
+.input-row input:disabled { opacity: .4; cursor: not-allowed; }
+.input-row .suffix { font-size: .7rem; color: var(--text-muted); font-family: var(--mono); min-width: 28px; }
+.input-row .hint { font-size: .64rem; color: var(--text-dim); font-family: var(--mono); }
+input[type=number]::-webkit-inner-spin-button { opacity: .3; }
+
+select { width: 100%; padding: 7px 10px; font-size: .85rem; background: var(--bg-input); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary); font-family: var(--mono); cursor: pointer; outline: none; }
+select:focus { border-color: var(--border-focus); }
+
+textarea { width: 100%; padding: 8px 10px; font-size: .82rem; background: var(--bg-input); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary); font-family: var(--mono); outline: none; resize: vertical; min-height: 60px; line-height: 1.5; transition: border-color .2s; }
+textarea:focus { border-color: var(--border-focus); }
+
+.text-input-full { width: 100%; padding: 7px 10px; font-size: .92rem; background: var(--bg-input); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary); font-family: var(--mono); outline: none; transition: border-color .2s; }
+.text-input-full:focus { border-color: var(--border-focus); }
+
+.btn { padding: 5px 12px; font-size: .7rem; font-weight: 600; font-family: var(--mono); letter-spacing: 1px; border-radius: 4px; cursor: pointer; transition: all .2s; border: 1px solid; }
+.btn-green { background: rgba(64,192,64,.12); border-color: rgba(64,192,64,.3); color: #80d080; }
+.btn-green:hover { background: rgba(64,192,64,.22); border-color: rgba(64,192,64,.5); }
+.btn-amber { background: rgba(224,192,64,.1); border-color: rgba(224,192,64,.25); color: #d0c060; }
+.btn-amber:hover { background: rgba(224,192,64,.2); border-color: rgba(224,192,64,.4); }
+.btn-red { background: rgba(255,60,40,.08); border-color: rgba(255,60,40,.25); color: #ff6050; }
+.btn-red:hover { background: rgba(255,60,40,.18); border-color: rgba(255,60,40,.4); }
+.btn-blue { background: rgba(80,140,220,.1); border-color: rgba(80,140,220,.25); color: #70b0e0; }
+.btn-blue:hover { background: rgba(80,140,220,.2); border-color: rgba(80,140,220,.4); }
+.btn-dim { background: transparent; border-color: var(--border); color: var(--text-muted); }
+.btn-dim:hover { border-color: var(--border-focus); color: var(--text-secondary); }
+
+.unit-toggle { display: flex; background: var(--bg-input); border-radius: 5px; border: 1px solid var(--border); overflow: hidden; }
+.unit-toggle button { flex: 1; padding: 7px 12px; font-size: .7rem; font-weight: 700; letter-spacing: 1.5px; background: transparent; border: none; color: var(--text-dim); cursor: pointer; font-family: var(--mono); transition: all .2s; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.unit-toggle button.active { background: var(--border); color: #c0e0a0; }
+.unit-toggle button small { font-size: .55rem; font-weight: 400; opacity: .6; }
+
+.mat-props { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 12px; margin-top: 10px; font-size: .71rem; font-family: var(--mono); }
+.mat-props .lbl { color: var(--text-muted); }
+.mat-props .val { color: #a0b090; }
+
+.rf-bar-wrap { margin-bottom: 10px; }
+.rf-bar-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 3px; }
+.rf-bar-label { font-size: .78rem; font-weight: 600; color: var(--text-secondary); font-family: var(--mono); display: flex; align-items: center; gap: 4px; }
+.rf-bar-pallow { font-size: .71rem; color: var(--text-muted); font-family: var(--mono); }
+.rf-track { height: 18px; background: var(--bg-input); border-radius: 3px; overflow: hidden; position: relative; border: 1px solid var(--border); }
+.rf-fill { height: 100%; border-radius: 3px; transition: width .4s ease; }
+.rf-marker { position: absolute; top: 0; bottom: 0; width: 1px; }
+.rf-value { position: absolute; right: 6px; top: 1px; font-size: .78rem; font-weight: 700; font-family: var(--mono); text-shadow: 0 0 4px #000; }
+
+.fail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.fail-card { background: rgba(20,28,20,.6); border-radius: 8px; padding: 10px 10px 6px; position: relative; overflow: hidden; }
+.fail-card.critical { border: 1px solid rgba(255,60,40,.4); }
+.fail-card.safe { border: 1px solid rgba(100,160,100,.2); }
+.fail-card .pulse-top { position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg,transparent,#ff4040,transparent); animation: pulse-bar 2s ease-in-out infinite; }
+.fail-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 2px; }
+.fail-footer .desc { font-size: .71rem; color: #8a9a8a; font-family: var(--mono); }
+.fail-footer .rf { font-size: .78rem; font-weight: 700; font-family: var(--mono); display: flex; align-items: center; gap: 4px; }
+
+.summary-banner { border-radius: 8px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+.threshold-btns { display: flex; gap: 6px; margin-top: 8px; }
+.threshold-btns button { flex: 1; padding: 4px 0; font-size: .71rem; font-family: var(--mono); border-radius: 3px; cursor: pointer; transition: all .2s; }
+
+.calc-detail { font-size: .71rem; font-family: var(--mono); color: #8a9a7a; line-height: 1.9; }
+.calc-detail .section-head { color: #6a8a6a; font-weight: 600; margin-top: 10px; margin-bottom: 4px; }
+.calc-detail .section-head:first-child { margin-top: 0; }
+.calc-detail .indent { padding-left: 12px; }
+.calc-detail b { color: var(--text-primary); }
+
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 1000; display: flex; align-items: center; justify-content: center; animation: fadeIn .2s ease; }
+.modal { background: #1a241a; border: 1px solid #3a5a3a; border-radius: 10px; padding: 20px; width: 420px; max-width: 95vw; max-height: 90vh; overflow-y: auto; }
+.modal h3 { font-family: var(--mono); font-size: .85rem; color: var(--text-primary); letter-spacing: 1px; margin-bottom: 14px; }
+.modal .form-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.modal .form-row label { width: 60px; font-size: .71rem; font-weight: 600; color: var(--text-secondary); font-family: var(--mono); text-align: right; flex-shrink: 0; }
+.modal .form-row input { flex: 1; padding: 5px 8px; font-size: .82rem; background: var(--bg-input); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary); font-family: var(--mono); outline: none; }
+.modal .form-row input:focus { border-color: var(--border-focus); }
+.modal .form-row .unit { font-size: .64rem; color: var(--text-muted); font-family: var(--mono); min-width: 28px; }
+.modal .btn-row { display: flex; gap: 8px; margin-top: 14px; justify-content: flex-end; }
+
+.toolbar { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+.toolbar .spacer { flex: 1; }
+.geom-note { font-size: .6rem; color: var(--text-faint); font-family: var(--mono); margin-top: 4px; line-height: 1.5; }
+
+/* Toggle switch */
+.toggle-wrap { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.toggle-label { font-size: .71rem; color: var(--text-muted); font-family: var(--mono); }
+.toggle-label.active { color: var(--accent-green); }
+.toggle-switch { position: relative; width: 36px; height: 20px; background: var(--border); border-radius: 10px; cursor: pointer; transition: background .2s; flex-shrink: 0; }
+.toggle-switch.on { background: rgba(64,192,64,.35); }
+.toggle-switch .knob { position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; background: var(--text-muted); border-radius: 50%; transition: all .2s; }
+.toggle-switch.on .knob { left: 18px; background: var(--accent-green); }
+
+@media print {
+  body { background: #fff !important; color: #000 !important; }
+  .toolbar, .unit-toggle, .btn, .threshold-btns, .no-print, .toggle-wrap { display: none !important; }
+  .card { border-color: #ccc !important; background: #fafafa !important; page-break-inside: avoid; }
+  .header { background: #f0f0f0 !important; border-color: #ccc !important; }
+  .header h1, .header .subtitle { color: #222 !important; text-shadow: none !important; }
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   ENGINEERING WORKBOOK · UNIFIED DESIGN SYSTEM
+   Greyscale + single accent (#6B8AFF) · Inter + JetBrains Mono
+   ══════════════════════════════════════════════════════════════════ */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+  /* ── Master palette ── */
+  --bg:#18181b !important; --bg2:#18181b !important; --bg3:#1e1e22 !important; --bg4:#222226 !important;
+  --panel:#1e1e22 !important; --surface:#222226 !important; --surface2:#2a2a2f !important;
+  --s2:#2a2a2f !important;
+  --border:#313138 !important; --border2:#3c3c44 !important; --border-focus:#6B8AFF !important;
+  --text:#d1d1d6 !important; --text2:#d1d1d6 !important; --text3:#6e6e78 !important;
+  --bright:#eeeef1 !important; --dim:#8c8c96 !important; --muted:#5a5a64 !important;
+  --accent:#6B8AFF !important; --accent2:#8aa4ff !important;
+  --a2:#8aa4ff !important; --ag:rgba(107,138,255,.10) !important; --a2g:rgba(138,164,255,.10) !important;
+  --good:#4aba78 !important; --warn:#d4993a !important; --danger:#d45050 !important;
+  --r:#d45050 !important; --rs:rgba(212,80,80,.12) !important;
+  --info:#6B8AFF !important; --blue:#6B8AFF !important; --green:#4aba78 !important;
+  --orange:#d4993a !important; --yellow:#d4993a !important; --red:#d45050 !important;
+  --cyan:#6B8AFF !important; --purple:#8c8c96 !important; --wg:rgba(212,153,58,.10) !important;
+
+  /* Lug-specific vars */
+  --bg-deep:#18181b !important; --bg-card:#222226 !important; --bg-input:#1e1e22 !important;
+  --text-primary:#eeeef1 !important; --text-secondary:#d1d1d6 !important;
+  --text-dim:#8c8c96 !important; --text-faint:#5a5a64 !important; --text-muted:#6e6e78 !important;
+  --accent-amber:#d4993a !important; --accent-green:#4aba78 !important;
+
+  /* Fonts */
+  --sans:'Inter',-apple-system,'SF Pro Display',system-ui,sans-serif !important;
+  --mono:'JetBrains Mono',ui-monospace,'SF Mono',monospace !important;
+}
+
+/* ── Global resets ── */
+body {
+  font-family: 'Inter',-apple-system,'SF Pro Display',system-ui,sans-serif !important;
+  background: #18181b !important;
+  color: #d1d1d6 !important;
+  -webkit-font-smoothing: antialiased !important;
+  background-image: none !important;
+}
+body::before { background-image: none !important; content: none !important; }
+
+/* ── Typography ── */
+h1,h2,h3,h4,h5,h6 { font-family: 'Inter',-apple-system,system-ui,sans-serif !important; }
+code, pre, .mono, [class*="result-val"], [class*="big-val"], [class*="res-val"],
+.v, .badge, .dt, .psz, td { font-family: 'JetBrains Mono',ui-monospace,monospace !important; }
+
+/* ── Cards / Panels ── */
+.card, .panel, .sec, [class*="big-card"] {
+  background: #222226 !important;
+  border: 1px solid #313138 !important;
+  border-radius: 10px !important;
+}
+.card-title, .card-label, .panel-title, [class*="card-title"], .pt, .chdr,
+[class*="pt"] > span {
+  font-family: 'Inter',-apple-system,system-ui,sans-serif !important;
+  font-size: 10px !important; font-weight: 600 !important;
+  color: #6e6e78 !important; text-transform: uppercase !important;
+  letter-spacing: 0.07em !important;
+}
+
+/* ── Inputs ── */
+input[type="number"], input[type="text"], select, textarea {
+  background: #1e1e22 !important;
+  border: 1px solid #3c3c44 !important;
+  border-radius: 6px !important;
+  color: #eeeef1 !important;
+  font-family: 'JetBrains Mono',ui-monospace,monospace !important;
+  transition: border-color .15s !important;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: #6B8AFF !important;
+  outline: none !important;
+}
+select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236e6e78'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 8px center !important;
+}
+
+/* ── Buttons ── */
+button, .btn, [class*="btn"] {
+  font-family: 'Inter',-apple-system,system-ui,sans-serif !important;
+  border-radius: 6px !important;
+  transition: all .12s !important;
+}
+.btn-amber, .btn-blue, .btn-green, .btn-red, .btn-dim,
+[class*="export"], [class*="save"] {
+  background: #2a2a2f !important;
+  border: 1px solid #3c3c44 !important;
+  color: #8c8c96 !important;
+}
+.btn-amber:hover, .btn-blue:hover, .btn-green:hover, .btn-dim:hover,
+[class*="export"]:hover, [class*="save"]:hover {
+  background: #313138 !important;
+  border-color: #4a4a54 !important;
+  color: #d1d1d6 !important;
+}
+/* Active/primary buttons get the accent */
+.btn.primary, [class*="btn primary"], .btn-accent {
+  background: rgba(107,138,255,.10) !important;
+  border: 1px solid rgba(107,138,255,.28) !important;
+  color: #6B8AFF !important;
+}
+
+/* ── Headers ── */
+.header, .hdr, [class*="topbar"] {
+  background: #1e1e22 !important;
+  border-bottom: 1px solid #313138 !important;
+}
+.header h1, .hdr h1 {
+  font-family: 'Inter',-apple-system,system-ui,sans-serif !important;
+  color: #eeeef1 !important;
+}
+.header .desc, .header .sub, .hdr .sub {
+  color: #6e6e78 !important;
+}
+
+/* ── Results / values ── */
+.result-val, .res-val, .big-val, .v, .badge {
+  color: #eeeef1 !important;
+}
+.result-label, .res-label, .big-label, .form-label, .row-label, .lbl, .l, .fl {
+  color: #8c8c96 !important;
+  font-family: 'Inter',-apple-system,system-ui,sans-serif !important;
+}
+.result-unit, .res-unit, .big-unit, .form-unit, .funit, .fu {
+  color: #5a5a64 !important;
+  font-family: 'JetBrains Mono',ui-monospace,monospace !important;
+}
+
+/* ── Tables ── */
+table { border-collapse: collapse !important; }
+thead th {
+  font-family: 'Inter',-apple-system,system-ui,sans-serif !important;
+  font-size: 9px !important; font-weight: 600 !important;
+  color: #6e6e78 !important; text-transform: uppercase !important;
+  letter-spacing: .06em !important;
+  border-bottom: 1px solid #3c3c44 !important;
+  background: transparent !important;
+}
+tbody td {
+  border-bottom: 1px solid #27272c !important;
+  font-size: 11px !important;
+}
+tbody tr:hover { background: #2a2a2f !important; }
+
+/* ── Notes / hints / info boxes ── */
+.note, .note-box, .info-box, .hint, .method, .fnote {
+  background: #1e1e22 !important;
+  border: 1px solid #313138 !important;
+  border-radius: 8px !important;
+  color: #8c8c96 !important;
+}
+.danger-box {
+  background: rgba(212,80,80,.06) !important;
+  border: 1px solid rgba(212,80,80,.2) !important;
+}
+
+/* ── Dividers ── */
+.divider, hr {
+  border-color: #313138 !important;
+  background: #313138 !important;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 5px !important; }
+::-webkit-scrollbar-track { background: #18181b !important; }
+::-webkit-scrollbar-thumb { background: #3c3c44 !important; border-radius: 3px !important; }
+
+/* ── Pill/chip elements ── */
+.chip, .tag, .pill-bar, [class*="quick-btn"], [class*="fit-type-badge"] {
+  font-family: 'Inter',-apple-system,system-ui,sans-serif !important;
+  border-radius: 6px !important;
+}
+
+/* ── Number formatting ── */
+input[type=number] { -moz-appearance: textfield !important; }
+input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none !important; }
+
+/* ── Canvas containers ── */
+canvas {
+  border-radius: 8px !important;
+}
+
+/* ── SVG diagrams ── */
+svg text {
+  font-family: 'JetBrains Mono',ui-monospace,monospace !important;
+}
+
+/* ── Grid containers ── */
+.grid-main, .grid-2, .grid-3, .g2, .grid3, .main-grid, .dgrid {
+  gap: 12px !important;
+}
+
+/* ── Toggle / knob switches ── */
+.knob { border-radius: 12px !important; }
+
+/* ── Modal overlays ── */
+.modal-overlay, .modal {
+  backdrop-filter: blur(6px) !important;
+}
+.modal {
+  background: #222226 !important;
+  border: 1px solid #313138 !important;
+  border-radius: 12px !important;
+}
+
+/* ── Workbook nav ── */
+.wb-back {
+  position: fixed; top: 12px; left: 12px; z-index: 9998;
+  padding: 7px 14px; border-radius: 8px; font-size: 12px; font-weight: 600;
+  font-family: 'Inter',-apple-system,system-ui,sans-serif;
+  background: #1e1e22; border: 1px solid #313138;
+  color: #8c8c96; cursor: pointer; text-decoration: none;
+  display: flex; align-items: center; gap: 6px;
+  transition: all .15s; backdrop-filter: blur(8px);
+}
+.wb-back:hover { color: #eeeef1; border-color: rgba(107,138,255,.3); background: #222226; }
+
+/* ── CAD image ── */
+.cad-zone { border: 1.5px dashed #3c3c44; border-radius: 10px; padding: 16px; text-align: center; cursor: pointer; transition: all .2s; position: relative; background: rgba(0,0,0,.12) }
+.cad-zone:hover { border-color: #5a5a64; background: rgba(0,0,0,.2) }
+.cad-zone.has-img { border: 1px solid #313138; padding: 4px; background: transparent }
+.cad-thumb { max-width: 100%; max-height: 140px; border-radius: 6px; cursor: pointer; display: block; margin: 0 auto }
+.cad-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.92); z-index: 99999; display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: 0; pointer-events: none; transition: opacity .25s }
+.cad-overlay.show { opacity: 1; pointer-events: auto }
+.cad-overlay img { max-width: 92vw; max-height: 92vh; border-radius: 10px; box-shadow: 0 8px 60px rgba(0,0,0,.5) }
+.cad-rm { position: absolute; top: 6px; right: 8px; background: rgba(180,50,50,.7); color: #fff; border: none; border-radius: 6px; font-size: 10px; padding: 3px 9px; cursor: pointer; z-index: 2 }
+.cad-rm:hover { background: rgba(210,60,60,.9) }
+
+/* ── PDF save ── */
+.pdf-btn { position: fixed; bottom: 14px; right: 14px; z-index: 9998; padding: 8px 16px; border-radius: 8px; font-size: 11px; font-weight: 600; border: 1px solid #313138; background: #1e1e22; color: #8c8c96; cursor: pointer; font-family: 'Inter',-apple-system,system-ui,sans-serif; display: flex; align-items: center; gap: 6px; transition: all .15s; backdrop-filter: blur(8px) }
+.pdf-btn:hover { color: #eeeef1; border-color: rgba(107,138,255,.3) }
+
+@media print { .wb-back, .pdf-btn, .cad-overlay { display: none !important; } }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>◈ LUG ANALYSIS</h1>
+  <span class="subtitle">AXIAL LOAD · STATIC STRENGTH</span>
+  <div class="method">Bearing · Net Tension · Shear-Out · Hoop Tension — per Bruhn/Niu methodology</div>
+</div>
+
+<div class="container">
+  <div class="toolbar">
+    <div class="unit-toggle" id="unitToggle">
+      <button class="active" data-metric="false" onclick="setUnit(false)">IMPERIAL<small>lbs · in · ksi</small></button>
+      <button data-metric="true" onclick="setUnit(true)">METRIC<small>N · mm · MPa</small></button>
+    </div>
+    <div class="spacer"></div>
+    <button class="btn btn-blue" onclick="saveHTML()">💾 SAVE</button>
+    <button class="btn btn-amber" onclick="saveAsPDF()">⬇ SAVE AS PDF</button>
+    <button class="btn btn-red" onclick="resetAll()">↺ RESET</button>
+  </div>
+
+  <div class="grid-main">
+    <!-- LEFT COLUMN -->
+    <div id="leftCol">
+      <div class="card">
+        <div class="card-label" style="display:flex;justify-content:space-between;align-items:center;">
+          MATERIAL
+          <button class="btn btn-green" onclick="openCustomMatModal()" style="padding:3px 8px;font-size:.6rem;">+ CUSTOM</button>
+        </div>
+        <select id="matSelect" onchange="recalc()"></select>
+        <div class="mat-props" id="matProps"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">GEOMETRY & LOAD</div>
+        <div class="input-row"><label>P</label><input type="number" id="inP" min="0" step="100" oninput="recalc()"><span class="suffix" id="sfP">lbs</span><span class="hint">Applied load</span></div>
+        <div class="input-row"><label>W</label><input type="number" id="inW" min="0" step="0.01" oninput="onWChange()"><span class="suffix" id="sfW">in</span><span class="hint">Lug width</span></div>
+        <div class="input-row"><label>D</label><input type="number" id="inD" min="0" step="0.01" oninput="recalc()"><span class="suffix" id="sfD">in</span><span class="hint">Hole diameter</span></div>
+
+        <!-- Edge distance with toggle -->
+        <div class="toggle-wrap">
+          <div class="toggle-switch on" id="eCentreToggle" onclick="toggleECentre()"><div class="knob"></div></div>
+          <span class="toggle-label active" id="eCentreLabel">e = W/2 (centred hole)</span>
+        </div>
+        <div class="input-row"><label>e</label><input type="number" id="inE" min="0" step="0.01" oninput="recalc()" disabled><span class="suffix" id="sfE">in</span><span class="hint">Edge distance</span></div>
+
+        <div class="input-row"><label>t</label><input type="number" id="inT" min="0" step="0.01" oninput="recalc()"><span class="suffix" id="sfT">in</span><span class="hint">Thickness</span></div>
+        <div id="geomWarn" style="display:none;margin-top:8px;padding:6px 10px;background:rgba(255,60,40,.1);border:1px solid rgba(255,60,40,.3);border-radius:4px;font-size:.71rem;color:#ff6040;font-family:var(--mono);">⚠ Invalid geometry — check D &lt; W, D/2 &lt; e, all values &gt; 0</div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">SAFETY THRESHOLD</div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <label style="font-size:.78rem;color:#8a9a7a;font-family:var(--mono);">Min Rf</label>
+          <input type="number" id="safeRf" value="1.5" min="0.5" max="5" step="0.1" oninput="recalc()" style="width:70px;padding:5px 8px;font-size:1rem;font-weight:700;text-align:center;background:var(--bg-input);border:1px solid var(--border);border-radius:4px;color:var(--accent-amber);font-family:var(--mono);outline:none;">
+          <div style="flex:1;font-size:.64rem;color:var(--text-dim);font-family:var(--mono);line-height:1.4;">Rf below this triggers ⚠ warnings</div>
+        </div>
+        <div class="threshold-btns" id="threshBtns"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">CAD REFERENCE</div>
+        <div id="lugCadZone" class="cad-zone"></div>
+      </div>
+      <div class="card">
+        <div class="card-label">LUG GEOMETRY — ISOMETRIC VIEW</div>
+        <canvas id="lugCanvas" width="640" height="500" style="width:100%;border-radius:4px;"></canvas>
+        <div class="geom-note">Isometric projection · Dimensions auto-scale · Load direction shown as red vector</div>
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN -->
+    <div id="rightCol">
+      <div class="card summary-banner" id="summaryBanner"></div>
+      <div class="card">
+        <div class="card-label">RESERVE FACTORS</div>
+        <div id="rfBars"></div>
+        <div id="rfLegend" style="display:flex;gap:16px;margin-top:6px;font-size:.64rem;color:var(--text-dim);font-family:var(--mono);"></div>
+      </div>
+      <div class="card">
+        <div class="card-label">FAILURE MODE DIAGRAMS</div>
+        <div class="fail-grid" id="failGrid"></div>
+      </div>
+      <div class="card">
+        <div class="card-label">CALCULATION DETAIL</div>
+        <div class="calc-detail" id="calcDetail"></div>
+      </div>
+      <div style="font-size:.64rem;color:var(--text-faint);font-family:var(--mono);line-height:1.6;padding:0 4px;margin-top:8px;">
+        <span style="color:var(--text-dim);">NOTE:</span> Axial loading only. Simplified K<sub>t</sub>, K<sub>h</sub> factors per Bruhn Ch. D1.9 / Niu Ch. 9. Shear-out uses standard two-plane tear-out area with no additional efficiency knock-down. Does not include pin bending, transverse loading, fatigue, bushing effects, or oblique load corrections. All allowables are ultimate.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Custom Material Modal -->
+<div class="modal-overlay" id="matModal" style="display:none;">
+  <div class="modal">
+    <h3 id="matModalTitle">+ ADD CUSTOM MATERIAL</h3>
+    <div class="form-row"><label>Name</label><input type="text" id="cmName" placeholder="e.g. Waspaloy 718"></div>
+    <div class="form-row"><label>F<sub>tu</sub></label><input type="number" id="cmFtu" step="1"><span class="unit">ksi</span></div>
+    <div class="form-row"><label>F<sub>ty</sub></label><input type="number" id="cmFty" step="1"><span class="unit">ksi</span></div>
+    <div class="form-row"><label>F<sub>su</sub></label><input type="number" id="cmFsu" step="1"><span class="unit">ksi</span></div>
+    <div class="form-row"><label>F<sub>bru</sub></label><input type="number" id="cmFbru" step="1"><span class="unit">ksi</span></div>
+    <div class="form-row"><label>F<sub>bry</sub></label><input type="number" id="cmFbry" step="1"><span class="unit">ksi</span></div>
+    <div class="form-row"><label>E</label><input type="number" id="cmE" step="100"><span class="unit">ksi</span></div>
+    <div class="btn-row">
+      <button class="btn btn-dim" onclick="closeMatModal()">CANCEL</button>
+      <button class="btn btn-red" id="cmDeleteBtn" style="display:none;" onclick="deleteCustomMat()">DELETE</button>
+      <button class="btn btn-green" onclick="saveCustomMat()">SAVE</button>
+    </div>
+  </div>
+</div>
+
+<!-- Embedded saved state (populated by Save HTML) -->
+<script id="savedState" type="application/json"></script>
+
+<script>
+/* ═══════════════════════════════════════════════
+   DATA
+   ═══════════════════════════════════════════════ */
+const STOCK_MATERIALS = [
+  { name:"Steel AISI 4340 (200 ksi HT)",Ftu:200,Fty:176,Fsu:117,Fbru:308,Fbry:270,E:29000 },
+  { name:"Steel AISI 4340 (180 ksi HT)",Ftu:180,Fty:163,Fsu:108,Fbru:279,Fbry:243,E:29000 },
+  { name:"Steel AISI 4340 (150 ksi HT)",Ftu:150,Fty:132,Fsu:90,Fbru:234,Fbry:202,E:29000 },
+  { name:"Steel AISI 4130 (125 ksi HT)",Ftu:125,Fty:100,Fsu:75,Fbru:194,Fbry:156,E:29000 },
+  { name:"Stainless 17-4PH (H900)",Ftu:190,Fty:170,Fsu:114,Fbru:285,Fbry:255,E:28500 },
+  { name:"Stainless 17-4PH (H1025)",Ftu:155,Fty:145,Fsu:93,Fbru:232,Fbry:218,E:28500 },
+  { name:"Stainless Steel 304",Ftu:75,Fty:30,Fsu:45,Fbru:116,Fbry:46,E:28000 },
+  { name:"Stainless Steel 15-5PH (H1025)",Ftu:155,Fty:145,Fsu:93,Fbru:240,Fbry:218,E:28000 },
+  { name:"Aluminium 2024-T3 (Sheet)",Ftu:64,Fty:42,Fsu:40,Fbru:104,Fbry:72,E:10500 },
+  { name:"Aluminium 2024-T351 (Plate)",Ftu:64,Fty:42,Fsu:40,Fbru:104,Fbry:72,E:10500 },
+  { name:"Aluminium 7075-T6 (Sheet)",Ftu:78,Fty:68,Fsu:47,Fbru:119,Fbry:105,E:10300 },
+  { name:"Aluminium 7075-T651 (Plate)",Ftu:76,Fty:66,Fsu:44,Fbru:116,Fbry:102,E:10300 },
+  { name:"Aluminium 6061-T6",Ftu:42,Fty:35,Fsu:27,Fbru:67,Fbry:56,E:9900 },
+  { name:"Titanium Ti-6Al-4V (Annealed)",Ftu:130,Fty:120,Fsu:82,Fbru:206,Fbry:192,E:16000 },
+  { name:"Titanium Ti-6Al-4V (STA)",Ftu:160,Fty:150,Fsu:100,Fbru:252,Fbry:237,E:16500 },
+  { name:"Inconel 718 (AMS 5663)",Ftu:180,Fty:150,Fsu:108,Fbru:279,Fbry:232,E:29400 },
+];
+
+let customMaterials = JSON.parse(localStorage.getItem('lugCalc_customMats') || '[]');
+let editingCustomIdx = -1;
+
+const LB_TO_N = 4.44822, IN_TO_MM = 25.4, KSI_TO_MPA = 6.89476;
+
+let state = {
+  matIdx: 10, P: 5000, W: 1.5, D: 0.5, e: 0.75, t: 0.375,
+  safeRf: 1.5, isMetric: true, eCentred: true
+};
+
+/* ═══════════════════════════════════════════════
+   HELPERS
+   ═══════════════════════════════════════════════ */
+function allMaterials() { return [...STOCK_MATERIALS, ...customMaterials.map(m=>({...m,custom:true}))]; }
+function getMat() { return allMaterials()[state.matIdx] || STOCK_MATERIALS[0]; }
+function toLen(v) { return state.isMetric ? v*IN_TO_MM : v; }
+function fromLen(v) { return state.isMetric ? v/IN_TO_MM : v; }
+function toForce(v) { return state.isMetric ? v*LB_TO_N : v; }
+function fromForce(v) { return state.isMetric ? v/LB_TO_N : v; }
+function lenU() { return state.isMetric?'mm':'in'; }
+function forceU() { return state.isMetric?'N':'lbs'; }
+function stressU() { return state.isMetric?'MPa':'ksi'; }
+function modU() { return state.isMetric?'GPa':'Msi'; }
+function areaU() { return state.isMetric?'mm²':'in²'; }
+function ldp() { return state.isMetric?1:3; }
+function fmt(v) { if(!isFinite(v)) return '—'; if(v>=1e5) return v.toFixed(0); if(v>=1000) return v.toFixed(0); if(v>=10) return v.toFixed(1); return v.toFixed(3); }
+function fmtRf(v) { return (isFinite(v)&&v>0)?v.toFixed(2):'—'; }
+function fmtF(v) { return fmt(state.isMetric?v*LB_TO_N:v); }
+function fmtA(v) { const a=state.isMetric?v*IN_TO_MM*IN_TO_MM:v; return a.toFixed(state.isMetric?1:4); }
+function rfCol(rf) { if(!isFinite(rf)||rf<=0) return '#888'; if(rf<1) return '#ff3030'; if(rf<state.safeRf) return '#e0a030'; return '#40c040'; }
+
+/* ═══════════════════════════════════════════════
+   UNIT TOGGLE
+   ═══════════════════════════════════════════════ */
+function setUnit(metric) {
+  state.isMetric = metric;
+  document.querySelectorAll('#unitToggle button').forEach(b => b.classList.toggle('active', b.dataset.metric===String(metric)));
+  populateInputs();
+  recalc();
+}
+
+/* ═══════════════════════════════════════════════
+   EDGE DISTANCE TOGGLE
+   ═══════════════════════════════════════════════ */
+function toggleECentre() {
+  state.eCentred = !state.eCentred;
+  const tog = document.getElementById('eCentreToggle');
+  const lbl = document.getElementById('eCentreLabel');
+  const inp = document.getElementById('inE');
+  tog.classList.toggle('on', state.eCentred);
+  lbl.classList.toggle('active', state.eCentred);
+  lbl.textContent = state.eCentred ? 'e = W/2 (centred hole)' : 'Custom edge distance';
+  inp.disabled = state.eCentred;
+  if (state.eCentred) {
+    state.e = state.W / 2;
+    inp.value = parseFloat(toLen(state.e).toFixed(ldp()));
+  }
+  recalc();
+}
+
+function onWChange() {
+  readInputs();
+  if (state.eCentred) {
+    state.e = state.W / 2;
+    document.getElementById('inE').value = parseFloat(toLen(state.e).toFixed(ldp()));
+  }
+  recalc();
+}
+
+/* ═══════════════════════════════════════════════
+   POPULATE
+   ═══════════════════════════════════════════════ */
+function populateMatSelect() {
+  const sel = document.getElementById('matSelect');
+  const mats = allMaterials();
+  sel.innerHTML = '';
+  let hasCustom = false;
+  mats.forEach((m,i) => {
+    if (m.custom && !hasCustom) {
+      const og = document.createElement('optgroup');
+      og.label = '── Custom Materials ──';
+      sel.appendChild(og);
+      hasCustom = true;
+    }
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = (m.custom?'★ ':'')+m.name;
+    if (m.custom) sel.lastElementChild.appendChild(opt);
+    else sel.appendChild(opt);
+  });
+  if (state.matIdx >= mats.length) state.matIdx = 0;
+  sel.value = state.matIdx;
+}
+
+function populateInputs() {
+  document.getElementById('inP').value = parseFloat(toForce(state.P).toFixed(0));
+  document.getElementById('inW').value = parseFloat(toLen(state.W).toFixed(ldp()));
+  document.getElementById('inD').value = parseFloat(toLen(state.D).toFixed(ldp()));
+  document.getElementById('inE').value = parseFloat(toLen(state.e).toFixed(ldp()));
+  document.getElementById('inT').value = parseFloat(toLen(state.t).toFixed(ldp()));
+  document.getElementById('inP').step = 100;
+  ['inW','inD','inE','inT'].forEach(id => document.getElementById(id).step = state.isMetric?0.5:0.01);
+  document.getElementById('sfP').textContent = forceU();
+  ['sfW','sfD','sfE','sfT'].forEach(id => document.getElementById(id).textContent = lenU());
+  document.getElementById('inE').disabled = state.eCentred;
+}
+
+function readInputs() {
+  state.P = fromForce(parseFloat(document.getElementById('inP').value)||0);
+  state.W = fromLen(parseFloat(document.getElementById('inW').value)||0);
+  state.D = fromLen(parseFloat(document.getElementById('inD').value)||0);
+  if (!state.eCentred) state.e = fromLen(parseFloat(document.getElementById('inE').value)||0);
+  else state.e = state.W / 2;
+  state.t = fromLen(parseFloat(document.getElementById('inT').value)||0);
+  state.safeRf = parseFloat(document.getElementById('safeRf').value)||1.0;
+  state.matIdx = parseInt(document.getElementById('matSelect').value)||0;
+}
+
+/* ═══════════════════════════════════════════════
+   CALCULATIONS
+   ═══════════════════════════════════════════════ */
+function calculate() {
+  const m=getMat(), {P,W,D,e,t}=state;
+  const Ftu=m.Ftu*1000, Fsu=m.Fsu*1000, Fbru=m.Fbru*1000;
+
+  const P_br=Fbru*D*t;
+  const Rf_br=P>0?P_br/P:Infinity;
+
+  const Kt=W>0?Math.min(1,(3-D/W)/2):0;
+  const A_net=(W-D)*t;
+  const P_t=Kt*Ftu*A_net;
+  const Rf_t=P>0?P_t/P:Infinity;
+
+  const e_eff=e-D/2;
+  const A_sh=2*e_eff*t;
+  const P_su=Fsu*A_sh;
+  const Rf_su=P>0?P_su/P:Infinity;
+
+  const a=D/2, R_o=Math.min(W/2,e);
+  const A_hp=(R_o-a)*t;
+  const Kh=a>0?Math.min(1,0.56+0.56*(R_o/a-1)):0;
+  const P_hp=Kh*Ftu*2*A_hp;
+  const Rf_hp=P>0?P_hp/P:Infinity;
+
+  const rfs=[Rf_br,Rf_t,Rf_su,Rf_hp];
+  const minRf=Math.min(...rfs);
+  const names=['Bearing','Net Tension','Shear-Out','Hoop Tension'];
+  return {
+    bearing:{P:P_br,Rf:Rf_br}, tension:{P:P_t,Rf:Rf_t,Kt,A_net},
+    shearout:{P:P_su,Rf:Rf_su,e_eff,A_sh}, hoop:{P:P_hp,Rf:Rf_hp,Kh,A_hp,R_o},
+    minRf, crit:names[rfs.indexOf(minRf)],
+    valid: D<W && D/2<e && W>0 && D>0 && e>0 && t>0 && P>0
+  };
+}
+
+/* ═══════════════════════════════════════════════
+   RENDER
+   ═══════════════════════════════════════════════ */
+function recalc() {
+  readInputs();
+  // Auto-sync e display when centred
+  if (state.eCentred) {
+    document.getElementById('inE').value = parseFloat(toLen(state.e).toFixed(ldp()));
+  }
+  const r=calculate(), m=getMat(), srf=state.safeRf;
+
+  // Material props
+  const mp=document.getElementById('matProps');
+  mp.innerHTML = `
+    <span class="lbl">F<sub>tu</sub></span><span class="val">${state.isMetric?(m.Ftu*KSI_TO_MPA).toFixed(0):m.Ftu} ${stressU()}</span>
+    <span class="lbl">F<sub>su</sub></span><span class="val">${state.isMetric?(m.Fsu*KSI_TO_MPA).toFixed(0):m.Fsu} ${stressU()}</span>
+    <span class="lbl">F<sub>bru</sub></span><span class="val">${state.isMetric?(m.Fbru*KSI_TO_MPA).toFixed(0):m.Fbru} ${stressU()}</span>
+    <span class="lbl">E</span><span class="val">${state.isMetric?(m.E*KSI_TO_MPA/1000).toFixed(1):(m.E/1000).toFixed(1)} ${modU()}</span>`;
+  if (m.custom) mp.innerHTML+=`<span></span><span><button class="btn btn-dim" style="padding:2px 8px;font-size:.55rem;margin-top:4px;" onclick="editCustomMat(${state.matIdx-STOCK_MATERIALS.length})">EDIT</button></span>`;
+
+  document.getElementById('geomWarn').style.display = r.valid?'none':'block';
+
+  // Summary banner
+  const sb=document.getElementById('summaryBanner'), mc=rfCol(r.minRf);
+  sb.style.background = r.minRf<1?'rgba(255,40,30,.12)':r.minRf<srf?'rgba(220,160,40,.1)':'rgba(60,160,60,.08)';
+  sb.style.border = `1px solid ${r.minRf<1?'rgba(255,40,30,.4)':r.minRf<srf?'rgba(220,160,40,.3)':'rgba(60,160,60,.2)'}`;
+  sb.innerHTML = `<div><div style="font-size:.64rem;letter-spacing:2px;color:var(--text-muted);font-family:var(--mono);font-weight:600;">CRITICAL MODE</div>
+    <div style="font-size:1.14rem;font-weight:700;color:${mc};font-family:var(--mono);margin-top:2px;">${r.minRf<1?'⚠ ':''}${r.crit}</div></div>
+    <div style="text-align:right;"><div style="font-size:.64rem;letter-spacing:2px;color:var(--text-muted);font-family:var(--mono);font-weight:600;">MINIMUM Rf</div>
+    <div style="font-size:2rem;font-weight:700;color:${mc};font-family:var(--mono);line-height:1.1;${r.minRf<1?'text-shadow:0 0 12px rgba(255,40,30,.4);':''}">${fmtRf(r.minRf)}</div></div>`;
+
+  // Rf bars
+  const bars=[{l:'Bearing',Pa:r.bearing.P,Rf:r.bearing.Rf},{l:'Net Tension',Pa:r.tension.P,Rf:r.tension.Rf},{l:'Shear-Out',Pa:r.shearout.P,Rf:r.shearout.Rf},{l:'Hoop Tension',Pa:r.hoop.P,Rf:r.hoop.Rf}];
+  document.getElementById('rfBars').innerHTML = bars.map(b=>{
+    const pct=Math.min(100,Math.max(0,(b.Rf/(srf*2))*100)), c=rfCol(b.Rf), cr=isFinite(b.Rf)&&b.Rf<srf;
+    return `<div class="rf-bar-wrap"><div class="rf-bar-header"><span class="rf-bar-label">${cr?'<span style="color:#ff4040;font-size:.92rem;line-height:1;">⚠</span>':''}${b.l}</span><span class="rf-bar-pallow">P<sub>allow</sub> = ${fmtF(b.Pa)} ${forceU()}</span></div>
+    <div class="rf-track"><div class="rf-fill" style="width:${pct}%;background:linear-gradient(90deg,${c}40,${c}90);"></div>
+    <div class="rf-marker" style="left:${Math.min(100,(1/(srf*2))*100)}%;background:#ff303080;border-right:1px dashed #ff303060;"></div>
+    <div class="rf-marker" style="left:50%;background:#40c04080;border-right:1px dashed #40c04060;"></div>
+    <span class="rf-value" style="color:${c};">Rf = ${fmtRf(b.Rf)}</span></div></div>`;
+  }).join('');
+  document.getElementById('rfLegend').innerHTML = `<span><span style="display:inline-block;width:8px;height:8px;background:#ff303040;border:1px dashed #ff3030;border-radius:1px;margin-right:3px;vertical-align:middle;"></span>Rf=1.0</span>
+    <span><span style="display:inline-block;width:8px;height:8px;background:#40c04040;border:1px dashed #40c040;border-radius:1px;margin-right:3px;vertical-align:middle;"></span>Rf=${srf.toFixed(1)} (safe)</span>`;
+
+  renderFailDiagrams(r);
+  renderCalcDetail(r, m);
+  renderThresholdBtns();
+  draw3DLug();
+  exportLugRF();
+}
+
+/* ═══════════════════════════════════════════════
+   FAILURE DIAGRAMS
+   ═══════════════════════════════════════════════ */
+function renderFailDiagrams(r) {
+  const modes=[
+    {key:'bearing',label:'BEARING',desc:'Crushing at pin contact zone',Rf:r.bearing.Rf},
+    {key:'tension',label:'NET TENSION',desc:'Fracture across net section',Rf:r.tension.Rf},
+    {key:'shearout',label:'SHEAR-OUT',desc:'Tear-out ahead of pin',Rf:r.shearout.Rf},
+    {key:'hoop',label:'HOOP TENSION',desc:'Radial tension around hole',Rf:r.hoop.Rf}
+  ];
+  document.getElementById('failGrid').innerHTML = modes.map(md=>{
+    const crit=isFinite(md.Rf)&&md.Rf<state.safeRf, cc=crit?'#ff4040':'#50c050';
+    return `<div class="fail-card ${crit?'critical':'safe'}">${crit?'<div class="pulse-top"></div>':''}
+      <svg viewBox="0 0 220 155" style="width:100%;display:block;">
+        <defs><pattern id="h-${md.key}" patternUnits="userSpaceOnUse" width="5" height="5" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="5" stroke="#5a6a5a" stroke-width=".4" opacity=".3"/></pattern></defs>
+        ${lugSVGPath(md.key)} ${failOverlay(md.key,cc,crit)} ${loadArrowUp()}
+        <text x="110" y="145" text-anchor="middle" fill="${cc}" font-size="10" font-weight="bold" font-family="'JetBrains Mono',monospace" letter-spacing="1">${md.label}</text>
+      </svg>
+      <div class="fail-footer"><span class="desc">${md.desc}</span>
+        <span class="rf" style="color:${crit?'#ff4040':'#50c050'};">${crit?'<span style="font-size:1rem;">⚠</span>':''}Rf = ${fmtRf(md.Rf)}</span></div></div>`;
+  }).join('');
+}
+
+function lugSVGPath(key) {
+  const cx=110,cy=80,sw=100,se=60,r=28,ll=cx-sw/2,lr=cx+sw/2,lb=cy+35;
+  return `<path d="M${ll},${lb} L${ll},${cy} A${sw/2},${se} 0 0,1 ${lr},${cy} L${lr},${lb} Z" fill="#2a3a2a" stroke="#6a8a6a" stroke-width="1.2"/>
+  <path d="M${ll},${lb} L${ll},${cy} A${sw/2},${se} 0 0,1 ${lr},${cy} L${lr},${lb} Z" fill="url(#h-${key})" opacity=".5"/>
+  <circle cx="${cx}" cy="${cy}" r="${r}" fill="#151a15" stroke="#6a8a6a" stroke-width=".8"/>`;
+}
+
+function loadArrowUp() {
+  const cx=110,lt=20;
+  return `<line x1="${cx}" y1="${lt+8}" x2="${cx}" y2="${lt-12}" stroke="#ff8060" stroke-width="1.8"/>
+  <polygon points="${cx},${lt-16} ${cx-4},${lt-8} ${cx+4},${lt-8}" fill="#ff8060"/>
+  <text x="${cx+8}" y="${lt-10}" text-anchor="start" fill="#ff8060" font-size="8" font-weight="bold" font-family="monospace">P</text>`;
+}
+
+function failOverlay(key, cc, crit) {
+  const cx=110,cy=80,r=28,sw=100,se=60,ll=cx-sw/2,lr=cx+sw/2,lt=cy-se;
+  switch(key) {
+    case 'bearing': {
+      // Correct bearing: crescent contact zone at TOP of hole where pin pushes upward
+      // The load pulls up, so the pin bears against the upper surface of the hole
+      let arcs = '';
+      // Contact crescent at the top of the hole (from ~-120° to ~-60° in standard coords = top arc)
+      const cw = 12; // crescent width
+      // Draw concentric arcs showing crushing pressure zone at top of hole
+      for (let i = 0; i < 4; i++) {
+        const ri = r - 2 + i * 3;
+        const startA = -140 * Math.PI/180;
+        const endA = -40 * Math.PI/180;
+        const pts = [];
+        for (let s = 0; s <= 12; s++) {
+          const a = startA + (endA-startA)*s/12;
+          pts.push(`${cx+ri*Math.cos(a)},${cy+ri*Math.sin(a)}`);
+        }
+        arcs += `<polyline points="${pts.join(' ')}" fill="none" stroke="${cc}" stroke-width="${2-i*0.3}" opacity="${0.8-i*0.15}" stroke-dasharray="${i>0?'3,2':'none'}"/>`;
+      }
+      // Filled crescent zone
+      const innerPts = [], outerPts = [];
+      for (let s = 0; s <= 16; s++) {
+        const a = -145*Math.PI/180 + (110*Math.PI/180)*s/16;
+        innerPts.push(`${cx+(r-1)*Math.cos(a)},${cy+(r-1)*Math.sin(a)}`);
+        outerPts.push(`${cx+(r+10)*Math.cos(a)},${cy+(r+10)*Math.sin(a)}`);
+      }
+      const crescentPath = `M${innerPts[0]} ${innerPts.map(p=>'L'+p).join(' ')} ${outerPts.reverse().map(p=>'L'+p).join(' ')} Z`;
+      // Compression arrows pointing inward toward hole surface
+      let arrows = '';
+      for (let s = 0; s < 5; s++) {
+        const a = -135*Math.PI/180 + (90*Math.PI/180)*s/4;
+        const x1 = cx + (r+16)*Math.cos(a), y1 = cy + (r+16)*Math.sin(a);
+        const x2 = cx + (r+4)*Math.cos(a), y2 = cy + (r+4)*Math.sin(a);
+        arrows += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${cc}" stroke-width="1.5" opacity=".65"/>`;
+        // arrowhead
+        const dx=x2-x1, dy=y2-y1, len=Math.sqrt(dx*dx+dy*dy);
+        const ux=dx/len, uy=dy/len;
+        const ax=x2-ux*4-uy*2.5, ay=y2-uy*4+ux*2.5;
+        const bx=x2-ux*4+uy*2.5, by=y2-uy*4-ux*2.5;
+        arrows += `<polygon points="${x2},${y2} ${ax},${ay} ${bx},${by}" fill="${cc}" opacity=".65"/>`;
+      }
+      return `<path d="${crescentPath}" fill="${cc}" opacity="${crit?0.35:0.18}"/>
+        ${arcs} ${arrows}
+        <text x="${cx}" y="${cy-r-14}" text-anchor="middle" fill="${cc}" font-size="7" font-family="'JetBrains Mono',monospace" opacity=".8">CONTACT</text>`;
+    }
+    case 'tension':
+      return `<rect x="${ll-2}" y="${cy-3}" width="${cx-r-ll}" height="6" fill="${cc}" opacity=".4" rx="1"/>
+      <rect x="${cx+r}" y="${cy-3}" width="${lr-cx-r+2}" height="6" fill="${cc}" opacity=".4" rx="1"/>
+      <line x1="${ll}" y1="${cy}" x2="${cx-r}" y2="${cy}" stroke="${cc}" stroke-width="2.5" stroke-dasharray="5,3"/>
+      <line x1="${cx+r}" y1="${cy}" x2="${lr}" y2="${cy}" stroke="${cc}" stroke-width="2.5" stroke-dasharray="5,3"/>`;
+    case 'shearout': {
+      const a=40*Math.PI/180;
+      const sx1=cx-r*Math.sin(a),sy1=cy-r*Math.cos(a),sx2=cx+r*Math.sin(a),sy2=cy-r*Math.cos(a);
+      return `<path d="M${sx1},${sy1} L${sx1-8},${lt-4}" stroke="${cc}" stroke-width="2.5" stroke-dasharray="5,3"/>
+      <path d="M${sx2},${sy2} L${sx2+8},${lt-4}" stroke="${cc}" stroke-width="2.5" stroke-dasharray="5,3"/>
+      <path d="M${sx1},${sy1} L${sx1-8},${lt-4} L${sx2+8},${lt-4} L${sx2},${sy2} A${r},${r} 0 0,0 ${sx1},${sy1} Z" fill="${cc}" opacity="${crit?.4:.23}"/>`;
+    }
+    case 'hoop':
+      return `<circle cx="${cx}" cy="${cy}" r="${r+8}" fill="none" stroke="${cc}" stroke-width="6" opacity=".2"/>
+      <circle cx="${cx}" cy="${cy}" r="${r+8}" fill="none" stroke="${cc}" stroke-width="2" stroke-dasharray="6,4" opacity=".7"/>
+      ${[0,45,90,135,180,225,270,315].map(a=>{const rd=a*Math.PI/180;const x1=cx+(r+3)*Math.cos(rd),y1=cy+(r+3)*Math.sin(rd),x2=cx+(r+14)*Math.cos(rd),y2=cy+(r+14)*Math.sin(rd);return`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${cc}" stroke-width="1.5" opacity=".5"/>`;}).join('')}`;
+  }
+  return '';
+}
+
+/* ═══════════════════════════════════════════════
+   CALC DETAIL
+   ═══════════════════════════════════════════════ */
+function renderCalcDetail(r, m) {
+  const Wd=toLen(state.W).toFixed(ldp()), Dd=toLen(state.D).toFixed(ldp()), ed=toLen(state.e).toFixed(ldp()), td=toLen(state.t).toFixed(ldp());
+  const fu=forceU(), au=areaU(), lu=lenU();
+  const fbru_d=state.isMetric?(m.Fbru*KSI_TO_MPA).toFixed(0):m.Fbru+'×10³';
+  const fsu_d=state.isMetric?(m.Fsu*KSI_TO_MPA).toFixed(0):m.Fsu+'×10³';
+  document.getElementById('calcDetail').innerHTML = `
+    <div class="section-head">▸ Bearing</div><div class="indent">
+      P<sub>br</sub> = F<sub>bru</sub> × D × t = ${fbru_d} × ${Dd} × ${td} = <b>${fmtF(r.bearing.P)} ${fu}</b></div>
+    <div class="section-head">▸ Net Tension</div><div class="indent">
+      K<sub>t</sub> = min(1.0, (3 − D/W)/2) = <b>${r.tension.Kt.toFixed(3)}</b><br>
+      A<sub>net</sub> = (W − D) × t = (${Wd} − ${Dd}) × ${td} = <b>${fmtA(r.tension.A_net)} ${au}</b><br>
+      P<sub>t</sub> = K<sub>t</sub> × F<sub>tu</sub> × A<sub>net</sub> = <b>${fmtF(r.tension.P)} ${fu}</b></div>
+    <div class="section-head">▸ Shear-Out <span style="font-weight:400;color:var(--text-muted);font-size:.6rem;">(two-plane tear-out)</span></div><div class="indent">
+      e<sub>eff</sub> = e − D/2 = ${ed} − ${(toLen(state.D)/2).toFixed(ldp())} = <b>${toLen(r.shearout.e_eff).toFixed(ldp())} ${lu}</b><br>
+      A<sub>shear</sub> = 2 × e<sub>eff</sub> × t = 2 × ${toLen(r.shearout.e_eff).toFixed(ldp())} × ${td} = <b>${fmtA(r.shearout.A_sh)} ${au}</b><br>
+      P<sub>su</sub> = F<sub>su</sub> × A<sub>shear</sub> = ${fsu_d} × ${fmtA(r.shearout.A_sh)} = <b>${fmtF(r.shearout.P)} ${fu}</b></div>
+    <div class="section-head">▸ Hoop Tension</div><div class="indent">
+      R<sub>outer</sub> = min(W/2, e) = <b>${toLen(r.hoop.R_o).toFixed(ldp())} ${lu}</b><br>
+      A<sub>hoop</sub> = (R<sub>outer</sub> − D/2) × t = <b>${fmtA(r.hoop.A_hp)} ${au}</b><br>
+      K<sub>h</sub> = min(1.0, 0.56 + 0.56×(R<sub>outer</sub>/a − 1)) = <b>${r.hoop.Kh.toFixed(3)}</b><br>
+      P<sub>h</sub> = K<sub>h</sub> × F<sub>tu</sub> × 2 × A<sub>hoop</sub> = <b>${fmtF(r.hoop.P)} ${fu}</b></div>`;
+}
+
+function renderThresholdBtns() {
+  document.getElementById('threshBtns').innerHTML=[1.0,1.25,1.5,2.0].map(v=>{
+    const a=Math.abs(state.safeRf-v)<0.01;
+    return `<button style="font-weight:${a?700:400};background:${a?'var(--border)':'transparent'};border:1px solid ${a?'#5a7a5a':'var(--border)'};color:${a?'#c0e0a0':'var(--text-muted)'};font-family:var(--mono);" onclick="document.getElementById('safeRf').value=${v};recalc();">${v.toFixed(v%1===0?1:2)}</button>`;
+  }).join('');
+}
+
+/* ═══════════════════════════════════════════════
+   3D ISOMETRIC LUG (Canvas)
+   ═══════════════════════════════════════════════ */
+function draw3DLug() {
+  const cvs=document.getElementById('lugCanvas'), ctx=cvs.getContext('2d');
+  const cw=cvs.width, ch=cvs.height;
+  ctx.clearRect(0,0,cw,ch);
+  const {W,D,e,t}=state;
+  if (W<=0||D<=0||e<=0||t<=0) return;
+
+  const maxDim=Math.max(W,e+W*0.3,t*3), sc=160/maxDim;
+  const sW=W*sc, sD=D*sc, sE=e*sc, sT=Math.max(t*sc,12);
+  const isoAngle=Math.PI/6, cosA=Math.cos(isoAngle), sinA=Math.sin(isoAngle);
+  const ox=cw/2, oy=ch*0.55;
+  function iso(x,y,z){ return [ox+(x-z)*cosA, oy-y+(x+z)*sinA]; }
+
+  const hw=sW/2, holeR=sD/2, bodyH=sE*0.6, arcCY=bodyH, topY=bodyH+sE;
+
+  function drawLugFace(zOff,fill,stroke){
+    ctx.beginPath();
+    const bl=iso(-hw,0,zOff); ctx.moveTo(bl[0],bl[1]);
+    ctx.lineTo(...iso(-hw,arcCY,zOff));
+    for(let i=0;i<=24;i++){const a=Math.PI+(Math.PI*i/24);ctx.lineTo(...iso(hw*Math.cos(a),arcCY+sE*(-Math.sin(a)),zOff));}
+    ctx.lineTo(...iso(hw,arcCY,zOff)); ctx.lineTo(...iso(hw,0,zOff));
+    ctx.closePath(); ctx.fillStyle=fill; ctx.fill(); ctx.strokeStyle=stroke; ctx.lineWidth=1.2; ctx.stroke();
+  }
+
+  function drawSideFaces(){
+    const br0=iso(hw,0,0),br1=iso(hw,0,sT),tr0=iso(hw,arcCY,0),tr1=iso(hw,arcCY,sT);
+    ctx.beginPath();ctx.moveTo(br0[0],br0[1]);ctx.lineTo(br1[0],br1[1]);ctx.lineTo(tr1[0],tr1[1]);ctx.lineTo(tr0[0],tr0[1]);ctx.closePath();ctx.fillStyle='#2a3a2a';ctx.fill();ctx.strokeStyle='#5a7a5a';ctx.lineWidth=0.8;ctx.stroke();
+
+    ctx.beginPath();
+    for(let i=0;i<=24;i++){const a=Math.PI+(Math.PI*i/24);const p=iso(hw*Math.cos(a),arcCY+sE*(-Math.sin(a)),0);if(i===0)ctx.moveTo(p[0],p[1]);else ctx.lineTo(p[0],p[1]);}
+    for(let i=24;i>=0;i--){const a=Math.PI+(Math.PI*i/24);const p=iso(hw*Math.cos(a),arcCY+sE*(-Math.sin(a)),sT);ctx.lineTo(p[0],p[1]);}
+    ctx.closePath();ctx.fillStyle='#354535';ctx.fill();ctx.strokeStyle='#5a7a5a';ctx.lineWidth=0.8;ctx.stroke();
+
+    const bl0=iso(-hw,0,0),bl1=iso(-hw,0,sT);
+    ctx.beginPath();ctx.moveTo(bl0[0],bl0[1]);ctx.lineTo(...br0);ctx.lineTo(br1[0],br1[1]);ctx.lineTo(bl1[0],bl1[1]);ctx.closePath();ctx.fillStyle='#1a2a1a';ctx.fill();ctx.strokeStyle='#4a6a4a';ctx.lineWidth=0.8;ctx.stroke();
+
+    const tl0=iso(-hw,arcCY,0),tl1=iso(-hw,arcCY,sT);
+    ctx.beginPath();ctx.moveTo(bl1[0],bl1[1]);ctx.lineTo(bl0[0],bl0[1]);ctx.lineTo(tl0[0],tl0[1]);ctx.lineTo(tl1[0],tl1[1]);ctx.closePath();ctx.fillStyle='#253525';ctx.fill();ctx.strokeStyle='#5a7a5a';ctx.lineWidth=0.8;ctx.stroke();
+  }
+
+  function drawHole(zOff,isBack){
+    const c=iso(0,arcCY,zOff), rx=holeR*cosA, ry=holeR*0.85;
+    ctx.beginPath();ctx.ellipse(c[0],c[1],rx,ry,-isoAngle*0.3,0,Math.PI*2);
+    ctx.fillStyle=isBack?'#0a0f0a':'#0d120d';ctx.fill();ctx.strokeStyle=isBack?'#3a4a3a':'#6a8a6a';ctx.lineWidth=1;ctx.stroke();
+    if(!isBack){const bc=iso(0,arcCY,sT);ctx.beginPath();ctx.ellipse(bc[0],bc[1],rx*0.6,ry*0.6,-isoAngle*0.3,0,Math.PI*2);ctx.strokeStyle='#3a4a3a';ctx.lineWidth=0.5;ctx.setLineDash([2,2]);ctx.stroke();ctx.setLineDash([]);}
+  }
+
+  function drawHatch(zOff){
+    ctx.save();ctx.globalAlpha=0.12;ctx.strokeStyle='#8fa88f';ctx.lineWidth=0.5;
+    for(let i=-20;i<30;i++){const p1=iso(-hw,i*8,zOff),p2=iso(hw,i*8+hw*1.5,zOff);ctx.beginPath();ctx.moveTo(p1[0],p1[1]);ctx.lineTo(p2[0],p2[1]);ctx.stroke();}
+    ctx.restore();
+  }
+
+  drawLugFace(sT,'#1e2e1e','#4a6a4a');drawHole(sT,true);drawSideFaces();drawLugFace(0,'#2e3e2e','#6a8a6a');drawHatch(0);drawHole(0,false);
+
+  ctx.font='600 11px "JetBrains Mono",monospace';
+  const wl=iso(-hw,-12,0),wr=iso(hw,-12,0);
+  ctx.beginPath();ctx.moveTo(wl[0],wl[1]);ctx.lineTo(wr[0],wr[1]);ctx.strokeStyle='#c8b060';ctx.lineWidth=1;ctx.stroke();
+  arrHead(ctx,wl,wr,'#c8b060');arrHead(ctx,wr,wl,'#c8b060');
+  const wm=iso(0,-20,0);ctx.fillStyle='#c8b060';ctx.textAlign='center';ctx.fillText(`W = ${toLen(W).toFixed(ldp())}${lenU()}`,wm[0],wm[1]);
+
+  const dl=iso(-holeR,arcCY,-8),dr=iso(holeR,arcCY,-8);
+  ctx.beginPath();ctx.moveTo(dl[0],dl[1]);ctx.lineTo(dr[0],dr[1]);ctx.strokeStyle='#60a0c8';ctx.lineWidth=1;ctx.setLineDash([3,2]);ctx.stroke();ctx.setLineDash([]);
+  const dm=iso(0,arcCY+14,-14);ctx.fillStyle='#60a0c8';ctx.textAlign='center';ctx.fillText(`D = ${toLen(D).toFixed(ldp())}${lenU()}`,dm[0],dm[1]);
+
+  const el=iso(hw+14,arcCY,0),et=iso(hw+14,topY,0);
+  ctx.beginPath();ctx.moveTo(el[0],el[1]);ctx.lineTo(et[0],et[1]);ctx.strokeStyle='#c87060';ctx.lineWidth=1;ctx.stroke();
+  arrHead(ctx,el,et,'#c87060');arrHead(ctx,et,el,'#c87060');
+  const em=iso(hw+24,arcCY+sE*0.5,0);ctx.fillStyle='#c87060';ctx.textAlign='left';ctx.fillText(`e = ${toLen(e).toFixed(ldp())}${lenU()}`,em[0],em[1]);
+
+  const tf=iso(hw+6,0,0),tb=iso(hw+6,0,sT);
+  ctx.beginPath();ctx.moveTo(tf[0],tf[1]);ctx.lineTo(tb[0],tb[1]);ctx.strokeStyle='#a080c0';ctx.lineWidth=1;ctx.stroke();
+  arrHead(ctx,tf,tb,'#a080c0');arrHead(ctx,tb,tf,'#a080c0');
+  const tm=iso(hw+10,-8,sT*0.5);ctx.fillStyle='#a080c0';ctx.textAlign='center';ctx.fillText(`t = ${toLen(t).toFixed(ldp())}${lenU()}`,tm[0],tm[1]);
+
+  const ab=iso(0,topY+2,sT*0.5),at=iso(0,topY+50,sT*0.5);
+  ctx.beginPath();ctx.moveTo(ab[0],ab[1]);ctx.lineTo(at[0],at[1]);ctx.strokeStyle='#ff6040';ctx.lineWidth=2.5;ctx.stroke();
+  arrHead(ctx,ab,at,'#ff6040',10);ctx.fillStyle='#ff6040';ctx.font='bold 14px "JetBrains Mono",monospace';ctx.textAlign='left';ctx.fillText('P',at[0]+8,at[1]+2);
+}
+
+function arrHead(ctx,from,to,color,size){
+  size=size||6;const dx=to[0]-from[0],dy=to[1]-from[1],a=Math.atan2(dy,dx);
+  ctx.beginPath();ctx.moveTo(to[0],to[1]);ctx.lineTo(to[0]-size*Math.cos(a-0.4),to[1]-size*Math.sin(a-0.4));ctx.lineTo(to[0]-size*Math.cos(a+0.4),to[1]-size*Math.sin(a+0.4));ctx.closePath();ctx.fillStyle=color;ctx.fill();
+}
+
+/* ═══════════════════════════════════════════════
+   CUSTOM MATERIALS
+   ═══════════════════════════════════════════════ */
+function openCustomMatModal(prefill){
+  editingCustomIdx=-1;
+  document.getElementById('matModalTitle').textContent='+ ADD CUSTOM MATERIAL';
+  document.getElementById('cmDeleteBtn').style.display='none';
+  document.getElementById('cmName').value=prefill?.name||'';
+  document.getElementById('cmFtu').value=prefill?.Ftu||'';
+  document.getElementById('cmFty').value=prefill?.Fty||'';
+  document.getElementById('cmFsu').value=prefill?.Fsu||'';
+  document.getElementById('cmFbru').value=prefill?.Fbru||'';
+  document.getElementById('cmFbry').value=prefill?.Fbry||'';
+  document.getElementById('cmE').value=prefill?.E||'';
+  document.getElementById('matModal').style.display='flex';
+}
+function editCustomMat(idx){
+  editingCustomIdx=idx;const m=customMaterials[idx];
+  document.getElementById('matModalTitle').textContent='✎ EDIT CUSTOM MATERIAL';
+  document.getElementById('cmDeleteBtn').style.display='inline-block';
+  document.getElementById('cmName').value=m.name;document.getElementById('cmFtu').value=m.Ftu;
+  document.getElementById('cmFty').value=m.Fty;document.getElementById('cmFsu').value=m.Fsu;
+  document.getElementById('cmFbru').value=m.Fbru;document.getElementById('cmFbry').value=m.Fbry;
+  document.getElementById('cmE').value=m.E;
+  document.getElementById('matModal').style.display='flex';
+}
+function closeMatModal(){ document.getElementById('matModal').style.display='none'; }
+function saveCustomMat(){
+  const mat={name:document.getElementById('cmName').value.trim()||'Custom Material',
+    Ftu:parseFloat(document.getElementById('cmFtu').value)||0,Fty:parseFloat(document.getElementById('cmFty').value)||0,
+    Fsu:parseFloat(document.getElementById('cmFsu').value)||0,Fbru:parseFloat(document.getElementById('cmFbru').value)||0,
+    Fbry:parseFloat(document.getElementById('cmFbry').value)||0,E:parseFloat(document.getElementById('cmE').value)||0,custom:true};
+  if(editingCustomIdx>=0) customMaterials[editingCustomIdx]=mat;
+  else{customMaterials.push(mat);state.matIdx=STOCK_MATERIALS.length+customMaterials.length-1;}
+  localStorage.setItem('lugCalc_customMats',JSON.stringify(customMaterials));
+  populateMatSelect();document.getElementById('matSelect').value=state.matIdx;closeMatModal();recalc();
+}
+function deleteCustomMat(){
+  if(editingCustomIdx<0) return; if(!confirm('Delete this custom material?')) return;
+  customMaterials.splice(editingCustomIdx,1);localStorage.setItem('lugCalc_customMats',JSON.stringify(customMaterials));
+  state.matIdx=0;populateMatSelect();closeMatModal();recalc();
+}
+
+/* ═══════════════════════════════════════════════
+   SAVE AS PDF (print dialog)
+   ═══════════════════════════════════════════════ */
+function saveAsPDF() { window.print(); }
+
+/* ═══════════════════════════════════════════════
+   SAVE HTML (download self-contained file with data)
+   ═══════════════════════════════════════════════ */
+function saveHTML() {
+  readInputs();
+  const saveData = {
+    state: {...state},
+    projectTitle: document.getElementById('projectTitle').value,
+    engNotes: document.getElementById('engNotes').value,
+    customMaterials: customMaterials,
+    savedAt: new Date().toISOString()
+  };
+
+  // Clone current page HTML
+  const clone = document.documentElement.cloneNode(true);
+
+  // Inject state into the savedState script tag
+  const ssTag = clone.querySelector('#savedState');
+  if (ssTag) ssTag.textContent = JSON.stringify(saveData);
+
+  // Remove modal display
+  const modal = clone.querySelector('#matModal');
+  if (modal) modal.style.display = 'none';
+
+  const html = '<!DOCTYPE html>\n' + clone.outerHTML;
+  const blob = new Blob([html], {type: 'text/html'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const title = document.getElementById('projectTitle').value.trim();
+  a.download = (title ? title.replace(/[^a-zA-Z0-9_\- ]/g,'').replace(/\s+/g,'_') : 'Lug_Analysis') + '.html';
+  a.href = url;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+/* ═══════════════════════════════════════════════
+   RESET
+   ═══════════════════════════════════════════════ */
+function resetAll() {
+  if (!confirm('Reset all inputs to defaults?')) return;
+  state = { matIdx:10, P:5000, W:1.5, D:0.5, e:0.75, t:0.375, safeRf:1.5, isMetric:false, eCentred:true };
+  document.getElementById('projectTitle').value='';
+  document.getElementById('engNotes').value='';
+  document.getElementById('safeRf').value='1.5';
+  const tog=document.getElementById('eCentreToggle'),lbl=document.getElementById('eCentreLabel'),inp=document.getElementById('inE');
+  tog.classList.add('on');lbl.classList.add('active');lbl.textContent='e = W/2 (centred hole)';inp.disabled=true;
+  setUnit(false);
+  populateMatSelect();populateInputs();recalc();
+}
+
+/* ═══════════════════════════════════════════════
+   LOAD SAVED STATE
+   ═══════════════════════════════════════════════ */
+function loadSavedState() {
+  const ssTag = document.getElementById('savedState');
+  if (!ssTag || !ssTag.textContent.trim()) return false;
+  try {
+    const data = JSON.parse(ssTag.textContent);
+    if (data.customMaterials) {
+      customMaterials = data.customMaterials;
+      localStorage.setItem('lugCalc_customMats', JSON.stringify(customMaterials));
+    }
+    if (data.state) {
+      state = {...state, ...data.state};
+    }
+    if (data.projectTitle) document.getElementById('projectTitle').value = data.projectTitle;
+    if (data.engNotes) document.getElementById('engNotes').value = data.engNotes;
+    document.getElementById('safeRf').value = state.safeRf;
+
+    // Sync edge distance toggle UI
+    const tog=document.getElementById('eCentreToggle'),lbl=document.getElementById('eCentreLabel'),inp=document.getElementById('inE');
+    tog.classList.toggle('on',state.eCentred);
+    lbl.classList.toggle('active',state.eCentred);
+    lbl.textContent=state.eCentred?'e = W/2 (centred hole)':'Custom edge distance';
+    inp.disabled=state.eCentred;
+
+    return true;
+  } catch(e) { return false; }
+}
+
+/* ═══════════════════════════════════════════════
+   MODAL CLOSE ON OUTSIDE CLICK
+   ═══════════════════════════════════════════════ */
+document.getElementById('matModal').addEventListener('click', function(ev){ if(ev.target===this) closeMatModal(); });
+
+/* ═══════════════════════════════════════════════
+   INIT
+   ═══════════════════════════════════════════════ */
+
+var _cadKey='';
+function initCadImage(key,id){_cadKey=key;var c=document.getElementById(id);if(!c)return;var s=null;try{s=localStorage.getItem(_cadKey)}catch(e){}renderCad(c,s)}
+function renderCad(c,url){
+  if(url){c.className='cad-zone has-img';c.innerHTML='<button class="cad-rm" onclick="event.stopPropagation();rmCad(this.parentNode)">\u2715</button><img class="cad-thumb" src="'+url+'" onclick="showCad(this.src)" title="Click to enlarge">';}
+  else{c.className='cad-zone';c.innerHTML='<div style="font-size:12px;color:#5a5a64;font-weight:500;letter-spacing:.3px">Drop CAD image here</div><div style="font-size:10px;color:#5a5a64;opacity:.6;margin-top:3px">or click to browse</div>';}
+}
+function rmCad(c){try{localStorage.removeItem(_cadKey)}catch(e){}renderCad(c,null)}
+function showCad(src){var o=document.getElementById('cadOv');if(!o){o=document.createElement('div');o.id='cadOv';o.className='cad-overlay';o.onclick=function(){this.classList.remove('show')};document.body.appendChild(o)}o.innerHTML='<img src="'+src+'">';o.classList.add('show')}
+function setupCad(id){var c=document.getElementById(id);if(!c)return;
+  c.addEventListener('click',function(e){if(e.target.tagName==='IMG'||e.target.classList.contains('cad-rm'))return;var inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.onchange=function(ev){loadCadFile(ev.target.files[0],c)};inp.click()});
+  c.addEventListener('dragover',function(e){e.preventDefault();c.style.borderColor='#6B8AFF'});
+  c.addEventListener('dragleave',function(){c.style.borderColor=''});
+  c.addEventListener('drop',function(e){e.preventDefault();c.style.borderColor='';if(e.dataTransfer.files.length)loadCadFile(e.dataTransfer.files[0],c)});
+}
+function loadCadFile(f,c){if(!f||!f.type.startsWith('image/'))return;var r=new FileReader();r.onload=function(e){try{localStorage.setItem(_cadKey,e.target.result)}catch(ex){}renderCad(c,e.target.result)};r.readAsDataURL(f)}
+function exportLugRF(){try{var r=calculate();if(r&&r.minRf&&isFinite(r.minRf))localStorage.setItem('eng_wb_rf_lug',JSON.stringify({rf:r.minRf,mode:r.crit,ts:Date.now()}))}catch(e){}}
+const hadSaved = loadSavedState();
+populateMatSelect();
+if (hadSaved) {
+  document.getElementById('matSelect').value = state.matIdx;
+  setUnit(state.isMetric);
+} else {
+  populateInputs();
+}
+recalc();
+setupCad("lugCadZone");initCadImage("eng_wb_img_lug","lugCadZone");
+</script>
+<a class="wb-back" href="Engineering_Workbook.html">← Workbook</a>
+<button class="pdf-btn" onclick="window.print()">⎙ Save as PDF</button>
+<div id="cadOv" class="cad-overlay" onclick="this.classList.remove('show')"></div>
+</body>
+</html>

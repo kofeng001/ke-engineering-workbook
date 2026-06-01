@@ -1,0 +1,1570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interference Fit Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Barlow+Condensed:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0e100f; --bg2:#181a18; --bg3:#1f211f; --bg4:#252725;
+  --border:#2e302e; --accent:#d97706; --accent2:#f59e0b;
+  --text:#dedad4; --text2:#8a8680; --text3:#5a5650;
+  --blue:#5eaeff; --green:#4ade80; --yellow:#fbbf24; --red:#f87171; --orange:#fb923c;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'Barlow Condensed',sans-serif;font-size:14px;line-height:1.4;}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:linear-gradient(rgba(255,255,255,.012) 1px,transparent 1px),
+  linear-gradient(90deg,rgba(255,255,255,.012) 1px,transparent 1px);
+  background-size:24px 24px;}
+.app{position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:20px 16px 48px;}
+
+/* ── HEADER ── */
+header{display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border);padding-bottom:14px;margin-bottom:14px;flex-wrap:wrap;}
+header h1{font-size:20px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent2);}
+header .sub{font-size:11px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;}
+.badge{font-family:'JetBrains Mono',monospace;font-size:10px;background:var(--bg3);border:1px solid var(--border);color:var(--text3);padding:2px 7px;}
+
+/* ── GLOBAL WARNING BANNER ── */
+.gw{background:rgba(251,146,60,.06);border:1px solid rgba(251,146,60,.28);padding:10px 14px;margin-bottom:14px;display:none;}
+.gw-hdr{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--orange);margin-bottom:6px;display:flex;align-items:center;gap:6px;}
+.gw-hdr::before{content:'';width:3px;height:11px;background:var(--orange);display:block;}
+.wi{display:flex;gap:8px;align-items:flex-start;padding:2px 0;font-size:12px;line-height:1.4;}
+.wi.err{color:var(--red);}
+.wi.warn{color:var(--yellow);}
+.wi.info{color:var(--blue);}
+.wi-icon{flex-shrink:0;margin-top:1px;}
+
+/* ── LAYOUT ── */
+.main-grid{display:grid;grid-template-columns:310px 1fr;gap:14px;align-items:start;}
+@media(max-width:820px){.main-grid{grid-template-columns:1fr;}}
+
+/* ── PANEL ── */
+.panel{background:var(--bg2);border:1px solid var(--border);padding:14px;margin-bottom:10px;overflow:hidden;}
+.panel:last-child{margin-bottom:0;}
+.pt{font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--text3);
+  margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:8px;}
+.pt::before{content:'';width:3px;height:11px;background:var(--accent);display:block;flex-shrink:0;}
+
+/* ── FORM ELEMENTS ── */
+.ig{margin-bottom:10px;}
+.ig:last-child{margin-bottom:0;}
+.ig label{display:block;font-size:10px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--text2);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.g2>*{min-width:0;}
+.g2>.ig{margin-bottom:0;}
+.iwu{display:flex;width:100%;min-width:0;}
+.iwu input{flex:1 1 0;min-width:0;background:var(--bg3);border:1px solid var(--border);border-right:none;
+  color:var(--text);font-family:'JetBrains Mono',monospace;font-size:12px;
+  padding:6px 8px;outline:none;transition:border-color .15s;}
+.iwu input:focus{border-color:var(--accent);}
+.ub{flex:0 0 auto;background:var(--bg4);border:1px solid var(--border);
+  padding:6px 7px;font-size:10px;color:var(--text3);
+  font-family:'JetBrains Mono',monospace;white-space:nowrap;line-height:1.8;}
+input[type=text].bare{width:100%;background:var(--bg3);border:1px solid var(--border);
+  color:var(--text);font-family:'JetBrains Mono',monospace;font-size:12px;
+  padding:6px 8px;outline:none;transition:border-color .15s;}
+input[type=text].bare:focus{border-color:var(--accent);}
+select{width:100%;min-width:0;background:var(--bg3);border:1px solid var(--border);
+  color:var(--text);font-family:'Barlow Condensed',sans-serif;font-size:13px;
+  padding:6px 24px 6px 8px;outline:none;cursor:pointer;
+  -webkit-appearance:none;appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23686460'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 8px center;
+  transition:border-color .15s;}
+select:focus{border-color:var(--accent);}
+.hint{font-size:10px;color:var(--text3);margin-top:4px;padding:4px 8px;background:var(--bg);border-left:2px solid var(--border);}
+
+/* ── TOL TABLE ── */
+.ttable{width:100%;border-collapse:collapse;font-family:'JetBrains Mono',monospace;font-size:10.5px;}
+.ttable td,.ttable th{padding:4px 7px;border:1px solid var(--border);}
+.ttable th{font-family:'Barlow Condensed',sans-serif;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);background:var(--bg);font-weight:600;}
+.ttable td:first-child{text-align:left;color:var(--text2);}
+.ttable td{text-align:right;}
+.vp{color:var(--accent2);}.vn{color:var(--blue);}.vz{color:var(--text3);}
+
+/* ── COMPARISON TABLE ── */
+.ctbl{width:100%;border-collapse:collapse;font-size:12px;}
+.ctbl th,.ctbl td{padding:6px 10px;border:1px solid var(--border);vertical-align:middle;}
+.ctbl thead tr th{background:var(--bg);font-family:'Barlow Condensed',sans-serif;font-size:9px;
+  letter-spacing:.1em;text-transform:uppercase;font-weight:600;}
+.ctbl thead tr th.min-h{color:var(--blue);}
+.ctbl thead tr th.max-h{color:var(--accent2);}
+.ctbl tbody tr:hover td{background:rgba(255,255,255,.012);}
+.ck{font-size:11px;color:var(--text2);white-space:nowrap;max-width:160px;}
+.cv{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--text);text-align:right;vertical-align:top;}
+.cv.na{color:var(--text3);font-weight:400;font-size:11px;}
+.cv.ok{color:var(--green);}
+.cv.warn-v{color:var(--yellow);}
+.cv.bad{color:var(--red);}
+.cu{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text3);margin-left:2px;font-weight:400;}
+/* mini stress bar inside table cell */
+.mb{margin-top:3px;}
+.mb-bg{height:3px;background:var(--bg4);overflow:hidden;}
+.mb-fill{height:100%;transition:width .3s,background .3s;}
+.mb-lbl{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text3);display:flex;justify-content:space-between;margin-top:1px;}
+/* section divider row */
+.ctbl tr.sec-hdr td{background:rgba(255,255,255,.025);font-family:'Barlow Condensed',sans-serif;
+  font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);
+  padding:4px 10px;border-top:2px solid var(--border);}
+
+/* ── RESULT CARDS (for thermal) ── */
+.rg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
+.rg:last-child{margin-bottom:0;}
+.rc{background:var(--bg3);border:1px solid var(--border);padding:10px 12px;}
+.rc.wide{grid-column:1/-1;}
+.rc.temp{border-color:rgba(94,174,255,.18);background:rgba(94,174,255,.03);}
+.rl{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:3px;}
+.rv{font-family:'JetBrains Mono',monospace;font-size:17px;font-weight:600;color:var(--accent2);line-height:1;}
+.ru{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text3);margin-left:3px;}
+.rsub{font-size:11px;color:var(--text2);margin-top:3px;}
+/* inline stress bar for cards */
+.sbar-wrap{margin-top:5px;}
+.sbar-bg{height:4px;background:var(--bg);border:1px solid var(--border);overflow:hidden;}
+.sbar-fill{height:100%;transition:width .35s,background .35s;}
+.sbar-lbl{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text3);margin-top:2px;display:flex;justify-content:space-between;}
+
+/* ── PREHEAT BOX ── */
+.preheat-box{background:rgba(94,174,255,.05);border:1px solid rgba(94,174,255,.18);padding:12px 14px;margin-bottom:10px;}
+.preheat-val{font-family:'JetBrains Mono',monospace;font-size:28px;font-weight:700;color:var(--blue);line-height:1;}
+.preheat-unit{font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--text3);margin-left:4px;}
+.preheat-sub{font-size:11px;color:var(--text2);margin-top:4px;}
+.preheat-rec{font-size:11px;color:var(--blue);margin-top:3px;}
+
+/* ── FORMULA NOTE ── */
+.fnote{font-size:10px;color:var(--text3);line-height:1.65;background:var(--bg);border:1px solid var(--border);padding:8px 10px;margin-top:8px;}
+.fnote b{color:var(--text2);}
+
+/* ── DIAGRAM ── */
+#xsec{display:block;width:100%;max-height:190px;}
+
+/* ── COLLAPSIBLE ── */
+.collapse-hdr{display:flex;align-items:center;gap:8px;cursor:pointer;background:none;border:none;padding:0;width:100%;
+  font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--text2);transition:color .15s;}
+.collapse-hdr:hover{color:var(--accent2);}
+.c-arrow{font-size:10px;width:10px;text-align:center;transition:transform .2s;display:inline-block;flex-shrink:0;}
+.c-arrow.open{transform:rotate(90deg);}
+.collapse-body{display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);}
+.collapse-body.open{display:block;}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:6px;background:var(--bg3);border:1px solid var(--border);
+  color:var(--text2);font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:.08em;
+  text-transform:uppercase;padding:6px 14px;cursor:pointer;transition:border-color .15s,color .15s;margin-top:10px;}
+.btn:hover{border-color:var(--accent);color:var(--accent2);}
+.btn.primary{background:rgba(217,119,6,.10);border-color:rgba(217,119,6,.35);color:var(--accent2);}
+.btn.primary:hover{background:rgba(217,119,6,.20);}
+
+/* ── CUSTOM MAT LIST ── */
+.cmat-list{margin-top:10px;}
+.cmat-item{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;
+  background:var(--bg);border:1px solid var(--border);padding:7px 10px;margin-bottom:4px;}
+.cmat-item:last-child{margin-bottom:0;}
+.cmat-name{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent2);}
+.cmat-props{color:var(--text3);font-family:'JetBrains Mono',monospace;font-size:9.5px;margin-top:2px;word-break:break-word;line-height:1.5;}
+.cmat-del{background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:0;line-height:1;flex-shrink:0;}
+.cmat-del:hover{color:var(--red);}
+.cmat-err{font-size:10px;color:var(--red);margin-top:6px;display:none;}
+
+/* ── PROJECT / NOTES ── */
+.notes-ta{
+  width:100%;background:var(--bg3);border:1px solid var(--border);
+  color:var(--text);font-family:'JetBrains Mono',monospace;font-size:11px;
+  padding:7px 9px;outline:none;resize:vertical;min-height:72px;
+  line-height:1.55;transition:border-color .15s;
+}
+.notes-ta:focus{border-color:var(--accent);}
+.notes-ta::placeholder{color:var(--text3);}
+
+/* ── EXPORT BUTTON ── */
+.export-btn{
+  display:flex;align-items:center;gap:8px;
+  background:rgba(217,119,6,.12);border:1px solid rgba(217,119,6,.45);
+  color:var(--accent2);font-family:'Barlow Condensed',sans-serif;
+  font-size:12px;letter-spacing:.1em;text-transform:uppercase;
+  padding:9px 20px;cursor:pointer;transition:background .15s,border-color .15s;
+  width:100%;justify-content:center;margin-bottom:10px;
+}
+.export-btn:hover{background:rgba(217,119,6,.24);border-color:var(--accent2);}
+.export-btn svg{flex-shrink:0;}
+
+/* ══════════════════════════════════════════════════════════════════
+   ENGINEERING WORKBOOK · UNIFIED DESIGN SYSTEM
+   Greyscale + single accent (#6B8AFF) · Inter + JetBrains Mono
+   ══════════════════════════════════════════════════════════════════ */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+  /* ── Master palette ── */
+  --bg:#18181b !important; --bg2:#18181b !important; --bg3:#1e1e22 !important; --bg4:#222226 !important;
+  --panel:#1e1e22 !important; --surface:#222226 !important; --surface2:#2a2a2f !important;
+  --s2:#2a2a2f !important;
+  --border:#313138 !important; --border2:#3c3c44 !important; --border-focus:#6B8AFF !important;
+  --text:#d1d1d6 !important; --text2:#d1d1d6 !important; --text3:#6e6e78 !important;
+  --bright:#eeeef1 !important; --dim:#8c8c96 !important; --muted:#5a5a64 !important;
+  --accent:#6B8AFF !important; --accent2:#8aa4ff !important;
+  --a2:#8aa4ff !important; --ag:rgba(107,138,255,.10) !important; --a2g:rgba(138,164,255,.10) !important;
+  --good:#4aba78 !important; --warn:#d4993a !important; --danger:#d45050 !important;
+  --r:#d45050 !important; --rs:rgba(212,80,80,.12) !important;
+  --info:#6B8AFF !important; --blue:#6B8AFF !important; --green:#4aba78 !important;
+  --orange:#d4993a !important; --yellow:#d4993a !important; --red:#d45050 !important;
+  --cyan:#6B8AFF !important; --purple:#8c8c96 !important; --wg:rgba(212,153,58,.10) !important;
+
+  /* Lug-specific vars */
+  --bg-deep:#18181b !important; --bg-card:#222226 !important; --bg-input:#1e1e22 !important;
+  --text-primary:#eeeef1 !important; --text-secondary:#d1d1d6 !important;
+  --text-dim:#8c8c96 !important; --text-faint:#5a5a64 !important; --text-muted:#6e6e78 !important;
+  --accent-amber:#d4993a !important; --accent-green:#4aba78 !important;
+
+  /* Fonts */
+  --sans:'Inter',-apple-system,'SF Pro Display',system-ui,sans-serif !important;
+  --mono:'JetBrains Mono',ui-monospace,'SF Mono',monospace !important;
+}
+
+/* ── Global resets ── */
+body {
+  font-family: 'Inter',-apple-system,'SF Pro Display',system-ui,sans-serif !important;
+  background: #18181b !important;
+  color: #d1d1d6 !important;
+  -webkit-font-smoothing: antialiased !important;
+  background-image: none !important;
+}
+body::before { background-image: none !important; content: none !important; }
+
+/* ── Typography ── */
+h1,h2,h3,h4,h5,h6 { font-family: 'Inter',-apple-system,system-ui,sans-serif !important; }
+code, pre, .mono, [class*="result-val"], [class*="big-val"], [class*="res-val"],
+.v, .badge, .dt, .psz, td { font-family: 'JetBrains Mono',ui-monospace,monospace !important; }
+
+/* ── Cards / Panels ── */
+.card, .panel, .sec, [class*="big-card"] {
+  background: #222226 !important;
+  border: 1px solid #313138 !important;
+  border-radius: 10px !important;
+}
+.card-title, .card-label, .panel-title, [class*="card-title"], .pt, .chdr,
+[class*="pt"] > span {
+  font-family: 'Inter',-apple-system,system-ui,sans-serif !important;
+  font-size: 10px !important; font-weight: 600 !important;
+  color: #6e6e78 !important; text-transform: uppercase !important;
+  letter-spacing: 0.07em !important;
+}
+
+/* ── Inputs ── */
+input[type="number"], input[type="text"], select, textarea {
+  background: #1e1e22 !important;
+  border: 1px solid #3c3c44 !important;
+  border-radius: 6px !important;
+  color: #eeeef1 !important;
+  font-family: 'JetBrains Mono',ui-monospace,monospace !important;
+  transition: border-color .15s !important;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: #6B8AFF !important;
+  outline: none !important;
+}
+select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236e6e78'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 8px center !important;
+}
+
+/* ── Buttons ── */
+button, .btn, [class*="btn"] {
+  font-family: 'Inter',-apple-system,system-ui,sans-serif !important;
+  border-radius: 6px !important;
+  transition: all .12s !important;
+}
+.btn-amber, .btn-blue, .btn-green, .btn-red, .btn-dim,
+[class*="export"], [class*="save"] {
+  background: #2a2a2f !important;
+  border: 1px solid #3c3c44 !important;
+  color: #8c8c96 !important;
+}
+.btn-amber:hover, .btn-blue:hover, .btn-green:hover, .btn-dim:hover,
+[class*="export"]:hover, [class*="save"]:hover {
+  background: #313138 !important;
+  border-color: #4a4a54 !important;
+  color: #d1d1d6 !important;
+}
+/* Active/primary buttons get the accent */
+.btn.primary, [class*="btn primary"], .btn-accent {
+  background: rgba(107,138,255,.10) !important;
+  border: 1px solid rgba(107,138,255,.28) !important;
+  color: #6B8AFF !important;
+}
+
+/* ── Headers ── */
+.header, .hdr, [class*="topbar"] {
+  background: #1e1e22 !important;
+  border-bottom: 1px solid #313138 !important;
+}
+.header h1, .hdr h1 {
+  font-family: 'Inter',-apple-system,system-ui,sans-serif !important;
+  color: #eeeef1 !important;
+}
+.header .desc, .header .sub, .hdr .sub {
+  color: #6e6e78 !important;
+}
+
+/* ── Results / values ── */
+.result-val, .res-val, .big-val, .v, .badge {
+  color: #eeeef1 !important;
+}
+.result-label, .res-label, .big-label, .form-label, .row-label, .lbl, .l, .fl {
+  color: #8c8c96 !important;
+  font-family: 'Inter',-apple-system,system-ui,sans-serif !important;
+}
+.result-unit, .res-unit, .big-unit, .form-unit, .funit, .fu {
+  color: #5a5a64 !important;
+  font-family: 'JetBrains Mono',ui-monospace,monospace !important;
+}
+
+/* ── Tables ── */
+table { border-collapse: collapse !important; }
+thead th {
+  font-family: 'Inter',-apple-system,system-ui,sans-serif !important;
+  font-size: 9px !important; font-weight: 600 !important;
+  color: #6e6e78 !important; text-transform: uppercase !important;
+  letter-spacing: .06em !important;
+  border-bottom: 1px solid #3c3c44 !important;
+  background: transparent !important;
+}
+tbody td {
+  border-bottom: 1px solid #27272c !important;
+  font-size: 11px !important;
+}
+tbody tr:hover { background: #2a2a2f !important; }
+
+/* ── Notes / hints / info boxes ── */
+.note, .note-box, .info-box, .hint, .method, .fnote {
+  background: #1e1e22 !important;
+  border: 1px solid #313138 !important;
+  border-radius: 8px !important;
+  color: #8c8c96 !important;
+}
+.danger-box {
+  background: rgba(212,80,80,.06) !important;
+  border: 1px solid rgba(212,80,80,.2) !important;
+}
+
+/* ── Dividers ── */
+.divider, hr {
+  border-color: #313138 !important;
+  background: #313138 !important;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 5px !important; }
+::-webkit-scrollbar-track { background: #18181b !important; }
+::-webkit-scrollbar-thumb { background: #3c3c44 !important; border-radius: 3px !important; }
+
+/* ── Pill/chip elements ── */
+.chip, .tag, .pill-bar, [class*="quick-btn"], [class*="fit-type-badge"] {
+  font-family: 'Inter',-apple-system,system-ui,sans-serif !important;
+  border-radius: 6px !important;
+}
+
+/* ── Number formatting ── */
+input[type=number] { -moz-appearance: textfield !important; }
+input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none !important; }
+
+/* ── Canvas containers ── */
+canvas {
+  border-radius: 8px !important;
+}
+
+/* ── SVG diagrams ── */
+svg text {
+  font-family: 'JetBrains Mono',ui-monospace,monospace !important;
+}
+
+/* ── Grid containers ── */
+.grid-main, .grid-2, .grid-3, .g2, .grid3, .main-grid, .dgrid {
+  gap: 12px !important;
+}
+
+/* ── Toggle / knob switches ── */
+.knob { border-radius: 12px !important; }
+
+/* ── Modal overlays ── */
+.modal-overlay, .modal {
+  backdrop-filter: blur(6px) !important;
+}
+.modal {
+  background: #222226 !important;
+  border: 1px solid #313138 !important;
+  border-radius: 12px !important;
+}
+
+/* ── Workbook nav ── */
+.wb-back {
+  position: fixed; top: 12px; left: 12px; z-index: 9998;
+  padding: 7px 14px; border-radius: 8px; font-size: 12px; font-weight: 600;
+  font-family: 'Inter',-apple-system,system-ui,sans-serif;
+  background: #1e1e22; border: 1px solid #313138;
+  color: #8c8c96; cursor: pointer; text-decoration: none;
+  display: flex; align-items: center; gap: 6px;
+  transition: all .15s; backdrop-filter: blur(8px);
+}
+.wb-back:hover { color: #eeeef1; border-color: rgba(107,138,255,.3); background: #222226; }
+
+/* ── CAD image ── */
+.cad-zone { border: 1.5px dashed #3c3c44; border-radius: 10px; padding: 16px; text-align: center; cursor: pointer; transition: all .2s; position: relative; background: rgba(0,0,0,.12) }
+.cad-zone:hover { border-color: #5a5a64; background: rgba(0,0,0,.2) }
+.cad-zone.has-img { border: 1px solid #313138; padding: 4px; background: transparent }
+.cad-thumb { max-width: 100%; max-height: 140px; border-radius: 6px; cursor: pointer; display: block; margin: 0 auto }
+.cad-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.92); z-index: 99999; display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: 0; pointer-events: none; transition: opacity .25s }
+.cad-overlay.show { opacity: 1; pointer-events: auto }
+.cad-overlay img { max-width: 92vw; max-height: 92vh; border-radius: 10px; box-shadow: 0 8px 60px rgba(0,0,0,.5) }
+.cad-rm { position: absolute; top: 6px; right: 8px; background: rgba(180,50,50,.7); color: #fff; border: none; border-radius: 6px; font-size: 10px; padding: 3px 9px; cursor: pointer; z-index: 2 }
+.cad-rm:hover { background: rgba(210,60,60,.9) }
+
+/* ── PDF save ── */
+.pdf-btn { position: fixed; bottom: 14px; right: 14px; z-index: 9998; padding: 8px 16px; border-radius: 8px; font-size: 11px; font-weight: 600; border: 1px solid #313138; background: #1e1e22; color: #8c8c96; cursor: pointer; font-family: 'Inter',-apple-system,system-ui,sans-serif; display: flex; align-items: center; gap: 6px; transition: all .15s; backdrop-filter: blur(8px) }
+.pdf-btn:hover { color: #eeeef1; border-color: rgba(107,138,255,.3) }
+
+@media print { .wb-back, .pdf-btn, .cad-overlay { display: none !important; } }
+</style>
+</head>
+<body>
+<div class="app">
+
+<header>
+  <h1>Interference Fit Calculator</h1>
+  <span class="sub">Hoop Stress · Shape Change · Torque Capacity · Thermal Analysis</span>
+  <span class="badge">ISO 286</span>
+  <span class="badge">Lamé Thick-Wall</span>
+</header>
+
+<!-- ════════════ GLOBAL WARNING BANNER ════════════ -->
+<div class="gw" id="globalWarn">
+  <div class="gw-hdr">Design Warnings</div>
+  <div id="warnItems"></div>
+</div>
+
+<div style="max-width:960px;margin:0 auto 12px"><div id="intfitCadZone" class="cad-zone" style="max-width:300px"></div></div>
+<div class="main-grid">
+
+<!-- ══════════════════════════════
+     LEFT COLUMN
+══════════════════════════════ -->
+<div>
+
+  <!-- GEOMETRY -->
+  <div class="panel">
+    <div class="pt">Geometry</div>
+    <div class="ig">
+      <label>Nominal Interface Diameter (d)</label>
+      <div class="iwu"><input type="number" id="dNom" value="50" min="3" max="500" step="0.5"><span class="ub">mm</span></div>
+    </div>
+    <div class="ig">
+      <label>Hub Outer Ø (D<sub>o</sub>)</label>
+      <div class="iwu"><input type="number" id="dHub" value="100" min="1" step="0.5"><span class="ub">mm</span></div>
+    </div>
+    <div class="ig">
+      <label>Shaft Inner Ø (D<sub>i</sub>) — 0 = solid</label>
+      <div class="iwu"><input type="number" id="dShaft" value="0" min="0" step="0.5"><span class="ub">mm</span></div>
+    </div>
+  </div>
+
+  <!-- FIT SELECTION -->
+  <div class="panel">
+    <div class="pt">ISO 286 Fit Selection</div>
+    <div class="g2">
+      <div class="ig">
+        <label>Hole Tolerance</label>
+        <select id="holeFit" onchange="onHoleFitChange()">
+          <option value="H5">H5</option>
+          <option value="H6">H6</option>
+          <option value="H7" selected>H7</option>
+          <option value="H8">H8</option>
+          <option value="H9">H9</option>
+          <option value="custom" style="color:var(--accent2)">Custom…</option>
+        </select>
+      </div>
+      <div class="ig">
+        <label>Shaft Tolerance</label>
+        <select id="shaftFit" onchange="onShaftFitChange()">
+          <option value="p5">p5</option><option value="p6" selected>p6</option>
+          <option value="r5">r5</option><option value="r6">r6</option>
+          <option value="s5">s5</option><option value="s6">s6</option><option value="s7">s7</option>
+          <option value="t5">t5</option><option value="t6">t6</option>
+          <option value="u6">u6</option><option value="u7">u7</option>
+          <option value="x6">x6</option><option value="x7">x7</option>
+          <option value="custom" style="color:var(--accent2)">Custom…</option>
+        </select>
+      </div>
+    </div>
+    <!-- Custom shaft deviations — shown only when Custom is selected -->
+    <div id="customShaftRow" style="display:none;margin-top:8px;background:var(--bg);border:1px solid rgba(217,119,6,.25);padding:10px;">
+      <div style="font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:8px;">Custom Shaft Deviations</div>
+      <div class="g2">
+        <div class="ig" style="margin-bottom:0;">
+          <label>Lower Dev. ei</label>
+          <div class="iwu"><input type="number" id="shaftEI" value="25" step="1"><span class="ub">μm</span></div>
+        </div>
+        <div class="ig" style="margin-bottom:0;">
+          <label>Upper Dev. es</label>
+          <div class="iwu"><input type="number" id="shaftES" value="50" step="1"><span class="ub">μm</span></div>
+        </div>
+      </div>
+      <div class="hint" style="margin-top:6px;">ei = lower, es = upper. Positive = oversize (interference). IT = es − ei.</div>
+    </div>
+    <!-- Custom hole deviations — shown only when Custom is selected -->
+    <div id="customHoleRow" style="display:none;margin-top:8px;background:var(--bg);border:1px solid rgba(217,119,6,.25);padding:10px;">
+      <div style="font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:8px;">Custom Hole Deviations</div>
+      <div class="g2">
+        <div class="ig" style="margin-bottom:0;">
+          <label>Lower Dev. EI</label>
+          <div class="iwu"><input type="number" id="holeEI" value="0" step="1"><span class="ub">μm</span></div>
+        </div>
+        <div class="ig" style="margin-bottom:0;">
+          <label>Upper Dev. ES</label>
+          <div class="iwu"><input type="number" id="holeES" value="25" step="1"><span class="ub">μm</span></div>
+        </div>
+      </div>
+      <div class="hint" style="margin-top:6px;">EI = lower, ES = upper. Positive = oversize. IT = ES − EI.</div>
+    </div>
+    <div class="pt" style="margin-top:12px;">Calculated Limits</div>
+    <table class="ttable">
+      <thead><tr><th>Feature</th><th>Dev Min</th><th>Dev Max</th><th>IT (μm)</th></tr></thead>
+      <tbody id="tolBody"><tr><td colspan="4" style="text-align:center;color:var(--text3)">—</td></tr></tbody>
+    </table>
+  </div>
+
+  <!-- JOINT CAPACITY -->
+  <div class="panel">
+    <div class="pt">Joint Capacity Inputs</div>
+    <div class="ig">
+      <label>Contact Length (L)</label>
+      <div class="iwu"><input type="number" id="cLen" value="50" min="1" step="1"><span class="ub">mm</span></div>
+    </div>
+    <div class="ig">
+      <label>Friction Coefficient (μ)</label>
+      <div class="iwu"><input type="number" id="mu" value="0.12" min="0.01" max="0.5" step="0.01"><span class="ub">—</span></div>
+    </div>
+    <div class="hint">Typical: 0.06–0.10 lubricated · 0.10–0.15 dry steel · 0.15–0.22 steel/Al</div>
+  </div>
+
+  <!-- MATERIALS -->
+  <div class="panel">
+    <div class="pt">Materials</div>
+    <div class="ig">
+      <label>Hub Material</label>
+      <select id="hubMat">
+        <optgroup label="── Steel ──">
+          <option value="s275">S275 Structural</option>
+          <option value="s355" selected>S355 Structural</option>
+          <option value="s690">S690 High Strength</option>
+          <option value="m4140">4140 Q&amp;T (655 MPa)</option>
+          <option value="en24">En24 / 817M40 (850 MPa)</option>
+          <option value="ss304">Stainless 304</option>
+          <option value="ss316">Stainless 316</option>
+          <option value="h13">H13 Tool Steel</option>
+        </optgroup>
+        <optgroup label="── Aluminium ──">
+          <option value="al6061">6061-T6</option>
+          <option value="al7075">7075-T6</option>
+          <option value="al2024">2024-T4</option>
+          <option value="al5052">5052-H32</option>
+          <option value="al6082">6082-T6</option>
+        </optgroup>
+        <optgroup label="── Custom ──" id="hubCustomGrp" style="display:none"></optgroup>
+      </select>
+    </div>
+    <div class="ig">
+      <label>Shaft Material</label>
+      <select id="shaftMat">
+        <optgroup label="── Steel ──">
+          <option value="s275">S275 Structural</option>
+          <option value="s355">S355 Structural</option>
+          <option value="s690">S690 High Strength</option>
+          <option value="m4140" selected>4140 Q&amp;T (655 MPa)</option>
+          <option value="en24">En24 / 817M40 (850 MPa)</option>
+          <option value="ss304">Stainless 304</option>
+          <option value="ss316">Stainless 316</option>
+          <option value="h13">H13 Tool Steel</option>
+        </optgroup>
+        <optgroup label="── Aluminium ──">
+          <option value="al6061">6061-T6</option>
+          <option value="al7075">7075-T6</option>
+          <option value="al2024">2024-T4</option>
+          <option value="al5052">5052-H32</option>
+          <option value="al6082">6082-T6</option>
+        </optgroup>
+        <optgroup label="── Custom ──" id="shaftCustomGrp" style="display:none"></optgroup>
+      </select>
+    </div>
+    <div id="matTable" style="margin-top:8px;"></div>
+  </div>
+
+  <!-- TEMPERATURE -->
+  <div class="panel">
+    <div class="pt">Temperature Conditions</div>
+    <div class="ig">
+      <label>Ambient / As-Built Temp</label>
+      <div class="iwu"><input type="number" id="tAmb" value="20" step="1"><span class="ub">°C</span></div>
+    </div>
+    <div class="ig">
+      <label>Hot Operating Temp</label>
+      <div class="iwu"><input type="number" id="tHot" value="120" step="1"><span class="ub">°C</span></div>
+    </div>
+    <div class="hint">Hub heated for assembly. Hot temp shows in-service interference shift.</div>
+  </div>
+
+  <!-- CUSTOM MATERIAL -->
+  <div class="panel">
+    <button class="collapse-hdr" onclick="togglePanel('cmatBody','cmatArr')">
+      <span class="c-arrow" id="cmatArr">▶</span>
+      Add Custom Material
+    </button>
+    <div class="collapse-body" id="cmatBody">
+      <div class="ig" style="margin-bottom:8px;">
+        <label>Material Name</label>
+        <input type="text" class="bare" id="cName" placeholder="e.g. Titanium Ti-6Al-4V">
+      </div>
+      <div class="g2" style="margin-bottom:8px;">
+        <div class="ig" style="margin-bottom:0;">
+          <label>Modulus E</label>
+          <div class="iwu"><input type="number" id="cE" placeholder="114" min="0.1" step="0.1"><span class="ub">GPa</span></div>
+        </div>
+        <div class="ig" style="margin-bottom:0;">
+          <label>Poisson ν</label>
+          <div class="iwu"><input type="number" id="cNu" placeholder="0.34" min="0.01" max="0.49" step="0.01"><span class="ub">—</span></div>
+        </div>
+      </div>
+      <div class="g2">
+        <div class="ig" style="margin-bottom:0;">
+          <label>Yield σ<sub>y</sub></label>
+          <div class="iwu"><input type="number" id="cSy" placeholder="880" min="1" step="1"><span class="ub">MPa</span></div>
+        </div>
+        <div class="ig" style="margin-bottom:0;">
+          <label>CTE α</label>
+          <div class="iwu"><input type="number" id="cCTE" placeholder="9.0" min="0.1" step="0.1" title="Coefficient of Thermal Expansion μm/m·K (= 1×10⁻⁶ /°C)"><span class="ub">µ/m·K</span></div>
+        </div>
+      </div>
+      <div class="cmat-err" id="cmatErr"></div>
+      <button class="btn primary" onclick="addCustomMaterial()">+ Add to Library</button>
+      <div class="cmat-list" id="cmatList"></div>
+    </div>
+  </div>
+
+</div><!-- end left col -->
+
+<!-- ══════════════════════════════
+     RIGHT COLUMN
+══════════════════════════════ -->
+<div>
+
+  <!-- EXPORT -->
+  <button class="export-btn" onclick="exportToImage()">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    Export Calculation Sheet
+  </button>
+
+  <!-- ASSEMBLY DIAGRAM -->
+  <div class="panel">
+    <div class="pt">Assembly Cross-Section</div>
+    <svg id="xsec" viewBox="0 0 480 200" xmlns="http://www.w3.org/2000/svg"></svg>
+  </div>
+
+  <!-- COMPARISON TABLE: MIN vs MAX INTERFERENCE -->
+  <div class="panel" id="compPanel" style="display:none">
+    <div class="pt">Interference Analysis — LMC (Min) vs MMC (Max) Condition</div>
+    <table class="ctbl">
+      <thead>
+        <tr>
+          <th style="text-align:left;color:var(--text3);">Parameter</th>
+          <th class="min-h">▼ Min Interference<br><span style="font-size:8px;font-weight:400;letter-spacing:0;">LMC — Loosest Fit</span></th>
+          <th class="max-h">▲ Max Interference<br><span style="font-size:8px;font-weight:400;letter-spacing:0;">MMC — Tightest Fit</span></th>
+        </tr>
+      </thead>
+      <tbody id="compBody"></tbody>
+    </table>
+    <div class="fnote" style="margin-top:8px;">
+      <b>Lamé equations:</b>&nbsp;
+      p = δ/(d·(C<sub>H</sub>/E<sub>H</sub>+C<sub>S</sub>/E<sub>S</sub>)) &nbsp;|&nbsp;
+      C<sub>H</sub> = (D_o²+d²)/(D_o²−d²)+ν<sub>H</sub> &nbsp;|&nbsp;
+      C<sub>S</sub>(solid) = 1−ν<sub>S</sub> &nbsp;|&nbsp;
+      C<sub>S</sub>(hollow) = (d²+D_i²)/(d²−D_i²)−ν<sub>S</sub><br>
+      Torque T = μ·p·π·d²·L/2 &nbsp;|&nbsp; Axial F = μ·p·π·d·L &nbsp;|&nbsp;
+      Hub σ<sub>θ</sub>(i) = p·(D_o²+d²)/(D_o²−d²) &nbsp;|&nbsp; Hub σ<sub>θ</sub>(o) = 2p·d²/(D_o²−d²)
+    </div>
+  </div>
+
+  <!-- THERMAL ANALYSIS -->
+  <div class="panel" id="tempPanel" style="display:none">
+    <div class="pt">Thermal Analysis</div>
+    <div class="preheat-box">
+      <div class="rl" style="margin-bottom:6px;">Min Hub Temperature for Slip Assembly</div>
+      <div><span class="preheat-val" id="preheatVal">—</span><span class="preheat-unit">°C</span></div>
+      <div class="preheat-sub" id="preheatSub"></div>
+      <div class="preheat-rec" id="preheatRec"></div>
+    </div>
+    <div class="pt" style="margin-top:0;margin-bottom:10px;">Hot Operating Condition</div>
+    <div class="rg" id="hotPanel"></div>
+    <div class="fnote" style="margin-top:8px;">
+      <b>Thermal:</b> δ_hot = δ_amb + d·(α<sub>S</sub>−α<sub>H</sub>)·ΔT &nbsp;|&nbsp;
+      T<sub>preheat</sub> = T<sub>amb</sub> + δ<sub>max</sub>/(d·α<sub>H</sub>) + margin &nbsp;|&nbsp;
+      Shaft held at ambient during assembly. All diametral.
+    </div>
+  </div>
+
+</div><!-- end right col -->
+</div><!-- end main-grid -->
+</div><!-- end app -->
+
+<script>
+// ── Export data store ──
+const _exp = {};
+
+// ══════════════════════════════════════════════════════════════
+// MATERIAL DATABASE  E=MPa, CTE=μm/m·K
+// ══════════════════════════════════════════════════════════════
+const MAT = {
+  s275:  {name:'S275',        E:200e3,nu:.30,Sy:275, cte:12.0},
+  s355:  {name:'S355',        E:200e3,nu:.30,Sy:355, cte:12.0},
+  s690:  {name:'S690',        E:210e3,nu:.30,Sy:690, cte:12.0},
+  m4140: {name:'4140 Q&T',    E:205e3,nu:.30,Sy:655, cte:12.3},
+  en24:  {name:'En24/817M40', E:205e3,nu:.30,Sy:850, cte:12.3},
+  ss304: {name:'SS 304',      E:193e3,nu:.29,Sy:215, cte:17.2},
+  ss316: {name:'SS 316',      E:193e3,nu:.29,Sy:205, cte:16.0},
+  h13:   {name:'H13 Tool',    E:215e3,nu:.30,Sy:1380,cte:11.5},
+  al6061:{name:'6061-T6',     E:69e3, nu:.33,Sy:276, cte:23.6},
+  al7075:{name:'7075-T6',     E:71e3, nu:.33,Sy:503, cte:23.4},
+  al2024:{name:'2024-T4',     E:73e3, nu:.33,Sy:324, cte:23.2},
+  al5052:{name:'5052-H32',    E:70e3, nu:.33,Sy:193, cte:23.8},
+  al6082:{name:'6082-T6',     E:70e3, nu:.33,Sy:260, cte:23.0},
+};
+
+const customMats={};let customCount=0;
+
+function togglePanel(bId,aId){
+  const open=document.getElementById(bId).classList.toggle('open');
+  document.getElementById(aId).classList.toggle('open',open);
+}
+function addCustomMaterial(){
+  const err=document.getElementById('cmatErr'); err.style.display='none';
+  const name=document.getElementById('cName').value.trim();
+  const E=parseFloat(document.getElementById('cE').value);
+  const nu=parseFloat(document.getElementById('cNu').value);
+  const Sy=parseFloat(document.getElementById('cSy').value);
+  const cte=parseFloat(document.getElementById('cCTE').value);
+  if(!name)                     return showCErr('Please enter a material name.');
+  if(isNaN(E)||E<=0)            return showCErr('E must be positive (GPa).');
+  if(isNaN(nu)||nu<=0||nu>=.5)  return showCErr('ν must be between 0.01 and 0.49.');
+  if(isNaN(Sy)||Sy<=0)          return showCErr('σ_y must be positive (MPa).');
+  if(isNaN(cte)||cte<=0)        return showCErr('CTE must be positive (μm/m·K).');
+  const key='custom_'+(++customCount);
+  const mat={name,E:E*1000,nu,Sy,cte};
+  customMats[key]=mat; MAT[key]=mat;
+  ['hubCustomGrp','shaftCustomGrp'].forEach(gid=>{
+    const grp=document.getElementById(gid); grp.style.display='';
+    const opt=document.createElement('option');
+    opt.value=key; opt.textContent=name; opt.id='copt_'+key+'_'+gid;
+    grp.appendChild(opt);
+  });
+  renderCustomList();
+  ['cName','cE','cNu','cSy','cCTE'].forEach(id=>document.getElementById(id).value='');
+  calculate();
+}
+function showCErr(msg){const el=document.getElementById('cmatErr');el.textContent='⚠ '+msg;el.style.display='block';}
+function removeCustomMaterial(key){
+  delete MAT[key]; delete customMats[key];
+  ['hubCustomGrp','shaftCustomGrp'].forEach(gid=>{
+    const opt=document.getElementById('copt_'+key+'_'+gid);
+    if(opt)opt.remove();
+    const grp=document.getElementById(gid);
+    if(grp&&!grp.children.length)grp.style.display='none';
+  });
+  ['hubMat','shaftMat'].forEach(sid=>{
+    const sel=document.getElementById(sid);
+    if(sel.value===key)sel.selectedIndex=0;
+  });
+  renderCustomList(); calculate();
+}
+function renderCustomList(){
+  const list=document.getElementById('cmatList');
+  const keys=Object.keys(customMats);
+  if(!keys.length){list.innerHTML='';return;}
+  list.innerHTML=keys.map(k=>{
+    const m=customMats[k];
+    return`<div class="cmat-item">
+      <div><div class="cmat-name">${m.name}</div>
+      <div class="cmat-props">E=${(m.E/1e3).toFixed(0)} GPa &nbsp;ν=${m.nu} &nbsp;σ_y=${m.Sy} MPa &nbsp;α=${m.cte} µ/m·K</div></div>
+      <button class="cmat-del" onclick="removeCustomMaterial('${k}')" title="Remove">✕</button>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════════════════
+// ISO 286 — IT grades & fundamental deviations
+// ══════════════════════════════════════════════════════════════
+const IT_TBL=[
+  [3,3,4,6,10,14,25],[6,4,5,8,12,18,30],[10,4,6,9,15,22,36],
+  [18,5,8,11,18,27,43],[30,6,9,13,21,33,52],[50,7,11,16,25,39,62],
+  [80,8,13,19,30,46,74],[120,10,15,22,35,54,87],[180,12,18,25,40,63,100],
+  [250,14,20,29,46,72,115],[315,16,23,32,52,81,130],[400,18,25,36,57,89,140],
+  [500,20,27,40,63,97,155]
+];
+// Shaft lower deviation ei (μm): cols = [maxD, p, r, s, t, u, x]
+const SHAFT_FD_TBL=[
+  [6,12,15,19,null,23,26],[10,15,19,23,null,28,34],[14,18,23,28,null,33,40],
+  [18,18,23,28,null,33,45],[24,22,28,35,41,41,47],[30,22,28,35,48,48,54],
+  [40,26,34,43,54,60,64],[50,26,34,43,70,70,76],[65,32,41,53,66,87,94],
+  [80,32,43,59,75,102,114],[100,37,51,71,91,124,144],[120,37,54,79,104,144,174],
+  [140,43,63,92,122,170,210],[160,43,65,100,134,190,236],[180,43,68,108,146,210,258],
+  [200,50,77,122,166,236,284],[225,50,80,130,180,258,315],[250,50,84,140,196,284,350],
+  [280,56,94,158,218,315,390],[315,56,98,170,240,350,435],[355,62,108,190,268,390,490],
+  [400,62,114,208,294,435,549],[450,68,126,232,330,490,619],[500,68,132,252,360,540,689]
+];
+const SHAFT_FD_IDX={p:1,r:2,s:3,t:4,u:5,x:6};
+
+// Hole fundamental deviations EI (μm) for H-basis fits — EI always = 0 for H
+// (other basis types removed in favour of Custom option)
+function getIT(d,g){const gi=g-4;if(gi<0||gi>5)return null;for(const r of IT_TBL)if(d<=r[0])return r[1+gi];return IT_TBL.at(-1)[1+gi];}
+function getShaftFD(d,l){const c=SHAFT_FD_IDX[l];if(!c)return null;for(const r of SHAFT_FD_TBL)if(d<=r[0])return r[c];return SHAFT_FD_TBL.at(-1)[c];}
+
+// holeLimits: fitStr = 'H5'..'H9' or 'custom'
+function holeLimits(d, fitStr){
+  if(fitStr==='custom'){
+    const EI=parseFloat(document.getElementById('holeEI').value)||0;
+    const ES=parseFloat(document.getElementById('holeES').value)||0;
+    if(ES<=EI) return null;   // invalid: upper must exceed lower
+    return{min:d+EI/1e3, max:d+ES/1e3, IT:ES-EI, EI, ES, label:'Custom'};
+  }
+  const m=fitStr.match(/^([A-Z]+)(\d+)$/); if(!m) return null;
+  const grade=+m[2];
+  const it=getIT(d,grade); if(!it) return null;
+  // H-basis: EI = 0, ES = IT
+  return{min:d, max:d+it/1e3, IT:it, EI:0, ES:it};
+}
+function shaftLimits(d, fitStr){
+  if(fitStr==='custom'){
+    const ei=parseFloat(document.getElementById('shaftEI').value)||0;
+    const es=parseFloat(document.getElementById('shaftES').value)||0;
+    if(es<=ei) return null;   // invalid: upper must exceed lower
+    return{min:d+ei/1e3, max:d+es/1e3, IT:es-ei, ei, es, label:'Custom'};
+  }
+  const m=fitStr.match(/^([a-z]+)(\d+)$/); if(!m)return null;
+  const letter=m[1],grade=+m[2];
+  const it=getIT(d,grade); if(!it)return null;
+  const ei=getShaftFD(d,letter); if(ei==null)return null;
+  return{min:d+ei/1e3,max:d+(ei+it)/1e3,IT:it,ei,es:ei+it};
+}
+
+// ══════════════════════════════════════════════════════════════
+// MECHANICS  (mm, MPa)
+// ══════════════════════════════════════════════════════════════
+function contactPressure(delta,d,Do,Di,mH,mS){
+  if(delta<=0)return 0;
+  const Ch=(Do*Do+d*d)/(Do*Do-d*d)+mH.nu;
+  const Cs=Di<.001?(1-mS.nu):(d*d+Di*Di)/(d*d-Di*Di)-mS.nu;
+  return delta/(d*(Ch/mH.E+Cs/mS.E));
+}
+function stresses(p,d,Do,Di){
+  if(p<=0)return{hub_i:0,hub_o:0,hub_vm:0,sh_i:0,sh_vm:0};
+  const hi=p*(Do*Do+d*d)/(Do*Do-d*d),ho=2*p*d*d/(Do*Do-d*d);
+  const hvm=Math.sqrt(hi*hi+hi*p+p*p);
+  let si,svm;
+  if(Di<.001){si=-p;svm=p;}
+  else{const k=(d*d+Di*Di)/(d*d-Di*Di);si=-p*k;svm=p*Math.sqrt(k*k+k+1);}
+  return{hub_i:hi,hub_o:ho,hub_vm:hvm,sh_i:si,sh_vm:svm};
+}
+function shapeChange(p,d,Do,Di,mH,mS){
+  if(p<=0)return{dHub:0,dShaft:0,total:0};
+  const dH=p*d/mH.E*((Do*Do+d*d)/(Do*Do-d*d)+mH.nu);
+  const dS=Di<.001?p*d/mS.E*(1-mS.nu):p*d/mS.E*((d*d+Di*Di)/(d*d-Di*Di)-mS.nu);
+  return{dHub:dH,dShaft:dS,total:dH+dS};
+}
+// Torque [N·m] and Axial [kN]
+function torque(p,d,L,mu){return mu*p*Math.PI*d*d*L/2/1e6;}   // d,L mm → N·m
+function axialForce(p,d,L,mu){return mu*p*Math.PI*d*L/1e3;}    // → kN
+// Thermal
+function thermalDelta(delta_amb,d,mH,mS,dT){
+  return delta_amb+d*(mS.cte-mH.cte)*1e-6*dT;
+}
+function minHubTemp(tAmb,dMax,d,mH){
+  return tAmb+(dMax+5e-3)/(d*mH.cte*1e-6);
+}
+
+// ══════════════════════════════════════════════════════════════
+// UI HELPERS
+// ══════════════════════════════════════════════════════════════
+const fv=(v,dp=3)=>(isNaN(v)||!isFinite(v))?'—':v.toFixed(dp);
+const fM=v=>fv(v,1);
+const barC=r=>r<.50?'#4ade80':r<.75?'#fbbf24':r<.95?'#fb923c':'#f87171';
+
+function sbarCell(val,Sy){
+  if(val<=0||Sy<=0)return'';
+  const r=Math.abs(val)/Sy,pct=Math.min(r*100,100).toFixed(1),sf=(Sy/Math.abs(val)).toFixed(2);
+  return`<div class="mb"><div class="mb-bg"><div class="mb-fill" style="width:${pct}%;background:${barC(r)}"></div></div>
+    <div class="mb-lbl"><span>${pct}% σ_y</span><span>SF ${sf}</span></div></div>`;
+}
+function sbarCard(val,Sy){
+  const r=Math.abs(val)/Sy,pct=Math.min(r*100,100).toFixed(1),sf=(Sy/Math.abs(val)).toFixed(2);
+  return`<div class="sbar-wrap"><div class="sbar-bg"><div class="sbar-fill" style="width:${pct}%;background:${barC(r)}"></div></div>
+    <div class="sbar-lbl"><span>${pct}% σ_y</span><span>SF ${sf}</span></div></div>`;
+}
+function card(label,val,unit,sub,wide,extra){
+  return`<div class="rc${wide?' wide':''}${extra?' '+extra:''}">
+    <div class="rl">${label}</div>
+    <div><span class="rv">${val}</span><span class="ru">${unit}</span></div>
+    ${sub?`<div class="rsub">${sub}</div>`:''}
+  </div>`;
+}
+function cvClass(val,Sy){
+  if(!Sy||val<=0)return'cv';
+  const r=val/Sy;
+  return r>1?'cv bad':r>.9?'cv warn-v':r>.6?'cv':'cv ok';
+}
+function naCell(txt){return`<td class="cv na">${txt||'—'}</td>`;}
+
+function matTableHTML(hk,sk){
+  const h=MAT[hk],s=MAT[sk];
+  return`<table class="ttable" style="font-size:10.5px">
+    <thead><tr><th>Property</th><th>Hub</th><th>Shaft</th></tr></thead>
+    <tbody>
+      <tr><td>Name</td><td>${h.name}</td><td>${s.name}</td></tr>
+      <tr><td>E (GPa)</td><td class="vp">${(h.E/1e3).toFixed(0)}</td><td class="vp">${(s.E/1e3).toFixed(0)}</td></tr>
+      <tr><td>ν</td><td>${h.nu}</td><td>${s.nu}</td></tr>
+      <tr><td>σ_y (MPa)</td><td class="vp">${h.Sy}</td><td class="vp">${s.Sy}</td></tr>
+      <tr><td>α (µ/m·K)</td><td class="vp">${h.cte}</td><td class="vp">${s.cte}</td></tr>
+    </tbody>
+  </table>`;
+}
+
+// ══════════════════════════════════════════════════════════════
+// COMPARISON TABLE BUILDER
+// ══════════════════════════════════════════════════════════════
+function secRow(label){
+  return`<tr class="sec-hdr"><td colspan="3">${label}</td></tr>`;
+}
+function compRow(label,minHtml,maxHtml){
+  return`<tr><td class="ck">${label}</td>${minHtml}${maxHtml}</tr>`;
+}
+
+function buildCompTable(dMin,dMax,d,Do,Di,mH,mS,L,mu){
+  const hasMin=dMin>1e-6;
+  const p_min=contactPressure(dMin,d,Do,Di,mH,mS);
+  const p_max=contactPressure(dMax,d,Do,Di,mH,mS);
+  const st_min=stresses(p_min,d,Do,Di);
+  const st_max=stresses(p_max,d,Do,Di);
+  const sc_max=shapeChange(p_max,d,Do,Di,mH,mS);
+  const sc_min=shapeChange(p_min,d,Do,Di,mH,mS);
+  const T_min=torque(p_min,d,L,mu),T_max=torque(p_max,d,L,mu);
+  const F_min=axialForce(p_min,d,L,mu),F_max=axialForce(p_max,d,L,mu);
+
+  const nc=`<span style="color:var(--text3);font-size:11px;font-weight:400;">No contact</span>`;
+
+  let rows='';
+  // ── Interference ──
+  rows+=secRow('Interference');
+  rows+=compRow('δ diametral',
+    hasMin?`<td class="cv">${fv(dMin*1e3,2)}<span class="cu">μm</span></td>`:naCell(nc),
+    `<td class="cv">${fv(dMax*1e3,2)}<span class="cu">μm</span></td>`);
+  rows+=compRow('Contact Pressure p',
+    hasMin?`<td class="cv">${fM(p_min)}<span class="cu">MPa</span></td>`:naCell(nc),
+    `<td class="cv">${fM(p_max)}<span class="cu">MPa</span></td>`);
+
+  // ── Hub Stresses ──
+  rows+=secRow('Hub Stresses');
+  rows+=compRow('σ<sub>θ</sub> inner (tensile)',
+    hasMin?`<td class="${cvClass(st_min.hub_i,mH.Sy)}">${fM(st_min.hub_i)}<span class="cu">MPa</span>${sbarCell(st_min.hub_i,mH.Sy)}</td>`:naCell(nc),
+    `<td class="${cvClass(st_max.hub_i,mH.Sy)}">${fM(st_max.hub_i)}<span class="cu">MPa</span>${sbarCell(st_max.hub_i,mH.Sy)}</td>`);
+  rows+=compRow('σ<sub>θ</sub> outer (tensile)',
+    hasMin?`<td class="cv">${fM(st_min.hub_o)}<span class="cu">MPa</span></td>`:naCell(nc),
+    `<td class="cv">${fM(st_max.hub_o)}<span class="cu">MPa</span></td>`);
+  rows+=compRow('Von Mises (inner)',
+    hasMin?`<td class="${cvClass(st_min.hub_vm,mH.Sy)}">${fM(st_min.hub_vm)}<span class="cu">MPa</span>${sbarCell(st_min.hub_vm,mH.Sy)}</td>`:naCell(nc),
+    `<td class="${cvClass(st_max.hub_vm,mH.Sy)}">${fM(st_max.hub_vm)}<span class="cu">MPa</span>${sbarCell(st_max.hub_vm,mH.Sy)}</td>`);
+
+  // ── Shaft Stresses ──
+  rows+=secRow('Shaft Stresses');
+  rows+=compRow('σ<sub>θ</sub> interface (comp.)',
+    hasMin?`<td class="${cvClass(Math.abs(st_min.sh_i),mS.Sy)}">${fM(Math.abs(st_min.sh_i))}<span class="cu">MPa</span>${sbarCell(Math.abs(st_min.sh_i),mS.Sy)}</td>`:naCell(nc),
+    `<td class="${cvClass(Math.abs(st_max.sh_i),mS.Sy)}">${fM(Math.abs(st_max.sh_i))}<span class="cu">MPa</span>${sbarCell(Math.abs(st_max.sh_i),mS.Sy)}</td>`);
+  rows+=compRow('Von Mises (interface)',
+    hasMin?`<td class="${cvClass(st_min.sh_vm,mS.Sy)}">${fM(st_min.sh_vm)}<span class="cu">MPa</span>${sbarCell(st_min.sh_vm,mS.Sy)}</td>`:naCell(nc),
+    `<td class="${cvClass(st_max.sh_vm,mS.Sy)}">${fM(st_max.sh_vm)}<span class="cu">MPa</span>${sbarCell(st_max.sh_vm,mS.Sy)}</td>`);
+
+  // ── Shape Change ──
+  rows+=secRow('Diametral Shape Change');
+  rows+=compRow('Hub bore expansion ΔD',
+    hasMin?`<td class="cv">${fv(sc_min.dHub*1e3,3)}<span class="cu">μm</span></td>`:naCell(nc),
+    `<td class="cv">${fv(sc_max.dHub*1e3,3)}<span class="cu">μm</span></td>`);
+  rows+=compRow('Shaft OD contraction ΔD',
+    hasMin?`<td class="cv">${fv(sc_min.dShaft*1e3,3)}<span class="cu">μm</span></td>`:naCell(nc),
+    `<td class="cv">${fv(sc_max.dShaft*1e3,3)}<span class="cu">μm</span></td>`);
+
+  // ── Joint Capacity ──
+  rows+=secRow('Joint Capacity  (μ='+mu+', L='+L+' mm)');
+  rows+=compRow('Torque capacity',
+    hasMin?`<td class="cv">${T_min>=0.1?fv(T_min,1):'<0.1'}<span class="cu">N·m</span></td>`:naCell(nc),
+    `<td class="cv">${fv(T_max,1)}<span class="cu">N·m</span></td>`);
+  rows+=compRow('Axial force capacity',
+    hasMin?`<td class="cv">${F_min>=0.01?fv(F_min,2):'<0.01'}<span class="cu">kN</span></td>`:naCell(nc),
+    `<td class="cv">${fv(F_max,2)}<span class="cu">kN</span></td>`);
+
+  return rows;
+}
+
+// ══════════════════════════════════════════════════════════════
+// WARNING COLLECTOR
+// ══════════════════════════════════════════════════════════════
+function buildWarnings(dMin,dMax,d,Do,Di,mH,mS,tAmb,tHot,delta_hot_max,delta_hot_min,T_preheat){
+  const warns=[];
+  const p_max=contactPressure(dMax,d,Do,Di,mH,mS);
+  const p_min=dMin>0?contactPressure(dMin,d,Do,Di,mH,mS):0;
+  const st_max=stresses(p_max,d,Do,Di);
+  const st_min=stresses(p_min,d,Do,Di);
+  const wR=Do/d;
+
+  if(st_max.hub_vm>mH.Sy)
+    warns.push({l:'err',m:`Hub will yield at max interference — hub VM (${fM(st_max.hub_vm)} MPa) exceeds σ_y (${mH.Sy} MPa). Reduce interference or increase hub wall.`});
+  else if(st_max.hub_vm>0.9*mH.Sy)
+    warns.push({l:'warn',m:`Hub near yield at max interference — VM is ${fM(st_max.hub_vm)} MPa (${(st_max.hub_vm/mH.Sy*100).toFixed(0)}% of σ_y).`});
+
+  if(st_max.sh_vm>mS.Sy)
+    warns.push({l:'err',m:`Shaft will yield at max interference — shaft VM (${fM(st_max.sh_vm)} MPa) exceeds σ_y (${mS.Sy} MPa).`});
+
+  if(dMin<=0)
+    warns.push({l:'warn',m:`Min interference is zero or clearance — LMC condition produces no contact. Joint may slip under minimum tolerance stack-up.`});
+  else if(st_min.hub_vm>mH.Sy)
+    warns.push({l:'err',m:`Hub yields even at minimum interference (VM = ${fM(st_min.hub_vm)} MPa).`});
+
+  if(wR<1.5)
+    warns.push({l:'warn',m:`Thin hub wall (D_o/d = ${wR.toFixed(2)} < 1.5) — Lamé equations may underestimate peak stresses. FEA verification recommended.`});
+
+  if(delta_hot_max<=0)
+    warns.push({l:'err',m:`All interference lost at hot operating temperature — joint will slip in service. Consider tighter fit or change material pairing.`});
+  else if(delta_hot_min<=0)
+    warns.push({l:'warn',m:`Interference lost at min material condition at operating temperature — joint may slip under worst-case tolerance + temperature combination.`});
+
+  if(T_preheat>250)
+    warns.push({l:'warn',m:`High hub preheat required for assembly (${T_preheat.toFixed(0)} °C) — verify material properties and temper stability at this temperature.`});
+  else if(T_preheat>180)
+    warns.push({l:'info',m:`Hub preheat ${T_preheat.toFixed(0)} °C — within range for oven heating. Ensure uniform temperature soak before assembly.`});
+
+  return warns;
+}
+
+function renderWarnings(warns){
+  const box=document.getElementById('globalWarn');
+  const items=document.getElementById('warnItems');
+  if(!warns.length){box.style.display='none';return;}
+  box.style.display='block';
+  const icons={err:'🔴',warn:'🟡',info:'🔵'};
+  items.innerHTML=warns.map(w=>`<div class="wi ${w.l==='err'?'err':w.l==='warn'?'warn':'info'}">
+    <span class="wi-icon">${icons[w.l]||'●'}</span><span>${w.m}</span></div>`).join('');
+}
+
+// ══════════════════════════════════════════════════════════════
+// SVG DIAGRAM
+// ══════════════════════════════════════════════════════════════
+function drawDiagram(d,Do,Di,p_max,mH,mS){
+  const svg=document.getElementById('xsec');
+  const W=480,H=200,cx=W/2,cy=H/2;
+  const sc=Math.min((H*.43)/(Do/2),85);
+  const ri=(d/2)*sc,ro=(Do/2)*sc,si=(Di/2)*sc;
+  let hA=.55,sA=.55;
+  if(p_max!=null&&mH&&mS){
+    const st=stresses(p_max,d,Do,Di);
+    hA=.4+Math.min(st.hub_vm/mH.Sy,1)*.45;
+    sA=.4+Math.min(st.sh_vm/mS.Sy,1)*.45;
+  }
+  const hF=`rgba(37,99,235,${hA})`,sF=`rgba(180,83,9,${sA})`;
+  const hole=Di>.1?`<circle cx="${cx}" cy="${cy}" r="${si.toFixed(1)}" fill="#0e100f" stroke="#374151" stroke-width="0.8"/>`:'';
+  svg.innerHTML=`
+    <circle cx="${cx}" cy="${cy}" r="${ro.toFixed(1)}" fill="${hF}" stroke="#3b82f6" stroke-width="1.5"/>
+    <circle cx="${cx}" cy="${cy}" r="${ri.toFixed(1)}" fill="#0e100f" stroke="#3b82f6" stroke-width="0.8"/>
+    <circle cx="${cx}" cy="${cy}" r="${ri.toFixed(1)}" fill="${sF}" stroke="#d97706" stroke-width="1.5"/>
+    ${hole}
+    <circle cx="${cx}" cy="${cy}" r="${ri.toFixed(1)}" fill="none" stroke="#f59e0b" stroke-width="0.7" stroke-dasharray="4,3" opacity="0.5"/>
+    <line x1="${cx}" y1="${cy}" x2="${cx+ri}" y2="${cy}" stroke="#93c5fd" stroke-width="0.8" stroke-dasharray="3,2"/>
+    <text x="${(cx*2+ri)/2}" y="${cy-5}" fill="#93c5fd" font-size="9" font-family="JetBrains Mono" text-anchor="middle">d=${d} mm</text>
+    <line x1="${cx}" y1="${cy}" x2="${cx+ro}" y2="${cy+18}" stroke="#6b7280" stroke-width="0.8" stroke-dasharray="3,2"/>
+    <text x="${cx+ro-2}" y="${cy+30}" fill="#6b7280" font-size="9" font-family="JetBrains Mono" text-anchor="end">D_o=${Do} mm</text>
+    ${Di>.1?`<line x1="${cx}" y1="${cy}" x2="${cx+si}" y2="${cy-16}" stroke="#475569" stroke-width="0.7" stroke-dasharray="3,2"/>
+    <text x="${cx+si}" y="${cy-22}" fill="#475569" font-size="9" font-family="JetBrains Mono" text-anchor="middle">D_i=${Di} mm</text>`:''}
+    <rect x="10" y="10" width="10" height="10" fill="${hF}" stroke="#3b82f6" stroke-width="0.8"/>
+    <text x="24" y="19" fill="#93c5fd" font-size="10" font-family="Barlow Condensed" font-weight="600" letter-spacing="0.06em">HUB</text>
+    <rect x="10" y="26" width="10" height="10" fill="${sF}" stroke="#d97706" stroke-width="0.8"/>
+    <text x="24" y="35" fill="#d97706" font-size="10" font-family="Barlow Condensed" font-weight="600" letter-spacing="0.06em">SHAFT</text>
+    <line x1="10" y1="51" x2="20" y2="51" stroke="#f59e0b" stroke-width="0.8" stroke-dasharray="4,2"/>
+    <text x="24" y="55" fill="#f59e0b" font-size="9" font-family="Barlow Condensed" letter-spacing="0.04em">INTERFACE</text>`;
+}
+
+// ══════════════════════════════════════════════════════════════
+// MAIN CALCULATE
+// ══════════════════════════════════════════════════════════════
+function calculate(){
+  const d      = parseFloat(document.getElementById('dNom').value);
+  const Do     = parseFloat(document.getElementById('dHub').value);
+  const Di     = parseFloat(document.getElementById('dShaft').value)||0;
+  const tAmb   = parseFloat(document.getElementById('tAmb').value);
+  const tHot   = parseFloat(document.getElementById('tHot').value);
+  const L      = parseFloat(document.getElementById('cLen').value)||50;
+  const mu     = parseFloat(document.getElementById('mu').value)||0.12;
+  const holeFitStr = document.getElementById('holeFit').value;
+  const shaftStr   = document.getElementById('shaftFit').value;
+  const hKey = document.getElementById('hubMat').value;
+  const sKey = document.getElementById('shaftMat').value;
+  const mH=MAT[hKey],mS=MAT[sKey];
+
+  document.getElementById('matTable').innerHTML=matTableHTML(hKey,sKey);
+
+  // Clear warnings first
+  renderWarnings([]);
+
+  // Basic validation
+  if(isNaN(d)||isNaN(Do)){return;}
+  if(Do<=d){renderWarnings([{l:'err',m:'Hub outer diameter must be greater than nominal interface diameter.'}]);return;}
+  if(Di>0&&Di>=d){renderWarnings([{l:'err',m:'Shaft inner diameter must be less than nominal interface diameter.'}]);return;}
+  if(d<3||d>500){renderWarnings([{l:'err',m:'Nominal diameter must be 3–500 mm for ISO 286 data.'}]);return;}
+
+  const hole  = holeLimits(d, holeFitStr);
+  const shaft = shaftLimits(d,shaftStr);
+  if(!hole||!shaft){
+    renderWarnings([{l:'err',m:'Tolerance data unavailable for this combination. "t" deviation requires ≥24 mm. For custom hole: ensure ES > EI.'}]);
+    return;
+  }
+
+  // Tolerance table
+  const holeName = holeFitStr==='custom'
+    ? `Custom (EI=${hole.EI>=0?'+':''}${hole.EI}, ES=+${hole.ES} μm)`
+    : holeFitStr;
+  const shaftName = shaftStr==='custom'
+    ? `Custom (ei=+${shaft.ei}, es=+${shaft.es} μm)`
+    : shaftStr;
+  function dev(v,um){
+    const s=um?v.toFixed(0):v.toFixed(4);
+    if(v>1e-4)return`<span class="vp">+${s}</span>`;
+    if(v<-1e-4)return`<span class="vn">${s}</span>`;
+    return`<span class="vz">0</span>`;
+  }
+  document.getElementById('tolBody').innerHTML=`
+    <tr><td>Hole (${holeName})</td><td>${dev(hole.min-d,false)}</td><td>${dev(hole.max-d,false)}</td><td>${dev(hole.IT,true)}</td></tr>
+    <tr><td>Shaft (${shaftName})</td><td>${dev(shaft.min-d,false)}</td><td>${dev(shaft.max-d,false)}</td><td>${dev(shaft.IT,true)}</td></tr>`;
+
+  // Interference limits
+  const dMax = shaft.max - hole.min;   // MMC: largest shaft, smallest hole
+  const dMin = shaft.min - hole.max;   // LMC: smallest shaft, largest hole
+
+  const compPanel=document.getElementById('compPanel');
+  if(dMax<=1e-6){
+    compPanel.style.display='block';
+    document.getElementById('compBody').innerHTML=`<tr><td colspan="3" style="padding:12px;text-align:center;color:var(--blue);font-size:12px;">No positive interference — fit produces clearance or transition only at all material conditions.</td></tr>`;
+    document.getElementById('tempPanel').style.display='none';
+    renderWarnings([{l:'info',m:'This fit produces clearance or transition only. No hoop stresses or torque capacity from interference.'}]);
+    drawDiagram(d,Do,Di,null,null,null);
+    return;
+  }
+
+  // Build comparison table
+  compPanel.style.display='block';
+  document.getElementById('compBody').innerHTML=buildCompTable(Math.max(dMin,0),dMax,d,Do,Di,mH,mS,L,mu);
+
+  // ── Thermal ──
+  const dT_hot=tHot-tAmb;
+  const delta_hot_max=thermalDelta(dMax,d,mH,mS,dT_hot);
+  const delta_hot_min=thermalDelta(Math.max(dMin,0),d,mH,mS,dT_hot);
+  const T_preheat=minHubTemp(tAmb,dMax,d,mH);
+
+  // Warnings
+  const _warns=buildWarnings(dMin,dMax,d,Do,Di,mH,mS,tAmb,tHot,delta_hot_max,delta_hot_min,T_preheat);
+  renderWarnings(_warns);
+
+  // Thermal panel
+  document.getElementById('tempPanel').style.display='block';
+  const dT_pre=T_preheat-tAmb;
+  const pv=document.getElementById('preheatVal');
+  pv.textContent=T_preheat.toFixed(1);
+  pv.style.color=T_preheat>250?'var(--red)':T_preheat>180?'var(--orange)':'var(--blue)';
+  document.getElementById('preheatSub').innerHTML=
+    `ΔT = +${dT_pre.toFixed(1)} °C above ambient &nbsp;|&nbsp; bore grows ${fv(dMax*1e3+5,1)} μm (5 μm clearance)`;
+  const T_rec=tAmb+(dMax+20e-3)/(d*mH.cte*1e-6);
+  document.getElementById('preheatRec').innerHTML=`Recommended (20 μm clearance): <b>${T_rec.toFixed(1)} °C</b>`;
+
+  const hub_exp=d*mH.cte*1e-6*dT_hot*1e3;
+  const sft_exp=d*mS.cte*1e-6*dT_hot*1e3;
+  const net_um=sft_exp-hub_exp;
+  const netC=net_um>0.5?'color:var(--red)':net_um<-0.5?'color:var(--green)':'color:var(--text2)';
+
+  let hotH='';
+  hotH+=card('Hub Bore Growth',fv(hub_exp,2),'μm',`α=${mH.cte} µ/m·K · ΔT=${dT_hot>0?'+':''}${dT_hot} °C`,false,'temp');
+  hotH+=card('Shaft OD Growth',fv(sft_exp,2),'μm',`α=${mS.cte} µ/m·K · ΔT=${dT_hot>0?'+':''}${dT_hot} °C`,false,'temp');
+  hotH+=card('Net Δ Interference',`${net_um>=0?'+':''}${fv(net_um,2)}`,'μm',
+    `<span style="${netC}">${net_um>0.5?'▲ Increases in service':net_um<-0.5?'▼ Decreases — slip risk at temperature':'≈ Balanced (similar CTE)'}</span>`,false,'temp');
+
+  if(delta_hot_max>1e-6){
+    const p_hot=contactPressure(delta_hot_max,d,Do,Di,mH,mS);
+    const p_hot_min=delta_hot_min>1e-6?contactPressure(delta_hot_min,d,Do,Di,mH,mS):0;
+    const st_hot=stresses(p_hot,d,Do,Di);
+    const T_hot=torque(p_hot,d,L,mu), F_hot=axialForce(p_hot,d,L,mu);
+    const p_max=contactPressure(dMax,d,Do,Di,mH,mS);
+    hotH+=card('Hot Contact Pressure',fM(p_hot),'MPa',
+      `Ambient MMC: ${fM(p_max)} MPa &nbsp;<span class="${p_hot>p_max?'vp':'vn'}">(${p_hot>p_max?'+':''}${fM(p_hot-p_max)})</span>`,false,'temp');
+    hotH+=card('Hot Hub σ_θ Inner',fM(st_hot.hub_i),'MPa','Hot condition'+sbarCard(st_hot.hub_i,mH.Sy),false,'temp');
+    hotH+=card('Hot Shaft Von Mises',fM(st_hot.sh_vm),'MPa',sbarCard(st_hot.sh_vm,mS.Sy),false,'temp');
+    hotH+=card('Hot Torque Capacity',fv(T_hot,1),'N·m',`Min condition: ${p_hot_min>0?fv(torque(p_hot_min,d,L,mu),1)+' N·m':'No contact'}`,false,'temp');
+    hotH+=card('Hot Axial Capacity',fv(F_hot,2),'kN','At hot MMC',false,'temp');
+  } else {
+    hotH+=card('Hot Condition','—','','<span style="color:var(--red)">⚠ All interference lost — joint will slip at operating temperature.</span>',true,'temp');
+  }
+  document.getElementById('hotPanel').innerHTML=hotH;
+
+  // ── Populate export data ──
+  {
+    const pm=contactPressure(Math.max(dMin,0),d,Do,Di,mH,mS);
+    const px=contactPressure(dMax,d,Do,Di,mH,mS);
+    const sm=stresses(pm,d,Do,Di), sx=stresses(px,d,Do,Di);
+    const scm=shapeChange(pm,d,Do,Di,mH,mS), scx=shapeChange(px,d,Do,Di,mH,mS);
+    const dh_max=thermalDelta(dMax,d,mH,mS,dT_hot);
+    const dh_min=thermalDelta(Math.max(dMin,0),d,mH,mS,dT_hot);
+    const ph_max=dh_max>1e-6?contactPressure(dh_max,d,Do,Di,mH,mS):0;
+    const ph_min=dh_min>1e-6?contactPressure(dh_min,d,Do,Di,mH,mS):0;
+    Object.assign(_exp,{
+      ready:true,
+      title:document.getElementById('projTitle').value.trim()||'INTERFERENCE FIT ANALYSIS',
+      notes:document.getElementById('projNotes').value.trim(),
+      d,Do,Di,L,mu,wR:Do/d,holeName,shaftName,mH,mS,
+      dMin:Math.max(dMin,0),dMax,p_min:pm,p_max:px,
+      st_min_hub_i:sm.hub_i,st_min_hub_vm:sm.hub_vm,st_min_sh_vm:sm.sh_vm,
+      st_max_hub_i:sx.hub_i,st_max_hub_vm:sx.hub_vm,st_max_sh_vm:sx.sh_vm,
+      sc_min_hub:scm.dHub,sc_min_sh:scm.dShaft,
+      sc_max_hub:scx.dHub,sc_max_sh:scx.dShaft,
+      T_cold_min:torque(pm,d,L,mu),T_cold_max:torque(px,d,L,mu),
+      F_cold_min:axialForce(pm,d,L,mu),F_cold_max:axialForce(px,d,L,mu),
+      T_hot_min:torque(ph_min,d,L,mu),T_hot_max:torque(ph_max,d,L,mu),
+      F_hot_min:axialForce(ph_min,d,L,mu),F_hot_max:axialForce(ph_max,d,L,mu),
+      tAmb,tHot,T_preheat,T_rec,net_um,warnings:_warns,
+    });
+  }
+
+  drawDiagram(d,Do,Di,contactPressure(dMax,d,Do,Di,mH,mS),mH,mS);
+}
+
+// ══════════════════════════════════════════════════════════════
+// EXPORT TO IMAGE
+// ══════════════════════════════════════════════════════════════
+function exportToImage(){
+  const e=_exp;
+  if(!e.ready){alert('Please complete a calculation before exporting.');return;}
+
+  const ff=(v,dp=3)=>(v===undefined||v===null||isNaN(v)||!isFinite(v))?'—':Number(v).toFixed(dp);
+
+  const W=1040;
+  const warnH=(e.warnings||[]).reduce((a,w)=>a+24+Math.ceil(w.m.length/95)*15,0);
+  const notesH=e.notes?e.notes.split('\n').reduce((a,l)=>a+18+Math.ceil(l.length/85)*18,0)+30:0;
+  const H=Math.max(1260,980+warnH+notesH);
+
+  const cv=document.createElement('canvas');
+  cv.width=W; cv.height=H;
+  const ctx=cv.getContext('2d');
+
+  // ── Palette ──
+  const C={bg:'#0f1110',bg2:'#171918',bg3:'#1e211f',bd:'#2a2d2b',
+    A:'#f59e0b',A2:'#d97706',Adim:'rgba(245,158,11,0.10)',
+    tx:'#dedad4',tx2:'#8a8680',tx3:'#45484a',
+    bl:'#5eaeff',gn:'#4ade80',yw:'#fbbf24',rd:'#f87171',or:'#fb923c',
+    hub:'#3b82f6',shaft:'#d97706'};
+
+  // background + grid
+  ctx.fillStyle=C.bg; ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle='rgba(255,255,255,0.016)'; ctx.lineWidth=1;
+  for(let x=0;x<W;x+=24){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+  for(let yy=0;yy<H;yy+=24){ctx.beginPath();ctx.moveTo(0,yy);ctx.lineTo(W,yy);ctx.stroke();}
+
+  // outer border — double rule
+  ctx.strokeStyle=C.A; ctx.lineWidth=2.5; ctx.strokeRect(10,10,W-20,H-20);
+  ctx.strokeStyle='rgba(245,158,11,0.20)'; ctx.lineWidth=1; ctx.strokeRect(16,16,W-32,H-32);
+
+  // header band
+  const hg=ctx.createLinearGradient(10,10,W,84);
+  hg.addColorStop(0,'#92400e'); hg.addColorStop(1,'#3d1a06');
+  ctx.fillStyle=hg; ctx.fillRect(10,10,W-20,74);
+  ctx.fillStyle=C.A; ctx.fillRect(10,84,W-20,2);
+
+  // header badge
+  ctx.fillStyle='rgba(0,0,0,0.32)'; ctx.fillRect(24,20,196,20);
+  ctx.fillStyle=C.A; ctx.font='bold 9px "Courier New",monospace';
+  ctx.fillText('INTERFERENCE FIT CALCULATION SHEET',30,33);
+
+  // title
+  ctx.fillStyle='#ffffff'; ctx.font='bold 25px Arial Narrow,sans-serif';
+  ctx.fillText((e.title||'INTERFERENCE FIT ANALYSIS').toUpperCase().slice(0,68),24,68);
+
+  // date + ref right
+  const dateStr=new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}).toUpperCase();
+  ctx.textAlign='right';
+  ctx.fillStyle='rgba(255,255,255,0.60)'; ctx.font='11px "Courier New",monospace';
+  ctx.fillText(dateStr,W-24,36);
+  ctx.fillStyle=C.A; ctx.font='bold 10px "Courier New",monospace';
+  ctx.fillText('REF: IFA-'+Date.now().toString(36).toUpperCase().slice(-6),W-24,56);
+  ctx.textAlign='left';
+
+  let y=100;
+
+  // ── Helpers ──
+  function secHdr(lbl){
+    ctx.fillStyle=C.Adim; ctx.fillRect(20,y,W-40,22);
+    ctx.fillStyle=C.A; ctx.fillRect(20,y,3,22);
+    ctx.fillStyle=C.A; ctx.font='bold 9px "Courier New",monospace';
+    ctx.fillText('  '+lbl.toUpperCase(),27,y+15);
+    y+=30;
+  }
+  function hline(clr){
+    ctx.strokeStyle=clr||C.bd; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(22,y); ctx.lineTo(W-22,y); ctx.stroke();
+    y+=1;
+  }
+  function colHdrs(l,r){
+    hline();
+    ctx.fillStyle=C.bl; ctx.font='bold 8.5px "Courier New",monospace'; ctx.fillText(l,332,y-2);
+    ctx.fillStyle=C.A;  ctx.font='bold 8.5px "Courier New",monospace'; ctx.fillText(r,666,y-2);
+    y+=14;
+  }
+  function row(lbl,vmin,vmax,cmin,cmax){
+    ctx.fillStyle='rgba(255,255,255,0.009)'; ctx.fillRect(22,y-13,W-44,19);
+    ctx.fillStyle=C.tx2; ctx.font='10px "Courier New",monospace'; ctx.fillText(lbl,32,y);
+    ctx.fillStyle=cmin||C.tx; ctx.font='bold 11px "Courier New",monospace'; ctx.fillText(String(vmin),332,y);
+    ctx.fillStyle=cmax||C.A;  ctx.font='bold 11px "Courier New",monospace'; ctx.fillText(String(vmax),666,y);
+    y+=20;
+  }
+  function trow(lbl,val,clr){
+    ctx.fillStyle='rgba(255,255,255,0.009)'; ctx.fillRect(22,y-13,W-44,19);
+    ctx.fillStyle=C.tx2; ctx.font='10px "Courier New",monospace'; ctx.fillText(lbl,32,y);
+    ctx.fillStyle=clr||C.tx; ctx.font='bold 12px "Courier New",monospace'; ctx.fillText(val,500,y);
+    y+=20;
+  }
+  function sfClr(sf){const v=parseFloat(sf);if(isNaN(v))return C.tx3;return v>=2?C.gn:v>=1.5?C.yw:v>=1?C.or:C.rd;}
+  function wrapAt(txt,x,maxW,font,clr){
+    ctx.fillStyle=clr||C.tx2; ctx.font=font||'10px "Courier New",monospace';
+    const words=txt.split(' '); let line='';
+    for(const w of words){
+      const t=line?line+' '+w:w;
+      if(ctx.measureText(t).width>maxW&&line){ctx.fillText(line,x,y);line=w;y+=16;}
+      else line=t;
+    }
+    if(line){ctx.fillText(line,x,y);y+=16;}
+  }
+
+  // ═══ 1. GEOMETRY & FIT ═══
+  secHdr('Assembly Geometry & Fit Specification');
+  const cw=(W-56)/5;
+  function prop5(i,lbl,val,unit){
+    const px=28+cw*i;
+    ctx.fillStyle=C.tx3; ctx.font='9px "Courier New",monospace'; ctx.fillText(lbl,px,y);
+    ctx.fillStyle=C.A;   ctx.font='bold 15px "Courier New",monospace'; ctx.fillText(val,px,y+18);
+    ctx.fillStyle=C.tx3; ctx.font='9px "Courier New",monospace';
+    ctx.fillText(unit,px+ctx.measureText(val).width*0.85+4,y+18);
+  }
+  prop5(0,'d  (interface)',ff(e.d,1),'mm');
+  prop5(1,'D_o (hub outer)',ff(e.Do,1),'mm');
+  prop5(2,'D_i (shaft inner)',ff(e.Di,1),'mm');
+  prop5(3,'L  (contact)',ff(e.L,1),'mm');
+  prop5(4,'μ  (friction coeff)',ff(e.mu,3),'—');
+  y+=42;
+
+  ctx.fillStyle=C.tx3; ctx.font='9px "Courier New",monospace';
+  ctx.fillText('HOLE FIT',32,y);
+  ctx.fillStyle=C.tx; ctx.font='bold 11px "Courier New",monospace'; ctx.fillText(e.holeName||'—',102,y);
+  ctx.fillStyle=C.tx3; ctx.font='9px "Courier New",monospace';
+  ctx.fillText('SHAFT FIT',340,y);
+  ctx.fillStyle=C.tx; ctx.font='bold 11px "Courier New",monospace'; ctx.fillText(e.shaftName||'—',416,y);
+  ctx.fillStyle=C.tx3; ctx.font='9px "Courier New",monospace';
+  ctx.fillText('WALL RATIO D_o/d',620,y);
+  const wrc=e.wR<1.5?C.rd:e.wR<2?C.yw:C.gn;
+  ctx.fillStyle=wrc; ctx.font='bold 11px "Courier New",monospace'; ctx.fillText(ff(e.wR,2),770,y);
+  y+=12; hline(); y+=10;
+
+  // ═══ 2. MATERIALS ═══
+  secHdr('Component Materials');
+  const mw=(W-54)/2;
+  function matBox(bx,w,role,m,rc){
+    ctx.fillStyle=C.bg2; ctx.fillRect(bx,y,w,78);
+    ctx.strokeStyle=rc; ctx.lineWidth=1.5; ctx.strokeRect(bx,y,w,78);
+    ctx.fillStyle=rc; ctx.font='bold 9px "Courier New",monospace'; ctx.fillText(role,bx+10,y+15);
+    ctx.fillStyle=C.tx; ctx.font='bold 14px "Courier New",monospace'; ctx.fillText(m.name,bx+10,y+34);
+    ctx.fillStyle=C.tx2; ctx.font='10px "Courier New",monospace';
+    ctx.fillText('E = '+(m.E/1e3).toFixed(0)+' GPa',bx+10,y+52);
+    ctx.fillText('σ_y = '+m.Sy+' MPa',bx+10+148,y+52);
+    ctx.fillText('ν = '+m.nu,bx+10,y+68);
+    ctx.fillText('α = '+m.cte+' µ/m·K',bx+10+148,y+68);
+  }
+  matBox(22,mw,'HUB',e.mH,C.hub);
+  matBox(30+mw,mw,'SHAFT',e.mS,C.shaft);
+  y+=92;
+
+  // ═══ 3. STRESS & INTERFERENCE ═══
+  secHdr('Interference & Stress Analysis');
+  colHdrs('▼  MIN INTERFERENCE  (LMC — LOOSEST)','▲  MAX INTERFERENCE  (MMC — TIGHTEST)');
+
+  const hasMn=e.dMin>1e-6, nc='No contact';
+  const SFhMin=hasMn?(e.mH.Sy/e.st_min_hub_vm).toFixed(2):nc;
+  const SFhMax=(e.mH.Sy/e.st_max_hub_vm).toFixed(2);
+  const SFsMin=hasMn?(e.mS.Sy/e.st_min_sh_vm).toFixed(2):nc;
+  const SFsMax=(e.mS.Sy/e.st_max_sh_vm).toFixed(2);
+  try{var _sfs=[parseFloat(SFhMax),parseFloat(SFsMax)];if(hasMn){_sfs.push(parseFloat(SFhMin),parseFloat(SFsMin))}_sfs=_sfs.filter(function(x){return isFinite(x)&&x>0});if(_sfs.length)localStorage.setItem('eng_wb_rf_intfit',JSON.stringify({sf:Math.min.apply(null,_sfs),ts:Date.now()}))}catch(ex){}
+
+  row('Diametral interference δ',
+    hasMn?ff(e.dMin*1e3,2)+' μm':nc, ff(e.dMax*1e3,2)+' μm',
+    hasMn?C.tx:C.tx3);
+  row('Contact pressure p',
+    hasMn?ff(e.p_min,1)+' MPa':nc, ff(e.p_max,1)+' MPa',
+    hasMn?C.tx:C.tx3);
+  row('Hub σ_θ inner (tensile)',
+    hasMn?ff(e.st_min_hub_i,1)+' MPa':nc, ff(e.st_max_hub_i,1)+' MPa',
+    hasMn?C.tx:C.tx3);
+  row('Hub Von Mises σ_vm (inner)',
+    hasMn?ff(e.st_min_hub_vm,1)+' MPa':nc, ff(e.st_max_hub_vm,1)+' MPa',
+    hasMn?C.tx:C.tx3);
+  row('Hub safety factor vs yield',
+    hasMn?'SF = '+SFhMin:nc, 'SF = '+SFhMax,
+    hasMn?sfClr(SFhMin):C.tx3, sfClr(SFhMax));
+  row('Shaft Von Mises σ_vm (interface)',
+    hasMn?ff(e.st_min_sh_vm,1)+' MPa':nc, ff(e.st_max_sh_vm,1)+' MPa',
+    hasMn?C.tx:C.tx3);
+  row('Shaft safety factor vs yield',
+    hasMn?'SF = '+SFsMin:nc, 'SF = '+SFsMax,
+    hasMn?sfClr(SFsMin):C.tx3, sfClr(SFsMax));
+  row('Hub bore diametral expansion ΔD',
+    hasMn?ff(e.sc_min_hub*1e3,3)+' μm':nc, ff(e.sc_max_hub*1e3,3)+' μm',
+    hasMn?C.tx:C.tx3);
+  row('Shaft OD diametral contraction ΔD',
+    hasMn?ff(e.sc_min_sh*1e3,3)+' μm':nc, ff(e.sc_max_sh*1e3,3)+' μm',
+    hasMn?C.tx:C.tx3);
+  y+=6;
+
+  // ═══ 4. JOINT CAPACITY ═══
+  secHdr('Joint Capacity  ·  μ = '+ff(e.mu,3)+'  (friction coeff)  ·  L = '+ff(e.L,1)+' mm  (contact length)');
+  colHdrs('▼  COLD — MIN INTERFERENCE (LMC)','▲  COLD — MAX INTERFERENCE (MMC)');
+  row('Torque capacity',
+    hasMn?ff(e.T_cold_min,1)+' N·m':nc, ff(e.T_cold_max,1)+' N·m',
+    hasMn?C.tx:C.tx3);
+  row('Axial force capacity',
+    hasMn?ff(e.F_cold_min,2)+' kN':nc, ff(e.F_cold_max,2)+' kN',
+    hasMn?C.tx:C.tx3);
+  y+=6;
+  colHdrs('▼  HOT — MIN INTERFERENCE (LMC)','▲  HOT — MAX INTERFERENCE (MMC)');
+  const htMC=e.T_hot_min>0?C.bl:C.rd, htXC=e.T_hot_max>0?C.bl:C.rd;
+  row('Hot torque capacity',
+    e.T_hot_min>0?ff(e.T_hot_min,1)+' N·m':nc,
+    e.T_hot_max>0?ff(e.T_hot_max,1)+' N·m':nc,
+    htMC, htXC);
+  row('Hot axial force capacity',
+    e.F_hot_min>0?ff(e.F_hot_min,2)+' kN':'—',
+    e.F_hot_max>0?ff(e.F_hot_max,2)+' kN':'—',
+    htMC, htXC);
+  y+=6;
+
+  // ═══ 5. THERMAL ═══
+  secHdr('Thermal & Assembly');
+  trow('As-built / ambient temperature',ff(e.tAmb,0)+' °C', C.tx);
+  trow('Hot operating temperature',ff(e.tHot,0)+' °C', C.bl);
+  const phC=e.T_preheat>250?C.rd:e.T_preheat>180?C.yw:C.bl;
+  trow('Minimum hub preheat for slip assembly',ff(e.T_preheat,1)+' °C', phC);
+  trow('Recommended hub preheat (20 μm clearance)',ff(e.T_rec,1)+' °C', C.bl);
+  const ns=e.net_um>=0?'+':'', nC=e.net_um>0.5?C.rd:e.net_um<-0.5?C.yw:C.gn;
+  trow('Net interference change at operating temp',ns+ff(e.net_um,2)+' μm', nC);
+  y+=6;
+
+  // ═══ 6. WARNINGS ═══
+  if((e.warnings||[]).length){
+    secHdr('Design Flags & Warnings');
+    const ic={err:'[ERR] ',warn:'[WARN]',info:'[INFO]'};
+    const wc={err:C.rd,warn:C.yw,info:C.bl};
+    for(const w of e.warnings){
+      ctx.fillStyle=wc[w.l]||C.tx2;
+      ctx.font='bold 9.5px "Courier New",monospace';
+      ctx.fillText(ic[w.l]||'[INFO]',30,y);
+      wrapAt(w.m,112,W-136,'10px "Courier New",monospace',w.l==='err'?C.rd:w.l==='warn'?'#fde68a':C.tx2);
+      y+=4;
+    }
+    y+=6;
+  }
+
+  // ═══ 7. NOTES ═══
+  if(e.notes&&e.notes.trim()){
+    secHdr('Engineering Notes');
+    for(const ln of e.notes.split('\n')){
+      if(!ln.trim()){y+=8;continue;}
+      wrapAt(ln,32,W-70,'10.5px "Courier New",monospace',C.tx2);
+      y+=2;
+    }
+    y+=6;
+  }
+
+  // ═══ FOOTER ═══
+  const fy=Math.max(y+14,H-46);
+  ctx.fillStyle=C.bg2; ctx.fillRect(10,fy,W-20,H-fy-10);
+  ctx.fillStyle=C.A; ctx.fillRect(10,fy,W-20,2);
+  ctx.fillStyle=C.tx3; ctx.font='9px "Courier New",monospace';
+  ctx.fillText('GENERATED BY INTERFERENCE FIT CALCULATOR · '+new Date().toLocaleString('en-GB').toUpperCase(),26,fy+18);
+  ctx.textAlign='right';
+  ctx.fillText('ISO 286  ·  LAMÉ THICK-WALL EQUATIONS  ·  T = μpπd²L/2  ·  p = δ/(d·(C_H/E_H+C_S/E_S))',W-26,fy+18);
+  ctx.textAlign='left';
+
+  // SF legend
+  ctx.fillStyle=C.tx3; ctx.font='9px "Courier New",monospace'; ctx.fillText('SAFETY FACTOR KEY:',26,fy+33);
+  [{c:C.gn,t:'SF ≥ 2.0 OK'},{c:C.yw,t:'SF ≥ 1.5 MARGINAL'},{c:C.or,t:'SF ≥ 1.0 LOW'},{c:C.rd,t:'SF < 1.0 YIELD'}]
+    .forEach((s,i)=>{ctx.fillStyle=s.c;ctx.font='bold 9px "Courier New",monospace';ctx.fillText(s.t,190+i*160,fy+33);});
+
+  // download
+  const link=document.createElement('a');
+  link.download=(e.title||'interference_fit').replace(/[^a-z0-9]/gi,'_').toLowerCase()+'_calc.png';
+  link.href=cv.toDataURL('image/png');
+  link.click();
+}
+
+// ── Show/hide custom hole inputs ──
+function onHoleFitChange(){
+  const isCustom = document.getElementById('holeFit').value === 'custom';
+  document.getElementById('customHoleRow').style.display = isCustom ? 'block' : 'none';
+  calculate();
+}
+
+// ── Show/hide custom shaft inputs ──
+function onShaftFitChange(){
+  const isCustom = document.getElementById('shaftFit').value === 'custom';
+  document.getElementById('customShaftRow').style.display = isCustom ? 'block' : 'none';
+  calculate();
+}
+
+// ── Event wiring ──
+['dNom','dHub','dShaft','tAmb','tHot','cLen','mu','holeEI','holeES','shaftEI','shaftES'].forEach(id=>
+  document.getElementById(id).addEventListener('input',calculate));
+['holeFit','shaftFit','hubMat','shaftMat'].forEach(id=>
+  document.getElementById(id).addEventListener('change',calculate));
+
+calculate();
+
+var _cadKey='';
+function initCadImage(key,id){_cadKey=key;var c=document.getElementById(id);if(!c)return;var s=null;try{s=localStorage.getItem(_cadKey)}catch(e){}renderCad(c,s)}
+function renderCad(c,url){
+  if(url){c.className='cad-zone has-img';c.innerHTML='<button class="cad-rm" onclick="event.stopPropagation();rmCad(this.parentNode)">\u2715</button><img class="cad-thumb" src="'+url+'" onclick="showCad(this.src)" title="Click to enlarge">';}
+  else{c.className='cad-zone';c.innerHTML='<div style="font-size:12px;color:#5a5a64;font-weight:500;letter-spacing:.3px">Drop CAD image here</div><div style="font-size:10px;color:#5a5a64;opacity:.6;margin-top:3px">or click to browse</div>';}
+}
+function rmCad(c){try{localStorage.removeItem(_cadKey)}catch(e){}renderCad(c,null)}
+function showCad(src){var o=document.getElementById('cadOv');if(!o){o=document.createElement('div');o.id='cadOv';o.className='cad-overlay';o.onclick=function(){this.classList.remove('show')};document.body.appendChild(o)}o.innerHTML='<img src="'+src+'">';o.classList.add('show')}
+function setupCad(id){var c=document.getElementById(id);if(!c)return;
+  c.addEventListener('click',function(e){if(e.target.tagName==='IMG'||e.target.classList.contains('cad-rm'))return;var inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.onchange=function(ev){loadCadFile(ev.target.files[0],c)};inp.click()});
+  c.addEventListener('dragover',function(e){e.preventDefault();c.style.borderColor='#6B8AFF'});
+  c.addEventListener('dragleave',function(){c.style.borderColor=''});
+  c.addEventListener('drop',function(e){e.preventDefault();c.style.borderColor='';if(e.dataTransfer.files.length)loadCadFile(e.dataTransfer.files[0],c)});
+}
+function loadCadFile(f,c){if(!f||!f.type.startsWith('image/'))return;var r=new FileReader();r.onload=function(e){try{localStorage.setItem(_cadKey,e.target.result)}catch(ex){}renderCad(c,e.target.result)};r.readAsDataURL(f)}
+
+setupCad("intfitCadZone");initCadImage("eng_wb_img_intfit","intfitCadZone");
+</script>
+<a class="wb-back" href="Engineering_Workbook.html">← Workbook</a>
+<button class="pdf-btn" onclick="window.print()">⎙ Save as PDF</button>
+<div id="cadOv" class="cad-overlay" onclick="this.classList.remove('show')"></div>
+</body>
+</html>

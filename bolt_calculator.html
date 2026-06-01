@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bolted Joint Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0c10;--panel:#0e1117;--surface:#12161e;--surface2:#161b25;
+  --border:#1c2130;--border2:#242a3a;--text:#c4cad6;--bright:#e6eaf2;
+  --dim:#505a6e;--muted:#3a4258;--accent:#3d8bfd;--accent2:#1a5cc7;
+  --good:#2a9d5c;--warn:#d97a1e;--danger:#dc3545;--info:#3a7bd5;
+  --mono:'IBM Plex Mono',monospace;--sans:'DM Sans',sans-serif;
+}
+html,body{height:100%;overflow:hidden}
+body{font-family:var(--mono);background:var(--bg);color:var(--text);font-size:12px;line-height:1.55}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:#3a4258}
+input[type=number]{-moz-appearance:textfield}
+input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+select{-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23505a6e'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;padding-right:24px !important}
+.pill-bar{display:flex;gap:1px;background:var(--surface);border-radius:5px;padding:2px;flex-wrap:wrap}
+.pill{padding:4px 9px;border:none;border-radius:4px;font-size:10px;font-weight:600;font-family:var(--mono);cursor:pointer;background:transparent;color:var(--dim);transition:all .12s;white-space:nowrap}
+.pill.on{background:var(--accent2);color:#a8d0ff}
+.pill:hover:not(.on){background:var(--surface2);color:var(--text)}
+.section-title{font-size:10px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1.1px;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--border)}
+.row{display:flex;align-items:center;margin-bottom:5px;gap:6px}
+.row-label{width:190px;font-size:11px;color:#7a849a;flex-shrink:0;font-family:var(--sans)}
+.row-input{width:80px;padding:4px 8px;background:var(--surface);border:1px solid var(--border2);border-radius:4px;color:var(--bright);font-size:12px;font-family:var(--mono);outline:none;text-align:right;transition:border .15s}
+.row-input:focus{border-color:var(--accent)}
+.row-select{padding:4px 8px;background:var(--surface);border:1px solid var(--border2);border-radius:4px;color:var(--bright);font-size:11px;font-family:var(--mono);outline:none;flex:1;max-width:230px;transition:border .15s;cursor:pointer}
+.row-select:focus{border-color:var(--accent)}
+.row-unit{font-size:10px;color:var(--muted);width:40px;flex-shrink:0}
+.note{font-size:10px;color:#4a5468;font-style:italic;margin:2px 0;padding:3px 0;font-family:var(--sans)}
+.note-box{font-size:10px;color:#6a7a90;padding:7px 10px;background:#0b0d14;border-radius:4px;border:1px solid var(--border);margin-top:4px;line-height:1.6;font-family:var(--sans)}
+.warn-box{font-size:10px;color:var(--warn);padding:6px 10px;background:#1a1508;border-radius:4px;border:1px solid #2a2010;margin-top:8px;font-family:var(--sans)}
+.danger-box{font-size:10px;color:var(--danger);padding:6px 10px;background:#1a0808;border-radius:4px;border:1px solid #2a1010;margin-top:8px;font-family:var(--sans)}
+.info-box{font-size:10px;color:var(--info);padding:6px 10px;background:#08101a;border-radius:4px;border:1px solid #102040;margin-top:8px;font-family:var(--sans)}
+.divider{height:1px;background:var(--border);margin:10px 0}
+.cat-tag{font-size:8px;padding:1px 5px;border-radius:2px;margin-left:5px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;vertical-align:middle}
+.cat-loctite{background:#1a1530;color:#9a7acc}
+.cat-grease{background:#152a15;color:#5aaa45}
+.cat-surface{background:#152028;color:#5a9abb}
+.cat-custom{background:#1a1a20;color:#888}
+.result-row{display:flex;align-items:center;padding:3px 0;gap:8px}
+.result-label{flex:1;font-size:11px;color:#5a6a80;font-family:var(--sans)}
+.result-val{font-size:13px;font-weight:600;min-width:70px;text-align:right}
+.result-unit{font-size:10px;color:#2e3848;width:50px;text-align:left}
+.big-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px 16px;text-align:center}
+.big-label{font-size:9px;color:#4a5a70;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;font-family:var(--sans);font-weight:600}
+.big-val{font-size:26px;font-weight:700;letter-spacing:-.5px}
+.big-unit{font-size:11px;color:#3a4a5a;margin-left:3px;font-weight:400}
+.bar-track{height:3px;background:var(--surface2);border-radius:2px;margin-top:4px;position:relative;overflow:hidden}
+.bar-fill{position:absolute;top:0;left:0;height:100%;border-radius:2px;transition:width .3s}
+.sf-badge{display:inline-block;padding:2px 8px;border-radius:3px;font-size:12px;font-weight:700;font-family:var(--mono)}
+.sf-good{background:#0d220d;color:#4caf50;border:1px solid #1a3a1a}
+.sf-warn{background:#221a0d;color:#ff9800;border:1px solid #3a2a11}
+.sf-bad{background:#220d0d;color:#ef5350;border:1px solid #3a1111}
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--border);flex-wrap:wrap;margin-bottom:14px}
+.tab-btn{padding:7px 13px;font-size:10px;font-weight:600;background:transparent;border:none;border-bottom:2px solid transparent;cursor:pointer;font-family:var(--mono);text-transform:uppercase;letter-spacing:.7px;color:var(--muted);transition:all .12s}
+.tab-btn.on{color:var(--accent);border-bottom-color:var(--accent)}
+.tab-btn:hover:not(.on){color:var(--dim)}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:10px 12px}
+.card-title{font-size:9px;font-weight:700;color:#4a6a90;text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px;font-family:var(--sans)}
+.custom-form{background:#0b0e16;border:1px solid var(--border2);border-radius:6px;padding:12px 14px;margin:6px 0}
+.form-row{display:flex;align-items:center;gap:5px;margin-bottom:3px}
+.form-label{width:110px;font-size:10px;color:#5a6a80;font-family:var(--sans)}
+.form-input{width:68px;padding:3px 6px;background:var(--surface);border:1px solid var(--border2);border-radius:3px;color:var(--bright);font-size:11px;font-family:var(--mono);outline:none;text-align:right}
+.form-input-wide{flex:1;padding:3px 6px;background:var(--surface);border:1px solid var(--border2);border-radius:3px;color:var(--bright);font-size:11px;font-family:var(--mono);outline:none}
+.form-unit{font-size:9px;color:var(--muted)}
+.btn-sm{padding:4px 12px;border:none;border-radius:3px;font-size:10px;font-weight:600;font-family:var(--mono);cursor:pointer;transition:opacity .12s}
+.btn-sm:hover{opacity:.85}
+.sandwich-item{background:var(--surface);border:1px solid var(--border);border-radius:5px;padding:8px 10px;margin-bottom:6px;position:relative}
+.sandwich-remove{position:absolute;top:6px;right:8px;background:none;border:none;color:#5a3030;font-size:14px;cursor:pointer;font-family:var(--mono);line-height:1}
+.sandwich-remove:hover{color:var(--danger)}
+
+/* ══════════════════════════════════════════════════════════════════
+   ENGINEERING WORKBOOK · UNIFIED DESIGN SYSTEM
+   Greyscale + single accent (#6B8AFF) · Inter + JetBrains Mono
+   ══════════════════════════════════════════════════════════════════ */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+  /* ── Master palette ── */
+  --bg:#18181b !important; --bg2:#18181b !important; --bg3:#1e1e22 !important; --bg4:#222226 !important;
+  --panel:#1e1e22 !important; --surface:#222226 !important; --surface2:#2a2a2f !important;
+  --s2:#2a2a2f !important;
+  --border:#313138 !important; --border2:#3c3c44 !important; --border-focus:#6B8AFF !important;
+  --text:#d1d1d6 !important; --text2:#d1d1d6 !important; --text3:#6e6e78 !important;
+  --bright:#eeeef1 !important; --dim:#8c8c96 !important; --muted:#5a5a64 !important;
+  --accent:#6B8AFF !important; --accent2:#8aa4ff !important;
+  --a2:#8aa4ff !important; --ag:rgba(107,138,255,.10) !important; --a2g:rgba(138,164,255,.10) !important;
+  --good:#4aba78 !important; --warn:#d4993a !important; --danger:#d45050 !important;
+  --r:#d45050 !important; --rs:rgba(212,80,80,.12) !important;
+  --info:#6B8AFF !important; --blue:#6B8AFF !important; --green:#4aba78 !important;
+  --orange:#d4993a !important; --yellow:#d4993a !important; --red:#d45050 !important;
+  --cyan:#6B8AFF !important; --purple:#8c8c96 !important; --wg:rgba(212,153,58,.10) !important;
+
+  /* Lug-specific vars */
+  --bg-deep:#18181b !important; --bg-card:#222226 !important; --bg-input:#1e1e22 !important;
+  --text-primary:#eeeef1 !important; --text-secondary:#d1d1d6 !important;
+  --text-dim:#8c8c96 !important; --text-faint:#5a5a64 !important; --text-muted:#6e6e78 !important;
+  --accent-amber:#d4993a !important; --accent-green:#4aba78 !important;
+
+  /* Fonts */
+  --sans:'Inter',-apple-system,'SF Pro Display',system-ui,sans-serif !important;
+  --mono:'JetBrains Mono',ui-monospace,'SF Mono',monospace !important;
+}
+
+/* ── Global resets ── */
+body {
+  font-family: 'Inter',-apple-system,'SF Pro Display',system-ui,sans-serif !important;
+  background: #18181b !important;
+  color: #d1d1d6 !important;
+  -webkit-font-smoothing: antialiased !important;
+  background-image: none !important;
+}
+body::before { background-image: none !important; content: none !important; }
+
+/* ── Typography ── */
+h1,h2,h3,h4,h5,h6 { font-family: 'Inter',-apple-system,system-ui,sans-serif !important; }
+code, pre, .mono, [class*="result-val"], [class*="big-val"], [class*="res-val"],
+.v, .badge, .dt, .psz, td { font-family: 'JetBrains Mono',ui-monospace,monospace !important; }
+
+/* ── Cards / Panels ── */
+.card, .panel, .sec, [class*="big-card"] {
+  background: #222226 !important;
+  border: 1px solid #313138 !important;
+  border-radius: 10px !important;
+}
+.card-title, .card-label, .panel-title, [class*="card-title"], .pt, .chdr,
+[class*="pt"] > span {
+  font-family: 'Inter',-apple-system,system-ui,sans-serif !important;
+  font-size: 10px !important; font-weight: 600 !important;
+  color: #6e6e78 !important; text-transform: uppercase !important;
+  letter-spacing: 0.07em !important;
+}
+
+/* ── Inputs ── */
+input[type="number"], input[type="text"], select, textarea {
+  background: #1e1e22 !important;
+  border: 1px solid #3c3c44 !important;
+  border-radius: 6px !important;
+  color: #eeeef1 !important;
+  font-family: 'JetBrains Mono',ui-monospace,monospace !important;
+  transition: border-color .15s !important;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: #6B8AFF !important;
+  outline: none !important;
+}
+select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236e6e78'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 8px center !important;
+}
+
+/* ── Buttons ── */
+button, .btn, [class*="btn"] {
+  font-family: 'Inter',-apple-system,system-ui,sans-serif !important;
+  border-radius: 6px !important;
+  transition: all .12s !important;
+}
+.btn-amber, .btn-blue, .btn-green, .btn-red, .btn-dim,
+[class*="export"], [class*="save"] {
+  background: #2a2a2f !important;
+  border: 1px solid #3c3c44 !important;
+  color: #8c8c96 !important;
+}
+.btn-amber:hover, .btn-blue:hover, .btn-green:hover, .btn-dim:hover,
+[class*="export"]:hover, [class*="save"]:hover {
+  background: #313138 !important;
+  border-color: #4a4a54 !important;
+  color: #d1d1d6 !important;
+}
+/* Active/primary buttons get the accent */
+.btn.primary, [class*="btn primary"], .btn-accent {
+  background: rgba(107,138,255,.10) !important;
+  border: 1px solid rgba(107,138,255,.28) !important;
+  color: #6B8AFF !important;
+}
+
+/* ── Headers ── */
+.header, .hdr, [class*="topbar"] {
+  background: #1e1e22 !important;
+  border-bottom: 1px solid #313138 !important;
+}
+.header h1, .hdr h1 {
+  font-family: 'Inter',-apple-system,system-ui,sans-serif !important;
+  color: #eeeef1 !important;
+}
+.header .desc, .header .sub, .hdr .sub {
+  color: #6e6e78 !important;
+}
+
+/* ── Results / values ── */
+.result-val, .res-val, .big-val, .v, .badge {
+  color: #eeeef1 !important;
+}
+.result-label, .res-label, .big-label, .form-label, .row-label, .lbl, .l, .fl {
+  color: #8c8c96 !important;
+  font-family: 'Inter',-apple-system,system-ui,sans-serif !important;
+}
+.result-unit, .res-unit, .big-unit, .form-unit, .funit, .fu {
+  color: #5a5a64 !important;
+  font-family: 'JetBrains Mono',ui-monospace,monospace !important;
+}
+
+/* ── Tables ── */
+table { border-collapse: collapse !important; }
+thead th {
+  font-family: 'Inter',-apple-system,system-ui,sans-serif !important;
+  font-size: 9px !important; font-weight: 600 !important;
+  color: #6e6e78 !important; text-transform: uppercase !important;
+  letter-spacing: .06em !important;
+  border-bottom: 1px solid #3c3c44 !important;
+  background: transparent !important;
+}
+tbody td {
+  border-bottom: 1px solid #27272c !important;
+  font-size: 11px !important;
+}
+tbody tr:hover { background: #2a2a2f !important; }
+
+/* ── Notes / hints / info boxes ── */
+.note, .note-box, .info-box, .hint, .method, .fnote {
+  background: #1e1e22 !important;
+  border: 1px solid #313138 !important;
+  border-radius: 8px !important;
+  color: #8c8c96 !important;
+}
+.danger-box {
+  background: rgba(212,80,80,.06) !important;
+  border: 1px solid rgba(212,80,80,.2) !important;
+}
+
+/* ── Dividers ── */
+.divider, hr {
+  border-color: #313138 !important;
+  background: #313138 !important;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 5px !important; }
+::-webkit-scrollbar-track { background: #18181b !important; }
+::-webkit-scrollbar-thumb { background: #3c3c44 !important; border-radius: 3px !important; }
+
+/* ── Pill/chip elements ── */
+.chip, .tag, .pill-bar, [class*="quick-btn"], [class*="fit-type-badge"] {
+  font-family: 'Inter',-apple-system,system-ui,sans-serif !important;
+  border-radius: 6px !important;
+}
+
+/* ── Number formatting ── */
+input[type=number] { -moz-appearance: textfield !important; }
+input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none !important; }
+
+/* ── Canvas containers ── */
+canvas {
+  border-radius: 8px !important;
+}
+
+/* ── SVG diagrams ── */
+svg text {
+  font-family: 'JetBrains Mono',ui-monospace,monospace !important;
+}
+
+/* ── Grid containers ── */
+.grid-main, .grid-2, .grid-3, .g2, .grid3, .main-grid, .dgrid {
+  gap: 12px !important;
+}
+
+/* ── Toggle / knob switches ── */
+.knob { border-radius: 12px !important; }
+
+/* ── Modal overlays ── */
+.modal-overlay, .modal {
+  backdrop-filter: blur(6px) !important;
+}
+.modal {
+  background: #222226 !important;
+  border: 1px solid #313138 !important;
+  border-radius: 12px !important;
+}
+
+/* ── Workbook nav ── */
+.wb-back {
+  position: fixed; top: 12px; left: 12px; z-index: 9998;
+  padding: 7px 14px; border-radius: 8px; font-size: 12px; font-weight: 600;
+  font-family: 'Inter',-apple-system,system-ui,sans-serif;
+  background: #1e1e22; border: 1px solid #313138;
+  color: #8c8c96; cursor: pointer; text-decoration: none;
+  display: flex; align-items: center; gap: 6px;
+  transition: all .15s; backdrop-filter: blur(8px);
+}
+.wb-back:hover { color: #eeeef1; border-color: rgba(107,138,255,.3); background: #222226; }
+
+/* ── CAD image ── */
+.cad-zone { border: 1.5px dashed #3c3c44; border-radius: 10px; padding: 16px; text-align: center; cursor: pointer; transition: all .2s; position: relative; background: rgba(0,0,0,.12) }
+.cad-zone:hover { border-color: #5a5a64; background: rgba(0,0,0,.2) }
+.cad-zone.has-img { border: 1px solid #313138; padding: 4px; background: transparent }
+.cad-thumb { max-width: 100%; max-height: 140px; border-radius: 6px; cursor: pointer; display: block; margin: 0 auto }
+.cad-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.92); z-index: 99999; display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: 0; pointer-events: none; transition: opacity .25s }
+.cad-overlay.show { opacity: 1; pointer-events: auto }
+.cad-overlay img { max-width: 92vw; max-height: 92vh; border-radius: 10px; box-shadow: 0 8px 60px rgba(0,0,0,.5) }
+.cad-rm { position: absolute; top: 6px; right: 8px; background: rgba(180,50,50,.7); color: #fff; border: none; border-radius: 6px; font-size: 10px; padding: 3px 9px; cursor: pointer; z-index: 2 }
+.cad-rm:hover { background: rgba(210,60,60,.9) }
+
+/* ── PDF save ── */
+.pdf-btn { position: fixed; bottom: 14px; right: 14px; z-index: 9998; padding: 8px 16px; border-radius: 8px; font-size: 11px; font-weight: 600; border: 1px solid #313138; background: #1e1e22; color: #8c8c96; cursor: pointer; font-family: 'Inter',-apple-system,system-ui,sans-serif; display: flex; align-items: center; gap: 6px; transition: all .15s; backdrop-filter: blur(8px) }
+.pdf-btn:hover { color: #eeeef1; border-color: rgba(107,138,255,.3) }
+
+@media print { .wb-back, .pdf-btn, .cad-overlay { display: none !important; } }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useMemo,useCallback,useContext,createContext,useEffect} = React;
+
+// ══════════════════════════════════════════════════════════════════
+// DATA
+// ══════════════════════════════════════════════════════════════════
+const TSYS={
+  M:{label:"M",full:"Metric ISO",rF:.125,pF:.6495,mF:1.0825,imp:false},
+  MJ:{label:"MJ",full:"Metric J",rF:.15011,pF:.6495,mF:1.0825,imp:false},
+  UNC:{label:"UNC",full:"Unified Coarse",rF:.125,pF:.6495,mF:1.0825,imp:true},
+  UNF:{label:"UNF",full:"Unified Fine",rF:.125,pF:.6495,mF:1.0825,imp:true},
+  UNJC:{label:"UNJC",full:"Unified Coarse J",rF:.15011,pF:.6495,mF:1.0825,imp:true},
+  UNJF:{label:"UNJF",full:"Unified Fine J",rF:.15011,pF:.6495,mF:1.0825,imp:true},
+};
+
+const MET=[
+  {s:3,p:.5,A:5.03,f:"C"},{s:3,p:.35,A:5.61,f:"F"},
+  {s:3.5,p:.6,A:6.78,f:"C"},
+  {s:4,p:.7,A:8.78,f:"C"},{s:4,p:.5,A:9.79,f:"F"},
+  {s:5,p:.8,A:14.2,f:"C"},{s:5,p:.5,A:16.1,f:"F"},
+  {s:6,p:1,A:20.1,f:"C"},{s:6,p:.75,A:22.0,f:"F"},
+  {s:7,p:1,A:28.9,f:"C"},{s:7,p:.75,A:31.3,f:"F"},
+  {s:8,p:1.25,A:36.6,f:"C"},{s:8,p:1,A:39.2,f:"F"},
+  {s:10,p:1.5,A:58.0,f:"C"},{s:10,p:1.25,A:61.2,f:"F"},{s:10,p:1,A:64.5,f:"F2"},
+  {s:12,p:1.75,A:84.3,f:"C"},{s:12,p:1.5,A:88.1,f:"F"},{s:12,p:1.25,A:92.1,f:"F2"},
+  {s:14,p:2,A:115,f:"C"},{s:14,p:1.5,A:125,f:"F"},
+  {s:16,p:2,A:157,f:"C"},{s:16,p:1.5,A:167,f:"F"},
+  {s:18,p:2.5,A:192,f:"C"},{s:18,p:2,A:204,f:"F"},{s:18,p:1.5,A:216,f:"F2"},
+  {s:20,p:2.5,A:245,f:"C"},{s:20,p:2,A:258,f:"F"},{s:20,p:1.5,A:272,f:"F2"},
+  {s:22,p:2.5,A:303,f:"C"},{s:22,p:2,A:318,f:"F"},{s:22,p:1.5,A:333,f:"F2"},
+  {s:24,p:3,A:353,f:"C"},{s:24,p:2,A:384,f:"F"},
+];
+const UNC=[
+  {l:"#4",d:.112,t:40},{l:"#5",d:.125,t:40},{l:"#6",d:.138,t:32},{l:"#8",d:.164,t:32},
+  {l:"#10",d:.190,t:24},{l:"1/4",d:.250,t:20},{l:"5/16",d:.3125,t:18},{l:"3/8",d:.375,t:16},
+  {l:"7/16",d:.4375,t:14},{l:"1/2",d:.500,t:13},{l:"9/16",d:.5625,t:12},{l:"5/8",d:.625,t:11},
+  {l:"3/4",d:.750,t:10},{l:"7/8",d:.875,t:9},{l:'1"',d:1,t:8},
+];
+const UNF=[
+  {l:"#4",d:.112,t:48},{l:"#5",d:.125,t:44},{l:"#6",d:.138,t:40},{l:"#8",d:.164,t:36},
+  {l:"#10",d:.190,t:32},{l:"1/4",d:.250,t:28},{l:"5/16",d:.3125,t:24},{l:"3/8",d:.375,t:24},
+  {l:"7/16",d:.4375,t:20},{l:"1/2",d:.500,t:20},{l:"9/16",d:.5625,t:18},{l:"5/8",d:.625,t:18},
+  {l:"3/4",d:.750,t:16},{l:"7/8",d:.875,t:14},{l:'1"',d:1,t:12},
+];
+
+const impList=(s)=>(s==="UNC"||s==="UNJC")?UNC:UNF;
+const i2mm=(t)=>({s:t.d*25.4,p:25.4/t.t,label:t.l,tpi:t.t,di:t.d});
+
+const JCOND=[{n:"Nonplated, black finish",K:.3},{n:"Zinc-plated",K:.2},{n:"Lubricated",K:.18},{n:"Cadmium plated",K:.16},{n:"Anti-seize compound",K:.12},{n:"Bowman-grip nuts",K:.09}];
+
+const GRADES=[{l:"4.6",pr:225,ut:400,yr:.6},{l:"4.8",pr:310,ut:420,yr:.8},{l:"5.6",pr:280,ut:500,yr:.6},{l:"5.8",pr:380,ut:520,yr:.8},{l:"6.8",pr:440,ut:600,yr:.8},{l:"8.8",pr:580,ut:800,yr:.91},{l:"9.8",pr:650,ut:900,yr:.91},{l:"10.9",pr:830,ut:1040,yr:.91},{l:"12.9",pr:970,ut:1220,yr:.91}];
+
+const LUBS=[
+  {n:"— Select —",c:null,cat:null,note:"Please select a grease/Loctite option."},
+  {n:"Dry",c:.20,cat:"surface",note:"No lubricant, metal/metal contact. Recommend avoiding — highly variable CoF, risk of galling and inconsistent preload."},
+  {n:"Oiled",c:.10,cat:"surface",note:"A typical automotive fit. Generic machine oil or assembly lube on threads and bearing face."},
+  {n:"Chemi Black Fastener",c:.12,cat:"surface",note:"Chemi black coating retains oil, so retains lubricity unless degreased with very strong solvents."},
+  {n:"TB1901 Dry Moly",c:.041,cat:"grease",note:"High performance grease with very low CoF, useful for reducing shank twist/shear. Good consistency for high performance applications."},
+  {n:"Copper Grease",c:.082,cat:"grease",note:"Widely used and available in automotive. Copper particles can be a contamination concern. Consistency not typically fantastic."},
+  {n:"Loctite 222",c:.17,cat:"loctite",note:"Low strength threadlocker — good for small fasteners and fasteners that need to be removed. Purple colour code."},
+  {n:"Loctite 243",c:.10,cat:"loctite",note:"Medium strength. High break-off, low prevailing torque. Low CoF makes it a good all-rounder. Blue colour code."},
+  {n:"Loctite 262",c:.15,cat:"loctite",note:"High strength, permanent threadlocker. Red colour code. Requires heat for disassembly."},
+  {n:"Loctite 272",c:.20,cat:"loctite",note:"Good for stud fitment. High break-off and prevailing torques. Red colour code — high temperature formulation."},
+  {n:"Loctite 648",c:.25,cat:"loctite",note:"Technically not a threadlocker — retaining compound. High CoF but very high break-off and prevailing. Can limit tightening torque capacity."},
+  {n:"Custom…",c:.15,cat:"custom",note:"Enter a custom coefficient of friction value."},
+];
+
+const INIT_MATS=[
+  {name:"— Select —",E:0,v:0,CTE:0,Yc:0,UTSc:0,Sc:0,Bc:0,Yh:0,UTSh:0,Sh:0,Bh:0,cust:false},
+  {name:"Unbrako 12.9 Fastener",E:204,v:.3,CTE:12.4,Yc:1172,UTSc:1310,Sc:496,Bc:1758,Yh:0,UTSh:0,Sh:0,Bh:0,cust:false},
+  {name:"MP35N",E:226,v:.357,CTE:11.2,Yc:1837,UTSc:1926,Sc:0,Bc:0,Yh:0,UTSh:0,Sh:0,Bh:0,cust:false},
+  {name:"13-8PH Stainless",E:195,v:.28,CTE:10.6,Yc:1410,UTSc:1520,Sc:1000,Bc:2118,Yh:0,UTSh:0,Sh:0,Bh:0,cust:false},
+  {name:"S99G",E:200,v:.3,CTE:12.3,Yc:1080,UTSc:1230,Sc:767,Bc:1667,Yh:1100,UTSh:1200,Sh:750,Bh:1500,cust:false},
+  {name:"Al 2618",E:72,v:.33,CTE:23,Yc:290,UTSc:379,Sc:280,Bc:438,Yh:320,UTSh:350,Sh:260,Bh:350,cust:false},
+  {name:"Al 7075-T6",E:71.7,v:.33,CTE:23.6,Yc:503,UTSc:572,Sc:331,Bc:862,Yh:0,UTSh:0,Sh:0,Bh:0,cust:false},
+  {name:"Ti-6Al-4V",E:113.8,v:.342,CTE:8.6,Yc:880,UTSc:950,Sc:550,Bc:1520,Yh:0,UTSh:0,Sh:0,Bh:0,cust:false},
+  {name:"Steel (Generic)",E:210,v:.3,CTE:12,Yc:250,UTSc:400,Sc:150,Bc:375,Yh:0,UTSh:0,Sh:0,Bh:0,cust:false},
+  {name:"Stainless 316",E:193,v:.3,CTE:16,Yc:205,UTSc:515,Sc:120,Bc:308,Yh:0,UTSh:0,Sh:0,Bh:0,cust:false},
+  {name:"Inconel 718",E:205,v:.29,CTE:13,Yc:1034,UTSc:1241,Sc:690,Bc:1551,Yh:980,UTSh:1170,Sh:650,Bh:1470,cust:false},
+];
+
+// ── Shared Context ───────────────────────────────────────────────
+const AppCtx=createContext();
+// Default safety factor thresholds
+const SF_CRIT_DEFAULT=1.2;
+const SF_OPT_DEFAULT=1.5;
+
+// ── Helpers ──────────────────────────────────────────────────────
+const fm=(v,d=1)=>(v==null||isNaN(v)||!isFinite(v))?"—":Number(v).toFixed(d);
+const fp=(v)=>(v==null||isNaN(v)||!isFinite(v))?"—":(v*100).toFixed(1)+"%";
+const scol=(r)=>{if(r==null||isNaN(r)||!isFinite(r))return"#888";return r>.95?"#dc3545":r>.75?"#d97a1e":"#2a9d5c";};
+const fcol=(v,t)=>{if(v==null||isNaN(v)||!isFinite(v))return"#888";return v<1?"#dc3545":v<t?"#d97a1e":"#2a9d5c";};
+const tg=(d,P,sys)=>{const s=TSYS[sys]||TSYS.M;const mn=d-s.mF*P,pd=d-s.pF*P,sd=(pd+mn)/2;return{mn,pd,sd,rr:s.rF*P,As:(Math.PI/4)*sd*sd};};
+const getCof=(idx,custom)=>{const l=LUBS[idx];return l?.cat==="custom"?custom:(l?.c||.2);};
+
+// ── BASIC CALC ───────────────────────────────────────────────────
+function calcBasic(inp){
+  const{d,P,As:Atab}=inp.th;
+  const g=tg(d,P,inp.sys); const As=Atab||g.As;
+  const grade=GRADES.find(x=>x.l===inp.grade);
+  const cofU=getCof(inp.luI,inp.lcU), cofT=getCof(inp.ltI,inp.lcT);
+  if(!grade||!d||!P) return null;
+  // Detailed torque (same model as advanced)
+  const clutchR=(1.5*d+d)/2/2; // assuming bearing dia ~ 1.5*d for basic
+  const Fi=inp.pre;
+  const Tb=Fi*cofU*clutchR;
+  const Tt=(g.pd*cofT*Fi)/(2*Math.cos(Math.PI/6));
+  const Ts=(Fi*P)/(2*Math.PI);
+  const T=Tb+Tt+Ts;
+  const prL=grade.pr*As/1e3, utL=grade.ut*As/1e3;
+  const pP=Fi/prL, sigma=Fi*1e3/As;
+  // Torsional shear during tightening — critical for yield check
+  const shankD=d; // basic assumes full-diameter shank
+  const minD2=Math.min(g.sd,shankD);
+  const Jpolar=Math.PI*(minD2**4)/32;
+  const tau=Jpolar>0?((Tt+Ts)*1e3*(g.pd/2))/Jpolar:0;
+  const vm=Math.sqrt(sigma**2+3*tau**2);
+  // Yield utilisation — using proof stress as proxy for yield in basic mode
+  const pctVMproof=vm/grade.pr;
+  const shearYield=grade.pr*0.577; // Von Mises shear yield
+  const sfVMbasic=grade.pr/vm;
+  const sfShearBasic=shearYield/tau;
+  const shearReduction=vm>0?1-sigma/vm:0;
+  const grip=inp.grip||d*2, Ash=(Math.PI/4)*d*d;
+  const tIG=Math.min(grip,grip*.4),sIG=grip-tIG;
+  let Kb=null;if(sIG>0&&tIG>0)Kb=1/(tIG/(As*210)+sIG/(Ash*210));
+  const dw=1.5*d;let Km=null;
+  if(grip>0&&dw>d){const nm=(0.5774*grip+.5*dw-.5*d)*(dw+d),dn=(0.5774*grip+.5*dw+.5*d)*(dw-d);if(dn>0&&nm/dn>0)Km=.5774*Math.PI*inp.mE*d/(2*Math.log(nm/dn));}
+  let Cs=null,n0=null,np=null,nL=null;
+  if(Kb&&Km){Cs=Kb/(Kb+Km);if(inp.sep>0){n0=Fi/(inp.sep*(1-Cs));np=prL/(Cs*inp.sep+Fi);nL=(prL-Fi)/(Cs*inp.sep);}}
+  return{T,Tb,Tt,Ts,cofU,cofT,d,P,As,prL,utL,pP,pU:Fi/utL,sigma,tau,vm,pctVMproof,sfVMbasic,sfShearBasic,shearReduction,grade,Kb,Km,Cs,n0,np,nL,...g};
+}
+
+// ── ADVANCED CALC ────────────────────────────────────────────────
+function calcAdv(inp){
+  const r={},P=inp.pitch,d=inp.nomD,sys=TSYS[inp.sys]||TSYS.M;
+  r.mn=d-sys.mF*P;r.pd=d-sys.pF*P;r.rr=sys.rF*P;r.sd=(r.pd+r.mn)/2;
+  r.As=(Math.PI/4)*(r.sd**2-inp.hID**2);
+  r.shA=(Math.PI/4)*(inp.shD**2-inp.hID**2);
+  r.crA=Math.min(r.shA,r.As);r.clutR=(inp.brD+d)/2/2;
+  r.engTh=.5*d;
+  // Clamp length = earth + primary + sum(sandwiches)
+  const swTotal=inp.sws.reduce((a,s)=>a+s.thick,0);
+  r.clL=inp.eD+inp.pT+swTotal;
+  r.thJ=r.engTh+inp.expTh;r.shJ=r.clL-inp.expTh;
+  const mD=Math.min(r.sd,inp.shD);
+  r.J=Math.PI*(mD**4/32-inp.hID**4/32);
+  r.tPre=inp.opP*(1+inp.rlx);
+  const F=r.tPre,mu=inp.cofU,mt=inp.cofT;
+  r.Tb=F*mu*r.clutR;r.Tt=(r.pd*mt*F)/(2*Math.cos(Math.PI/6));
+  r.Ts=(F*P)/(2*Math.PI);r.Ttot=r.Tb+r.Tt+r.Ts;r.Tbo=r.Tb+r.Tt-r.Ts;
+  r.sig=(F*1e3)/r.crA;r.tau=((r.Tt+r.Ts)*1e3*(r.pd/2))/r.J;
+  r.vm=Math.sqrt(r.sig**2+3*r.tau**2);
+  const m=inp.fM;r.Yc=m.Yc;r.Uc=m.UTSc;r.Yh=m.Yh||m.Yc;r.Uh=m.UTSh||m.UTSc;r.fE=m.E;
+  r.pYt=r.vm/r.Yc;r.pYs=r.sig/r.Yc;r.shR=r.pYt>0?1-r.pYs/r.pYt:0;
+  r.yldT=r.pYt>0?r.Ttot/r.pYt:Infinity;r.ultT=r.vm>0?(r.Uc/r.vm)*r.Ttot:Infinity;
+  r.tyL=(r.Yc*r.crA)/1e3;r.tyLA=r.tyL*(1-r.shR);
+  r.kTh=(r.As*r.fE)/r.thJ;
+  r.kSh=r.shJ>0?(r.shA*r.fE)/r.shJ:Infinity;
+  r.kB=1/(1/r.kTh+(isFinite(r.kSh)?1/r.kSh:0));
+  // Member stiffnesses — earth, primary, each sandwich (series)
+  const eA=(Math.PI/4)*(inp.eMOn**2-inp.eCl**2);
+  const pA=(Math.PI/4)*(inp.pMOn**2-inp.pCl**2);
+  const fiA=(Math.PI/4)*(inp.brD**2-inp.pCl**2);
+  r.kE=inp.eD>0&&eA>0?(eA*inp.eM.E)/inp.eD:Infinity;
+  r.kP=inp.pT>0&&pA>0?(pA*inp.pM.E)/inp.pT:Infinity;
+  // Sandwich items
+  r.kSws=inp.sws.map(sw=>{
+    if(sw.thick<=0||!sw.mat||sw.mat.E===0)return Infinity;
+    const a=(Math.PI/4)*(sw.massOn**2-sw.clear**2);
+    return a>0?(a*sw.mat.E)/sw.thick:Infinity;
+  });
+  let ik=0;
+  if(isFinite(r.kE)&&r.kE>0)ik+=1/r.kE;
+  if(isFinite(r.kP)&&r.kP>0)ik+=1/r.kP;
+  r.kSws.forEach(k=>{if(isFinite(k)&&k>0)ik+=1/k;});
+  r.kJ=ik>0?1/ik:0;r.C=r.kB/(r.kJ+r.kB);r.C1=1-r.C;
+  r.tsA=(5/8)*Math.PI*r.pd*r.engTh;
+  r.bsF=fiA>0?(F*1e3)/fiA:Infinity;r.bsP=pA>0?(F*1e3)/pA:Infinity;r.bsE=eA>0?(F*1e3)/eA:Infinity;
+  r.tss=r.tsA>0?(F*1e3)/r.tsA:Infinity;
+  const dT=inp.runT-21;
+  r.bTE=r.clL*m.CTE*dT*1e-6;
+  r.eTE=inp.eD*(inp.eM.CTE||0)*dT*1e-6;
+  r.pTE=inp.pT*(inp.pM.CTE||0)*dT*1e-6;
+  r.swTEs=inp.sws.map(sw=>sw.thick*(sw.mat?.CTE||0)*dT*1e-6);
+  r.jTE=r.eTE+r.pTE+r.swTEs.reduce((a,x)=>a+x,0);
+  r.thD=r.kB>0&&r.kJ>0?(r.jTE-r.bTE)/(1/r.kB+1/r.kJ):0;
+  r.rPre=inp.opP;r.thPre=r.rPre+r.thD;
+  r.thFS=r.crA>0?(r.thPre*1e3)/r.crA:0;
+  r.cyD=inp.cyL;r.cyPre=r.cyD*r.C+r.thPre;
+  r.cyFS=r.crA>0?(r.cyPre*1e3)/r.crA:0;
+  const sC=m.Sc||r.Yc*.577;
+  // Pure torsional shear SF during tightening
+  r.sfShTighten=sC/r.tau;
+  r.sfVM=r.Yc/r.vm;r.sfTA=r.Yc/r.sig;
+  r.sfTR=r.rPre>0?r.Yc/((r.rPre*1e3)/r.crA):Infinity;
+  r.sfTT=r.thPre>0?r.Yh/r.thFS:Infinity;
+  r.sfTC=r.cyPre>0?r.Yh/r.cyFS:Infinity;
+  r.sfSA=sC/r.tss;r.sfSR=r.rPre>0?sC/((r.rPre*1e3)/r.tsA):Infinity;
+  const eB=inp.eM.Bc||inp.eM.Yc*1.5,pB=inp.pM.Bc||inp.pM.Yc*1.5;
+  r.sfBP=r.bsP>0&&isFinite(r.bsP)?pB/r.bsP:Infinity;
+  r.sfBE=r.bsE>0&&isFinite(r.bsE)?eB/r.bsE:Infinity;
+  r.sfSep=r.C1>0&&inp.sepL>0?r.rPre/(inp.sepL*r.C1):Infinity;
+  r.bExt=r.kB>0?F/r.kB:0;r.jCmp=r.kJ>0?F/r.kJ:0;
+  r.travel=r.bExt+r.jCmp;r.dpMM=360/P;r.angle=r.travel*r.dpMM;
+  r.yEl=(r.Yc/(r.fE*1e3))*(r.thJ+r.shJ)*(1-r.shR);
+  r.pEl=Math.max(0,r.bExt-r.yEl);r.minL=r.thJ+r.shJ;
+  r.longSh=r.clL/10/inp.shD>1;
+  return r;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// COMPONENTS
+// ══════════════════════════════════════════════════════════════════
+function IR({label,value,onChange,unit,step,min,max,disabled}){
+  return <div className="row"><span className="row-label">{label}</span><input type="number" className="row-input" style={{opacity:disabled?.4:1}} value={value} onChange={e=>onChange(parseFloat(e.target.value)||0)} step={step} min={min} max={max} disabled={disabled}/><span className="row-unit">{unit}</span></div>;
+}
+function SR({label,value,onChange,options,rOpt}){
+  return <div className="row"><span className="row-label">{label}</span><select className="row-select" value={value} onChange={e=>onChange(e.target.value)}>{options.map((o,i)=>{const r=rOpt?rOpt(o,i):{value:i,label:String(o)};return <option key={r.value+"_"+i} value={r.value}>{r.label}</option>;})}</select></div>;
+}
+function RR({label,value,unit,color,dp=1}){
+  return <div className="result-row"><span className="result-label">{label}</span><span className="result-val" style={{color:color||"var(--bright)"}}>{typeof value==="string"?value:fm(value,dp)}</span><span className="result-unit">{unit}</span></div>;
+}
+function SFT({title,rows,tsf,crit}){
+  const c=crit||1.0;
+  return <div className="card"><div className="card-title">{title}</div>{rows.map((r,i)=><div key={i} className="result-row" style={{padding:"2px 0"}}><span className="result-label" style={{fontSize:10}}>{r.label}</span><span className={"sf-badge "+(r.value<c?"sf-bad":r.value<tsf?"sf-warn":"sf-good")}>{r.value===Infinity?"∞":fm(r.value,2)}</span></div>)}</div>;
+}
+
+function ThPills({value,onChange}){
+  return <div className="pill-bar">{Object.entries(TSYS).map(([k,v])=><button key={k} className={"pill"+(value===k?" on":"")} onClick={()=>onChange(k)}>{v.label}</button>)}<button className={"pill"+(value==="CUSTOM"?" on":"")} onClick={()=>onChange("CUSTOM")}>Custom</button></div>;
+}
+
+function LubSel({label,idx,setIdx,ccof,setCcof}){
+  const l=LUBS[idx];const isCust=l?.cat==="custom";
+  return <>
+    <div className="row"><span className="row-label">{label}</span>
+      <select className="row-select" value={idx} onChange={e=>setIdx(parseInt(e.target.value))}>{LUBS.map((o,i)=><option key={i} value={i}>{o.n}{o.c!=null&&o.cat!=="custom"?` (μ = ${o.c})`:""}</option>)}</select>
+    </div>
+    {isCust&&<div className="row"><span className="row-label">Custom CoF</span><input type="number" className="row-input" value={ccof} onChange={e=>setCcof(parseFloat(e.target.value)||0)} step={.01} min={.01} max={1}/></div>}
+    {l&&l.note&&idx>0&&<div className="note-box">{l.cat&&<span className={"cat-tag cat-"+l.cat}>{l.cat}</span>} {l.note}</div>}
+  </>;
+}
+
+function MatSel({label,value,onChange,target}){
+  const{mats,setShowMatForm}=useContext(AppCtx);
+  return <div className="row"><span className="row-label">{label}</span>
+    <select className="row-select" value={value} onChange={e=>{if(e.target.value==="__add__"){setShowMatForm(target);return;}onChange(parseInt(e.target.value));}}>
+      {mats.map((o,i)=><option key={i} value={i}>{o.name}{o.cust?" ✦":""}</option>)}
+      <option value="__add__">＋ Add Custom Material…</option>
+    </select>
+  </div>;
+}
+
+function MatForm({onAdd,onCancel}){
+  const[s,sS]=useState({n:"Custom Material",E:200,v:.3,CTE:12,Yc:500,UTSc:700,Sc:0,Bc:0,Yh:0,UTSh:0,Sh:0,Bh:0});
+  const u=(k,v)=>sS(p=>({...p,[k]:v}));
+  const FI=({l,k,un})=><div className="form-row"><span className="form-label">{l}</span><input type="number" className="form-input" value={s[k]} onChange={e=>u(k,parseFloat(e.target.value)||0)} step={1}/>{un&&<span className="form-unit">{un}</span>}</div>;
+  return <div className="custom-form">
+    <div style={{fontSize:10,fontWeight:700,color:"var(--accent)",marginBottom:8}}>ADD CUSTOM MATERIAL</div>
+    <div className="form-row"><span className="form-label">Name</span><input className="form-input-wide" value={s.n} onChange={e=>u("n",e.target.value)}/></div>
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"0 12px"}}>
+      <FI l="Young's Mod." k="E" un="GPa"/><FI l="Poisson's" k="v"/>
+      <FI l="CTE" k="CTE" un="μm/m·K"/><div/>
+      <div style={{gridColumn:"span 2",fontSize:9,color:"#5a6a7a",fontWeight:600,margin:"6px 0 2px"}}>COLD / ROOM TEMP</div>
+      <FI l="Yield" k="Yc" un="MPa"/><FI l="UTS" k="UTSc" un="MPa"/><FI l="Shear" k="Sc" un="MPa"/><FI l="Bearing" k="Bc" un="MPa"/>
+      <div style={{gridColumn:"span 2",fontSize:9,color:"#5a6a7a",fontWeight:600,margin:"6px 0 2px"}}>HOT / RUNNING (0 = use cold)</div>
+      <FI l="Yield" k="Yh" un="MPa"/><FI l="UTS" k="UTSh" un="MPa"/><FI l="Shear" k="Sh" un="MPa"/><FI l="Bearing" k="Bh" un="MPa"/>
+    </div>
+    <div style={{display:"flex",gap:8,marginTop:10}}>
+      <button className="btn-sm" style={{background:"var(--accent2)",color:"var(--bright)"}} onClick={()=>onAdd({name:s.n||"Custom",E:s.E,v:s.v,CTE:s.CTE,Yc:s.Yc,UTSc:s.UTSc,Sc:s.Sc,Bc:s.Bc,Yh:s.Yh,UTSh:s.UTSh,Sh:s.Sh,Bh:s.Bh,cust:true})}>Add Material</button>
+      <button className="btn-sm" style={{background:"#1a1a22",color:"#888"}} onClick={onCancel}>Cancel</button>
+    </div>
+  </div>;
+}
+
+function MatSelWrap({label,value,onChange,target}){
+  const{showMatForm,setShowMatForm,addMat}=useContext(AppCtx);
+  return <>
+    <MatSel label={label} value={value} onChange={onChange} target={target}/>
+    {showMatForm===target&&<MatForm onAdd={m=>{addMat(m,target,onChange);}} onCancel={()=>setShowMatForm(null)}/>}
+  </>;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// BASIC CALCULATOR
+// ══════════════════════════════════════════════════════════════════
+function Basic(){
+  const{mats,sfCrit,sfOpt}=useContext(AppCtx);
+  const[sys,setSys]=useState("M");
+  const[si,sSi]=useState(13);
+  const[grade,sGrade]=useState("8.8");
+  const[ci,sCi]=useState(2);
+  const[pre,sPre]=useState(20);
+  const[grip,sGrip]=useState(30);
+  const[mE,sME]=useState(210);
+  const[sep,sSep]=useState(0);
+  const[cd,sCd]=useState(10);const[cp,sCp]=useState(1.5);
+  const[luI,sLuI]=useState(1);const[ltI,sLtI]=useState(1);
+  const[lcU,sLcU]=useState(.15);const[lcT,sLcT]=useState(.15);
+
+  const isCust=sys==="CUSTOM",isImp=!isCust&&TSYS[sys]?.imp;
+  const sL=useMemo(()=>{if(isCust)return[];return isImp?impList(sys).map(i2mm):MET;},[sys,isCust,isImp]);
+  const th=useMemo(()=>{
+    if(isCust){const g=tg(cd,cp,"M");return{d:cd,P:cp,As:g.As};}
+    const s=sL[si]||sL[0];if(!s)return{d:0,P:0,As:0};return{d:s.s,P:s.p,As:s.A};
+  },[isCust,sL,si,cd,cp]);
+
+  const res=useMemo(()=>calcBasic({th,grade,condIdx:ci,pre,grip,mE,sep,sys:isCust?"M":sys,luI,ltI,lcU,lcT}),[th,grade,ci,pre,grip,mE,sep,sys,isCust,luI,ltI,lcU,lcT]);
+  const pc2=res?scol(res.pP):"#888";
+  useEffect(()=>{if(typeof exportBoltRF==="function")exportBoltRF(res)},[res]);
+
+  return <div style={{display:"flex",minHeight:"calc(100vh - 54px)"}}>
+    <div style={{width:460,minWidth:400,borderRight:"1px solid var(--border)",overflowY:"auto",padding:"16px 20px",maxHeight:"calc(100vh - 54px)",flexShrink:0}}>
+      <div style={{marginBottom:16}}>
+        <div className="section-title">Thread Specification</div>
+        <ThPills value={sys} onChange={s=>{setSys(s);sSi(0);}}/>
+        {isCust?<><IR label="Nominal Diameter" value={cd} onChange={sCd} unit="mm" step={.5} min={1}/><IR label="Thread Pitch" value={cp} onChange={sCp} unit="mm" step={.1} min={.1}/><div className="note">Custom thread — 60° ISO geometry.</div></>:
+          <SR label="Thread Size" value={si} onChange={v=>sSi(parseInt(v))} options={sL} rOpt={(o,i)=>({value:i,label:isImp?`${o.label}-${o.tpi} TPI (Ø${fm(o.s,2)} mm)`:`M${o.s} × ${o.p}${o.f==="F"?" fine":o.f==="F2"?" fine 2":""}`})}/>}
+        {!isCust&&sL[si]&&<div className="row"><span className="row-label">Pitch</span><input className="row-input" style={{opacity:.5}} value={th.P.toFixed(isImp?3:2)} disabled/><span className="row-unit">mm</span></div>}
+      </div>
+      <div style={{marginBottom:16}}><div className="section-title">Bolt Grade</div>
+        <SR label="Grade" value={grade} onChange={sGrade} options={GRADES} rOpt={o=>({value:o.l,label:`Grade ${o.l}  (${o.ut} MPa UTS)`})}/>
+      </div>
+      <div style={{marginBottom:16}}><div className="section-title">Lubrication</div>
+        <LubSel label="Underhead Lubricant" idx={luI} setIdx={sLuI} ccof={lcU} setCcof={sLcU}/>
+        <div className="divider"/>
+        <LubSel label="Thread Lubricant" idx={ltI} setIdx={sLtI} ccof={lcT} setCcof={sLcT}/>
+        {luI!==ltI&&luI>0&&ltI>0&&<div className="note-box" style={{borderColor:"#2a3040"}}><span style={{color:"var(--accent)",fontWeight:600}}>Split lubrication:</span> μ<sub>underhead</sub> = {getCof(luI,lcU)} | μ<sub>thread</sub> = {getCof(ltI,lcT)}</div>}
+      </div>
+      <div style={{marginBottom:16}}><div className="section-title">Loading</div>
+        <IR label="Required Pre-Load" value={pre} onChange={sPre} unit="kN" step={.5} min={0}/>
+        <IR label="Grip Length" value={grip} onChange={sGrip} unit="mm" step={1} min={1}/>
+        <IR label="Member Young's Modulus" value={mE} onChange={sME} unit="GPa" step={1} min={1}/>
+        <div className="divider"/><IR label="External Separation Load" value={sep} onChange={sSep} unit="kN" step={.5} min={0}/>
+        <div className="note">Per-bolt external tensile load tending to separate the joint.</div>
+      </div>
+    </div>
+    <div style={{flex:1,overflowY:"auto",padding:"16px 24px",maxHeight:"calc(100vh - 54px)"}}>{res&&<>
+      <div className="grid-2" style={{marginBottom:12}}>
+        <div className="big-card"><div className="big-label">Tightening Torque</div><div className="big-val" style={{color:"var(--accent)"}}>{fm(res.T,1)}<span className="big-unit">Nm</span></div><div style={{fontSize:10,color:"#3a4a5a",marginTop:4}}>μ<sub>u</sub>={res.cofU} | μ<sub>t</sub>={res.cofT}</div></div>
+        <div className="big-card"><div className="big-label">% Proof Load</div><div className="big-val" style={{color:pc2}}>{fp(res.pP)}</div><div style={{fontSize:10,color:"#3a4a5a",marginTop:4}}>{pre} kN / {fm(res.prL,1)} kN proof</div><div className="bar-track"><div className="bar-fill" style={{width:Math.min(100,res.pP*100)+"%",background:pc2}}/></div></div>
+      </div>
+      {res.pP>.75&&res.pP<=1&&<div className="warn-box">⚠ Pre-load exceeds 75% proof — fastener re-use not recommended.</div>}
+      {res.pP>1&&<div className="danger-box">✖ Pre-load exceeds bolt proof load — permanent deformation expected.</div>}
+
+      <div style={{marginTop:16,marginBottom:16}}><div className="section-title">Tightening Stress Analysis</div>
+        <RR label="Direct Tensile Stress (σ)" value={res.sigma} unit="MPa"/>
+        <RR label="Torsional Shear Stress (τ)" value={res.tau} unit="MPa"/>
+        <RR label="Von Mises Combined (σ_vm)" value={res.vm} unit="MPa" color={scol(res.pctVMproof)}/>
+        <div className="divider"/>
+        <RR label="σ_vm / Proof Strength" value={fp(res.pctVMproof)} color={scol(res.pctVMproof)}/>
+        <RR label="Shear Reduction on Tensile" value={fp(res.shearReduction)}/>
+        <div className="divider"/>
+        <div className="grid-2" style={{marginTop:4}}>
+          <SFT title="VM Yield (vs Proof)" tsf={sfOpt} crit={sfCrit} rows={[{label:"Tightening",value:res.sfVMbasic}]}/>
+          <SFT title="Shear Yield (τ vs 0.577×Proof)" tsf={sfOpt} crit={sfCrit} rows={[{label:"Tightening",value:res.sfShearBasic}]}/>
+        </div>
+        {res.sfVMbasic<sfCrit&&<div className="danger-box">✖ Von Mises stress exceeds proof strength (SF = {fm(res.sfVMbasic,2)} &lt; {sfCrit}) — fastener will yield during tightening.</div>}
+        {res.sfVMbasic>=sfCrit&&res.sfVMbasic<sfOpt&&<div className="warn-box">⚠ Von Mises tightening SF = {fm(res.sfVMbasic,2)} is below optimal ({sfOpt}). Consider reducing preload or improving lubrication to reduce shear.</div>}
+        {res.sfShearBasic<sfCrit&&res.sfVMbasic>=sfCrit&&<div className="danger-box">✖ Pure torsional shear exceeds shear yield (SF = {fm(res.sfShearBasic,2)} &lt; {sfCrit}) — shank may yield in torsion during torquing.</div>}
+        {res.sfShearBasic>=sfCrit&&res.sfShearBasic<sfOpt&&res.sfVMbasic>=sfOpt&&<div className="warn-box">⚠ Torsional shear SF = {fm(res.sfShearBasic,2)} is below optimal ({sfOpt}). Lower CoF lubricant would reduce shear loading.</div>}
+        <div className="note">Torsional shear is applied to the fastener shank during torquing. It typically relaxes after tightening is complete, but must not exceed yield during the installation process. Lower CoF lubricants reduce the shear component.</div>
+      </div>
+
+      <div style={{marginTop:16,marginBottom:16}}><div className="section-title">Torque Breakdown</div>
+        <RR label="Bearing Face Friction" value={res.Tb} unit="Nm" dp={2}/><div className="bar-track"><div className="bar-fill" style={{width:(res.Tb/res.T*100)+"%",background:"var(--accent)"}}/></div>
+        <RR label="Thread Friction" value={res.Tt} unit="Nm" dp={2}/><div className="bar-track"><div className="bar-fill" style={{width:(res.Tt/res.T*100)+"%",background:"#4a7aaa"}}/></div>
+        <RR label="Bolt Stretch (Helix)" value={res.Ts} unit="Nm" dp={2}/><div className="bar-track"><div className="bar-fill" style={{width:(res.Ts/res.T*100)+"%",background:"#3a5a7a"}}/></div>
+      </div>
+
+      <div style={{marginBottom:16}}><div className="section-title">Fastener Data</div><div className="grid-2">
+        <div><RR label="Nominal Diameter" value={res.d} unit="mm" dp={2}/><RR label="Thread Pitch" value={res.P} unit="mm" dp={3}/><RR label="Stress Diameter" value={res.sd} unit="mm" dp={3}/><RR label="Stress Area" value={res.As} unit="mm²" dp={2}/></div>
+        <div><RR label="Proof Load" value={res.prL} unit="kN"/><RR label="UTS Load" value={res.utL} unit="kN"/><RR label="Tensile Stress" value={res.sigma} unit="MPa"/><RR label="Stress / Proof" value={fp(res.sigma/res.grade.pr)} color={scol(res.sigma/res.grade.pr)}/></div>
+      </div></div>
+      {res.Kb!=null&&res.Km!=null&&<div style={{marginBottom:16}}><div className="section-title">Estimated Stiffness & Safety</div>
+        <RR label="Bolt Stiffness (Kb)" value={res.Kb} unit="kN/mm"/><RR label="Joint Stiffness (Km) — Shigley" value={res.Km} unit="kN/mm"/>
+        {res.Cs!=null&&<><RR label="Stiffness Ratio C" value={res.Cs} unit="" dp={3}/><div className="note">C = Kb/(Kb+Km). Lower → more load carried by joint. Typical: 0.15–0.40.</div></>}
+        {res.n0!=null&&<><div className="divider"/><RR label="Separation FOS (n₀)" value={res.n0} unit="" dp={2} color={fcol(res.n0,sfOpt)}/><RR label="Yielding FOS (Np)" value={res.np} unit="" dp={2} color={fcol(res.np,sfOpt)}/><RR label="Overload FOS (NL)" value={res.nL} unit="" dp={2} color={fcol(res.nL,sfOpt)}/></>}
+      </div>}
+    </>}</div>
+  </div>;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// ADVANCED CALCULATOR
+// ══════════════════════════════════════════════════════════════════
+function Advanced(){
+  const{mats,sfCrit,sfOpt}=useContext(AppCtx);
+  const[tab,sTab]=useState("summary");
+  const[sys,sSys]=useState("M");const[si,sSi]=useState(9);
+  const[cd,sCd]=useState(10);const[cp,sCp]=useState(1.5);
+  const isCust=sys==="CUSTOM",isImp=!isCust&&TSYS[sys]?.imp;
+  const sL=useMemo(()=>{if(isCust)return[];return isImp?impList(sys).map(i2mm):MET;},[sys,isCust,isImp]);
+  const sel=sL[si]||sL[0];
+  const nomD=isCust?cd:(sel?.s||0),pitch=isCust?cp:(sel?.p||0);
+
+  const[jt,sJt]=useState("Bolt");
+  const[shD,sShD]=useState(5.6);const[brD,sBrD]=useState(13);
+  const[expTh,sExpTh]=useState(20);const[hID,sHID]=useState(0);
+  const[fmi,sFmi]=useState(3);
+  const[luI,sLuI]=useState(1);const[ltI,sLtI]=useState(1);
+  const[lcU,sLcU]=useState(.15);const[lcT,sLcT]=useState(.15);
+  const[opP,sOpP]=useState(10.6);const[rlx,sRlx]=useState(0);
+  const[emi,sEmi]=useState(5);const[eD,sED]=useState(20);const[eM,sEM]=useState(30);const[eC,sEC]=useState(8);
+  const[pmi,sPmi]=useState(4);const[pT,sPT]=useState(50);const[pM,sPM]=useState(30);const[pC,sPC]=useState(8);
+  // Sandwich items array
+  const[sws,sSws]=useState([]);
+  const addSw=()=>sSws(p=>[...p,{id:Date.now(),matIdx:5,thick:5,massOn:30,clear:8}]);
+  const rmSw=(id)=>sSws(p=>p.filter(x=>x.id!==id));
+  const updSw=(id,k,v)=>sSws(p=>p.map(x=>x.id===id?{...x,[k]:v}:x));
+
+  const[runT,sRunT]=useState(150);const[cyL,sCyL]=useState(2);const[sepL,sSepL]=useState(0);
+
+  const cofU=getCof(luI,lcU),cofT=getCof(ltI,lcT);
+  const fM=mats[fmi],eM2=mats[emi],pM2=mats[pmi];
+
+  const r=useMemo(()=>{
+    if(!fM||fM.E===0||!eM2||eM2.E===0||!pM2||pM2.E===0)return null;
+    const swData=sws.map(sw=>({thick:sw.thick,massOn:sw.massOn,clear:sw.clear,mat:mats[sw.matIdx]}));
+    return calcAdv({sys:isCust?"M":sys,nomD,pitch,shD,brD,expTh,hID,fM,cofU,cofT,opP,rlx,
+      eM:eM2,eD,eMOn:eM,eCl:eC,pM:pM2,pT,pMOn:pM,pCl:pC,sws:swData,runT,cyL,sepL,jt});
+  },[sys,isCust,nomD,pitch,shD,brD,expTh,hID,fmi,luI,ltI,lcU,lcT,opP,rlx,
+    emi,eD,eM,eC,pmi,pT,pM,pC,sws,runT,cyL,sepL,cofU,cofT,fM,eM2,pM2,mats,jt]);
+
+  const aSys=TSYS[sys];
+
+  return <div style={{display:"flex",minHeight:"calc(100vh - 54px)"}}>
+    <div style={{width:460,minWidth:400,borderRight:"1px solid var(--border)",overflowY:"auto",padding:"16px 20px",maxHeight:"calc(100vh - 54px)",flexShrink:0}}>
+      {/* Thread */}
+      <div style={{marginBottom:16}}><div className="section-title">Thread Specification</div>
+        <ThPills value={sys} onChange={s=>{sSys(s);sSi(0);}}/>
+        {isCust?<><IR label="Nominal Diameter" value={cd} onChange={sCd} unit="mm" step={.5} min={1}/><IR label="Thread Pitch" value={cp} onChange={sCp} unit="mm" step={.1} min={.1}/><div className="note">Custom thread — 60° ISO profile geometry.</div></>:<>
+          <SR label="Thread Size" value={si} onChange={v=>sSi(parseInt(v))} options={sL} rOpt={(o,i)=>({value:i,label:isImp?`${o.label}-${o.tpi} TPI (Ø${fm(o.s,2)} mm)`:`${aSys?.label||"M"}${o.s} × ${o.p}${o.f==="F"?" fine":o.f==="F2"?" fine 2":""}`})}/>
+          <div className="row"><span className="row-label">Pitch / Root Radius</span>
+            <input className="row-input" style={{opacity:.5,width:55}} value={fm(pitch,3)} disabled/>
+            <span style={{fontSize:10,color:"var(--muted)",marginRight:4}}>mm</span>
+            <input className="row-input" style={{opacity:.5,width:55}} value={fm((aSys?.rF||.125)*pitch,4)} disabled/><span className="row-unit">mm</span>
+          </div>
+          {(sys==="MJ"||sys==="UNJF"||sys==="UNJC")&&<div className="note-box">J-series: controlled root radius (r = {fm((aSys?.rF||0)*pitch,4)} mm) for improved fatigue life.</div>}
+        </>}
+      </div>
+
+      {/* Fastener */}
+      <div style={{marginBottom:16}}><div className="section-title">Fastener Specification</div>
+        <SR label="Joint Type" value={jt} onChange={sJt} options={["Bolt","Stud"]} rOpt={o=>({value:o,label:o})}/>
+        <IR label="Shank Diameter" value={shD} onChange={sShD} unit="mm" step={.1}/>
+        <IR label={`${jt==="Bolt"?"Bolt":"Nut"} Bearing Ø`} value={brD} onChange={sBrD} unit="mm" step={.5}/>
+        <IR label="Exposed Thread in Joint" value={expTh} onChange={sExpTh} unit="mm" step={1}/>
+        <IR label="Hollow Internal Ø (0=solid)" value={hID} onChange={sHID} unit="mm" step={.5} min={0}/>
+        <MatSelWrap label="Fastener Material" value={fmi} onChange={sFmi} target="f"/>
+      </div>
+
+      {/* Lubrication */}
+      <div style={{marginBottom:16}}><div className="section-title">Lubrication</div>
+        <LubSel label="Underhead Lubricant" idx={luI} setIdx={sLuI} ccof={lcU} setCcof={sLcU}/>
+        <div className="divider"/>
+        <LubSel label="Thread Lubricant" idx={ltI} setIdx={sLtI} ccof={lcT} setCcof={sLcT}/>
+        {luI!==ltI&&luI>0&&ltI>0&&<div className="note-box" style={{borderColor:"#2a3040"}}><span style={{color:"var(--accent)",fontWeight:600}}>Split lubrication:</span> μ<sub>u</sub>={cofU} ({LUBS[luI]?.n}) | μ<sub>t</sub>={cofT} ({LUBS[ltI]?.n})</div>}
+      </div>
+
+      {/* Pre-Load */}
+      <div style={{marginBottom:16}}><div className="section-title">Pre-Load Target</div>
+        <IR label="Required Operating Pre-Load" value={opP} onChange={sOpP} unit="kN" step={.5}/>
+        <IR label="Expected Relaxation" value={rlx} onChange={sRlx} unit="frac" step={.05} min={0} max={.5}/>
+        <div className="note">Tighten-to: {fm(opP*(1+rlx),2)} kN</div>
+      </div>
+
+      {/* Members */}
+      <div style={{marginBottom:16}}><div className="section-title">Clamped Members</div>
+        <div style={{fontSize:10,color:"#4a6080",marginBottom:6,fontWeight:600}}>EARTH ITEM</div>
+        <MatSelWrap label="Material" value={emi} onChange={sEmi} target="e"/>
+        <IR label="Depth to 1st Engaged Thread" value={eD} onChange={sED} unit="mm" step={1}/>
+        <IR label="Mass-on Diameter" value={eM} onChange={sEM} unit="mm" step={1}/>
+        <IR label="Clearance Hole" value={eC} onChange={sEC} unit="mm" step={.5}/>
+        <div className="divider"/>
+        <div style={{fontSize:10,color:"#4a6080",marginBottom:6,fontWeight:600}}>PRIMARY CLAMPED ITEM</div>
+        <MatSelWrap label="Material" value={pmi} onChange={sPmi} target="p"/>
+        <IR label="Thickness" value={pT} onChange={sPT} unit="mm" step={1}/>
+        <IR label="Mass-on Diameter" value={pM} onChange={sPM} unit="mm" step={1}/>
+        <IR label="Clearance Hole" value={pC} onChange={sPC} unit="mm" step={.5}/>
+
+        {/* Sandwich items */}
+        <div className="divider"/>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
+          <span style={{fontSize:10,color:"#4a6080",fontWeight:600}}>SANDWICH ITEMS ({sws.length})</span>
+          <button className="btn-sm" style={{background:"var(--surface2)",color:"var(--accent)",fontSize:9}} onClick={addSw}>＋ Add Item</button>
+        </div>
+        {sws.map((sw,idx)=><div key={sw.id} className="sandwich-item">
+          <button className="sandwich-remove" onClick={()=>rmSw(sw.id)}>×</button>
+          <div style={{fontSize:9,color:"var(--dim)",fontWeight:600,marginBottom:4}}>SANDWICH {idx+1}</div>
+          <MatSelWrap label="Material" value={sw.matIdx} onChange={v=>updSw(sw.id,"matIdx",parseInt(v))} target={"sw_"+sw.id}/>
+          <IR label="Thickness" value={sw.thick} onChange={v=>updSw(sw.id,"thick",v)} unit="mm" step={1}/>
+          <IR label="Mass-on Diameter" value={sw.massOn} onChange={v=>updSw(sw.id,"massOn",v)} unit="mm" step={1}/>
+          <IR label="Clearance Hole" value={sw.clear} onChange={v=>updSw(sw.id,"clear",v)} unit="mm" step={.5}/>
+        </div>)}
+        {sws.length===0&&<div className="note">No sandwich items. Click "＋ Add Item" to insert clamped layers between primary and earth.</div>}
+      </div>
+
+      {/* Operating */}
+      <div style={{marginBottom:16}}><div className="section-title">Operating Conditions</div>
+        <IR label="Running Temperature" value={runT} onChange={sRunT} unit="°C" step={5}/>
+        <IR label="Cyclic Load Expectation" value={cyL} onChange={sCyL} unit="kN" step={.5}/>
+        <IR label="Separation Load (per bolt)" value={sepL} onChange={sSepL} unit="kN" step={.5} min={0}/>
+      </div>
+    </div>
+
+    {/* ═══ RESULTS ═══ */}
+    <div style={{flex:1,overflowY:"auto",padding:"16px 24px",maxHeight:"calc(100vh - 54px)"}}>{!r?<div style={{color:"var(--muted)",textAlign:"center",marginTop:60,fontSize:12}}>Select valid materials to see results.</div>:<>
+      <div className="tabs">{["summary","torque","stiffness","stresses","safety","tighten"].map(t=><button key={t} className={"tab-btn"+(tab===t?" on":"")} onClick={()=>sTab(t)}>{t}</button>)}</div>
+
+      {tab==="summary"&&<>
+        <div className="grid-3" style={{marginBottom:10}}>
+          <div className="big-card"><div className="big-label">Tightening Torque</div><div className="big-val" style={{color:"var(--accent)"}}>{fm(r.Ttot,1)}<span className="big-unit">Nm</span></div></div>
+          <div className="big-card"><div className="big-label">VM Stress @ Install</div><div className="big-val" style={{color:scol(r.pYt)}}>{fp(r.pYt)}</div><div style={{fontSize:9,color:"#4a5a6a",marginTop:2}}>of yield</div></div>
+          <div className="big-card"><div className="big-label">Est. Angle</div><div className="big-val" style={{color:"#6a8aaa"}}>{fm(r.angle,0)}<span className="big-unit">°</span></div></div>
+        </div>
+        <div className="grid-2" style={{marginBottom:10}}>
+          <div className="big-card"><div className="big-label">Break-Off Torque</div><div className="big-val" style={{color:"#5a7a8a"}}>{fm(r.Tbo,1)}<span className="big-unit">Nm</span></div></div>
+          <div className="big-card"><div className="big-label">Yield Torque</div><div className="big-val" style={{color:"#5a7a8a"}}>{fm(r.yldT,1)}<span className="big-unit">Nm</span></div></div>
+        </div>
+        {r.pYt>.75&&<div className="warn-box">⚠ VM stress exceeds 75% yield — fastener re-use not recommended.</div>}
+        {r.sfVM<sfCrit&&<div className="danger-box">✖ Von Mises stress exceeds yield during tightening (SF = {fm(r.sfVM,2)} &lt; {sfCrit}). Fastener will yield.</div>}
+        {r.sfVM>=sfCrit&&r.sfVM<sfOpt&&<div className="warn-box">⚠ Tightening VM safety factor {fm(r.sfVM,2)} below optimal ({sfOpt}). Consider reducing preload or improving lubrication.</div>}
+        {r.sfShTighten<sfCrit&&r.sfVM>=sfCrit&&<div className="danger-box">✖ Pure torsional shear exceeds shear yield during torquing (SF = {fm(r.sfShTighten,2)} &lt; {sfCrit}). Shank may yield in torsion.</div>}
+        {r.sfShTighten>=sfCrit&&r.sfShTighten<sfOpt&&r.sfVM>=sfOpt&&<div className="warn-box">⚠ Torsional shear SF = {fm(r.sfShTighten,2)} below optimal ({sfOpt}). Lower CoF lubricant would reduce shear.</div>}
+        {r.longSh&&<div className="info-box">ℹ Long exposed shank (L/d &gt; 10) — consider harmonic bobbin.</div>}
+        <div style={{marginTop:16,marginBottom:16}}><div className="section-title">Geometry</div><div className="grid-2">
+          <div><RR label="Minor Diameter" value={r.mn} unit="mm" dp={3}/><RR label="Pitch Diameter" value={r.pd} unit="mm" dp={3}/><RR label="Stress Diameter" value={r.sd} unit="mm" dp={3}/><RR label="Thread Stress Area" value={r.As} unit="mm²" dp={2}/></div>
+          <div><RR label="Shank CSA" value={r.shA} unit="mm²" dp={2}/><RR label="Critical CSA" value={r.crA} unit="mm²" dp={2}/><RR label="Clutch Radius" value={r.clutR} unit="mm" dp={2}/><RR label="Total Clamp Length" value={r.clL} unit="mm"/></div>
+        </div></div>
+        <div style={{marginBottom:16}}><div className="section-title">Quick Safety Factors</div><div className="grid-2">
+          <SFT title="Fastener — Tightening" tsf={sfOpt} crit={sfCrit} rows={[{label:"VM Stress",value:r.sfVM},{label:"Tensile",value:r.sfTA},{label:"Torsional Shear",value:r.sfShTighten}]}/>
+          <SFT title="Fastener — Operating" tsf={sfOpt} crit={sfCrit} rows={[{label:"Relaxed",value:r.sfTR},{label:"Thermal",value:r.sfTT},{label:"Cyclic",value:r.sfTC}]}/>
+          <SFT title="Thread & Bearing" tsf={sfOpt} crit={sfCrit} rows={[{label:"Thread Shear (Asm)",value:r.sfSA},{label:"Thread Shear (Rlx)",value:r.sfSR},{label:"Bearing — Primary",value:r.sfBP},{label:"Bearing — Earth",value:r.sfBE}]}/>
+          <SFT title="Joint Integrity" tsf={sfOpt} crit={sfCrit} rows={[{label:"Joint Separation",value:r.sfSep}]}/>
+        </div></div>
+      </>}
+
+      {tab==="torque"&&<>
+        <div style={{marginBottom:16}}><div className="section-title">Torque Breakdown</div>
+          <RR label="Bearing Face Friction" value={r.Tb} unit="Nm" dp={2}/><div className="bar-track"><div className="bar-fill" style={{width:(r.Tb/r.Ttot*100)+"%",background:"var(--accent)"}}/></div>
+          <RR label="Thread Friction" value={r.Tt} unit="Nm" dp={2}/><div className="bar-track"><div className="bar-fill" style={{width:(r.Tt/r.Ttot*100)+"%",background:"#4a7aaa"}}/></div>
+          <RR label="Bolt Stretch (Helix)" value={r.Ts} unit="Nm" dp={2}/><div className="bar-track"><div className="bar-fill" style={{width:(r.Ts/r.Ttot*100)+"%",background:"#3a5a7a"}}/></div>
+          <div className="divider"/><RR label="Total Torque" value={r.Ttot} unit="Nm" dp={2} color="var(--accent)"/><RR label="Break-Off Torque" value={r.Tbo} unit="Nm" dp={2}/>
+        </div>
+        <div style={{marginBottom:16}}><div className="section-title">Reference</div><RR label="Yield Torque" value={r.yldT} unit="Nm" dp={1}/><RR label="Ultimate Torque" value={r.ultT} unit="Nm" dp={1}/><RR label="Tighten / Yield" value={fp(r.Ttot/r.yldT)}/></div>
+        <div style={{marginBottom:16}}><div className="section-title">Component Ratios</div><RR label="Bearing" value={fp(r.Tb/r.Ttot)}/><RR label="Thread" value={fp(r.Tt/r.Ttot)}/><RR label="Stretch" value={fp(r.Ts/r.Ttot)}/><div className="note">Typical: ~50% underhead, ~40% thread, ~10% stretch.</div></div>
+        <div style={{marginBottom:16}}><div className="section-title">Lubrication Summary</div><div className="note-box">
+          <div><strong style={{color:"#6a9aaa"}}>Underhead:</strong> {LUBS[luI]?.n} — μ = {cofU}</div>{LUBS[luI]?.note&&luI>0&&<div style={{marginTop:3,color:"#5a6a7a"}}>{LUBS[luI].note}</div>}
+          <div style={{marginTop:8}}><strong style={{color:"#6a9aaa"}}>Thread:</strong> {LUBS[ltI]?.n} — μ = {cofT}</div>{LUBS[ltI]?.note&&ltI>0&&<div style={{marginTop:3,color:"#5a6a7a"}}>{LUBS[ltI].note}</div>}
+        </div></div>
+      </>}
+
+      {tab==="stiffness"&&<>
+        <div style={{marginBottom:16}}><div className="section-title">Fastener Stiffness</div>
+          <RR label="Thread Section" value={r.kTh} unit="kN/mm" dp={1}/><RR label="Shank Section" value={isFinite(r.kSh)?fm(r.kSh,1):"∞"} unit="kN/mm"/><RR label="Combined Bolt (Kb)" value={r.kB} unit="kN/mm" dp={1} color="var(--accent)"/>
+        </div>
+        <div style={{marginBottom:16}}><div className="section-title">Joint Member Stiffness</div>
+          <RR label={`Earth (${mats[emi]?.name})`} value={isFinite(r.kE)?fm(r.kE,1):"∞"} unit="kN/mm"/>
+          <RR label={`Primary (${mats[pmi]?.name})`} value={isFinite(r.kP)?fm(r.kP,1):"∞"} unit="kN/mm"/>
+          {r.kSws&&r.kSws.map((k,i)=><RR key={i} label={`Sandwich ${i+1} (${mats[sws[i]?.matIdx]?.name||"?"})`} value={isFinite(k)?fm(k,1):"∞"} unit="kN/mm"/>)}
+          <div className="divider"/><RR label="Combined Joint (Km)" value={r.kJ} unit="kN/mm" dp={1} color="var(--accent)"/>
+        </div>
+        <div style={{marginBottom:16}}><div className="section-title">Stiffness Ratios</div>
+          <RR label="Bolt Fraction (C)" value={r.C} unit="" dp={4}/><RR label="Joint Fraction (1−C)" value={r.C1} unit="" dp={4}/><RR label="Km / Kb" value={r.kJ>0?fm(r.kJ/r.kB,2):"—"} unit=""/>
+          <div className="note">C = {fm(r.C,4)} → {fm(r.C*100,1)}% of external load to bolt. Desirable: 0.1–0.3.</div>
+        </div>
+      </>}
+
+      {tab==="stresses"&&<>
+        <div style={{marginBottom:16}}><div className="section-title">Assembly Stresses (Tighten-to: {fm(r.tPre,2)} kN)</div>
+          <RR label="Direct Tensile Stress (σ)" value={r.sig} unit="MPa"/><RR label="Torsional Shear Stress (τ)" value={r.tau} unit="MPa"/><RR label="Von Mises Combined (σ_vm)" value={r.vm} unit="MPa" color={scol(r.pYt)}/>
+          <div className="divider"/>
+          <RR label="% Yield (VM)" value={fp(r.pYt)} color={scol(r.pYt)}/><RR label="% Yield (Tensile only)" value={fp(r.pYs)}/><RR label="Shear Reduction on Tensile" value={fp(r.shR)}/>
+          <div className="divider"/>
+          <div className="grid-2" style={{marginTop:4}}>
+            <SFT title="Tightening Yield" tsf={sfOpt} crit={sfCrit} rows={[{label:"VM Stress",value:r.sfVM},{label:"Direct Tensile",value:r.sfTA},{label:"Torsional Shear",value:r.sfShTighten}]}/>
+          </div>
+          {r.sfShTighten<sfCrit&&<div className="danger-box">✖ Pure torsional shear SF = {fm(r.sfShTighten,2)} — shank may yield in torsion during torquing. Consider lower CoF lubricant to reduce the shear component.</div>}
+          <div className="note">Torsional shear is applied during torquing and typically relaxes after tightening. It must not exceed the shear yield during installation. The Von Mises criterion combines both tensile and shear loading.</div>
+        </div>
+        <div style={{marginBottom:16}}><div className="section-title">Bearing @ Assembly</div>
+          <RR label="Fastener Interface" value={isFinite(r.bsF)?r.bsF:"N/A"} unit="MPa"/><RR label="Earth" value={r.bsE} unit="MPa"/><RR label="Primary" value={r.bsP} unit="MPa"/>
+        </div>
+        <div style={{marginBottom:16}}><div className="section-title">Thread Shear</div>
+          <RR label="Male Thread Shear CSA" value={r.tsA} unit="mm²" dp={2}/><RR label="Thread Shear Stress" value={r.tss} unit="MPa"/>
+        </div>
+        <div style={{marginBottom:16}}><div className="section-title">Thermal ({runT}°C)</div>
+          <RR label="Bolt Expansion" value={r.bTE*1e3} unit="μm" dp={1}/><RR label="Joint Expansion" value={r.jTE*1e3} unit="μm" dp={1}/>
+          <RR label="Thermal Δ Preload" value={r.thD} unit="kN" dp={2} color={r.thD<0?"var(--warn)":"var(--good)"}/><RR label="Net Thermal Preload" value={r.thPre} unit="kN" dp={2}/><RR label="Thermal Stress" value={r.thFS} unit="MPa"/>
+          {r.thD<-opP*.3&&<div className="warn-box">⚠ Large thermal preload loss ({fp(Math.abs(r.thD)/opP)}). CTE mismatch is significant.</div>}
+        </div>
+        <div style={{marginBottom:16}}><div className="section-title">Cyclic</div>
+          <RR label="Cyclic Load" value={cyL} unit="kN"/><RR label="Bolt Share (C × cyclic)" value={r.cyD*r.C} unit="kN" dp={2}/><RR label="Net Cyclic Preload" value={r.cyPre} unit="kN" dp={2}/><RR label="Cyclic Stress" value={r.cyFS} unit="MPa"/>
+        </div>
+      </>}
+
+      {tab==="safety"&&<>
+        <div style={{marginBottom:10,fontSize:11,color:"#5a6a7a"}}>Optimal: <strong style={{color:"var(--accent)"}}>{sfOpt}</strong> | Critical: <strong style={{color:"var(--warn)"}}>{sfCrit}</strong> <span style={{fontSize:9,color:"var(--muted)",marginLeft:8}}>(set in header)</span></div>
+        <div className="grid-2">
+          <SFT title="Tightening — VM & Shear" tsf={sfOpt} crit={sfCrit} rows={[{label:"VM Stress",value:r.sfVM},{label:"Direct Tensile",value:r.sfTA},{label:"Torsional Shear",value:r.sfShTighten}]}/>
+          <SFT title="Fastener — Operating" tsf={sfOpt} crit={sfCrit} rows={[{label:"Relaxed",value:r.sfTR},{label:"Thermal",value:r.sfTT},{label:"Cyclic",value:r.sfTC}]}/>
+          <SFT title="Thread Shear" tsf={sfOpt} crit={sfCrit} rows={[{label:"Assembly",value:r.sfSA},{label:"Relaxed",value:r.sfSR}]}/>
+          <SFT title="Bearing" tsf={sfOpt} crit={sfCrit} rows={[{label:"Primary",value:r.sfBP},{label:"Earth",value:r.sfBE}]}/>
+          <SFT title="Separation" tsf={sfOpt} crit={sfCrit} rows={[{label:"FOS",value:r.sfSep}]}/>
+          <SFT title="Load Capacity" tsf={sfOpt} crit={sfCrit} rows={[{label:"Yield/Preload",value:r.tyL>0?r.tyL/opP:Infinity},{label:"Adjusted (shear)",value:r.tyLA>0?r.tyLA/opP:Infinity}]}/>
+        </div>
+      </>}
+
+      {tab==="tighten"&&<>
+        <div style={{marginBottom:16}}><div className="section-title">Tightening Angle</div>
+          <RR label="Bolt Extension" value={r.bExt*1e3} unit="μm" dp={1}/><RR label="Joint Compression" value={r.jCmp*1e3} unit="μm" dp={1}/><RR label="Total Travel" value={r.travel*1e3} unit="μm" dp={1}/><RR label="Degrees per mm" value={r.dpMM} unit="°/mm" dp={1}/>
+          <div className="divider"/><RR label="Estimated Angle" value={r.angle} unit="°" dp={1} color="var(--accent)"/>
+          <div className="note">From snug to target preload. Actual higher due to embedding.</div>
+        </div>
+        <div style={{marginBottom:16}}><div className="section-title">Staged Torque</div>
+          {[{l:"Stage 1 — Snug",p:.3},{l:"Stage 2 — 50%",p:.5},{l:"Stage 3 — Final",p:1}].map(s=><div key={s.l} className="result-row" style={{padding:"3px 0"}}><span className="result-label">{s.l}</span><span className="result-val" style={{color:"var(--text)"}}>{fm(r.Ttot*s.p,1)}</span><span className="result-unit">Nm</span><span style={{fontSize:10,color:"#2e3848",width:40,textAlign:"right"}}>~{fm(r.angle*s.p,0)}°</span></div>)}
+        </div>
+        <div style={{marginBottom:16}}><div className="section-title">Elongation</div>
+          <RR label="Elastic @ Yield" value={r.yEl*1e3} unit="μm" dp={1}/><RR label="Extension @ Preload" value={r.bExt*1e3} unit="μm" dp={1}/>
+          <RR label="Plastic Elongation" value={r.pEl*1e3} unit="μm" dp={1} color={r.pEl>0?"var(--warn)":"var(--good)"}/>
+          <RR label="Elongation %" value={r.minL>0?fp(r.pEl/r.minL):"—"}/>
+          {r.pEl>0&&<div className="warn-box">⚠ Plastic elongation — bolt may partially yield during tightening.</div>}
+        </div>
+        <div style={{marginBottom:16}}><div className="section-title">Min. Fastener Length</div>
+          <RR label="Thread in Joint" value={r.thJ} unit="mm" dp={1}/><RR label="Shank in Joint" value={r.shJ} unit="mm" dp={1}/><RR label="Min. Length" value={r.minL} unit="mm" dp={1}/>
+        </div>
+      </>}
+    </>}</div>
+  </div>;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// APP ROOT
+// ══════════════════════════════════════════════════════════════════
+function App(){
+  const[mode,sMode]=useState("basic");
+  const[mats,sMats]=useState(INIT_MATS);
+  const[showMatForm,setShowMatForm]=useState(null);
+  const[sfCrit,setSfCrit]=useState(SF_CRIT_DEFAULT);
+  const[sfOpt,setSfOpt]=useState(SF_OPT_DEFAULT);
+
+  const addMat=useCallback((mat,target,setIdx)=>{
+    const nl=[...mats,mat];sMats(nl);
+    setIdx(nl.length-1);
+    setShowMatForm(null);
+  },[mats]);
+
+  const ctx={mats,sMats,showMatForm,setShowMatForm,addMat,sfCrit,setSfCrit,sfOpt,setSfOpt};
+
+  return <AppCtx.Provider value={ctx}>
+    <div style={{display:"flex",flexDirection:"column",height:"100vh"}}>
+      <div style={{padding:"12px 24px",borderBottom:"1px solid var(--border)",display:"flex",alignItems:"center",justifyContent:"space-between",background:"var(--panel)",flexShrink:0}}>
+        <div>
+          <div style={{fontSize:15,fontWeight:700,color:"var(--bright)",letterSpacing:".5px",fontFamily:"var(--sans)"}}>⚙ Bolted Joint Calculator</div>
+          <div style={{fontSize:10,color:"var(--dim)",marginTop:1,letterSpacing:".3px"}}>Tightening torque · stiffness analysis · safety factors</div></div><div id="boltCadZone" class="cad-zone" style={{maxWidth:160,padding:8}}></div><div>
+        </div>
+        <div style={{display:"flex",alignItems:"center",gap:16}}>
+          <div style={{display:"flex",alignItems:"center",gap:6}}>
+            <span style={{fontSize:9,color:"var(--dim)",fontFamily:"var(--sans)",whiteSpace:"nowrap"}}>SF Critical</span>
+            <input type="number" className="row-input" style={{width:50,fontSize:11,padding:"3px 6px"}} value={sfCrit} onChange={e=>setSfCrit(parseFloat(e.target.value)||1)} step={.1} min={1}/>
+            <span style={{fontSize:9,color:"var(--dim)",fontFamily:"var(--sans)",whiteSpace:"nowrap"}}>Optimal</span>
+            <input type="number" className="row-input" style={{width:50,fontSize:11,padding:"3px 6px"}} value={sfOpt} onChange={e=>setSfOpt(parseFloat(e.target.value)||1)} step={.1} min={1}/>
+          </div>
+          <div style={{display:"flex",gap:2,background:"var(--surface)",borderRadius:6,padding:2}}>
+            <button style={{padding:"6px 18px",border:"none",borderRadius:5,fontSize:11,fontWeight:600,fontFamily:"var(--sans)",cursor:"pointer",background:mode==="basic"?"var(--accent2)":"transparent",color:mode==="basic"?"var(--bright)":"var(--dim)",transition:"all .15s"}} onClick={()=>sMode("basic")}>Basic</button>
+            <button style={{padding:"6px 18px",border:"none",borderRadius:5,fontSize:11,fontWeight:600,fontFamily:"var(--sans)",cursor:"pointer",background:mode==="advanced"?"var(--accent2)":"transparent",color:mode==="advanced"?"var(--bright)":"var(--dim)",transition:"all .15s"}} onClick={()=>sMode("advanced")}>Advanced</button>
+          </div>
+        </div>
+      </div>
+      {mode==="basic"?<Basic/>:<Advanced/>}
+    </div>
+  </AppCtx.Provider>;
+}
+
+
+var _cadKey='';
+function initCadImage(key,id){_cadKey=key;var c=document.getElementById(id);if(!c)return;var s=null;try{s=localStorage.getItem(_cadKey)}catch(e){}renderCad(c,s)}
+function renderCad(c,url){
+  if(url){c.className='cad-zone has-img';c.innerHTML='<button class="cad-rm" onclick="event.stopPropagation();rmCad(this.parentNode)">\u2715</button><img class="cad-thumb" src="'+url+'" onclick="showCad(this.src)" title="Click to enlarge">';}
+  else{c.className='cad-zone';c.innerHTML='<div style="font-size:12px;color:#5a5a64;font-weight:500;letter-spacing:.3px">Drop CAD image here</div><div style="font-size:10px;color:#5a5a64;opacity:.6;margin-top:3px">or click to browse</div>';}
+}
+function rmCad(c){try{localStorage.removeItem(_cadKey)}catch(e){}renderCad(c,null)}
+function showCad(src){var o=document.getElementById('cadOv');if(!o){o=document.createElement('div');o.id='cadOv';o.className='cad-overlay';o.onclick=function(){this.classList.remove('show')};document.body.appendChild(o)}o.innerHTML='<img src="'+src+'">';o.classList.add('show')}
+function setupCad(id){var c=document.getElementById(id);if(!c)return;
+  c.addEventListener('click',function(e){if(e.target.tagName==='IMG'||e.target.classList.contains('cad-rm'))return;var inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.onchange=function(ev){loadCadFile(ev.target.files[0],c)};inp.click()});
+  c.addEventListener('dragover',function(e){e.preventDefault();c.style.borderColor='#6B8AFF'});
+  c.addEventListener('dragleave',function(){c.style.borderColor=''});
+  c.addEventListener('drop',function(e){e.preventDefault();c.style.borderColor='';if(e.dataTransfer.files.length)loadCadFile(e.dataTransfer.files[0],c)});
+}
+function loadCadFile(f,c){if(!f||!f.type.startsWith('image/'))return;var r=new FileReader();r.onload=function(e){try{localStorage.setItem(_cadKey,e.target.result)}catch(ex){}renderCad(c,e.target.result)};r.readAsDataURL(f)}
+
+function exportBoltRF(res){if(!res)return;try{var sfs=[res.sfVMbasic,res.sfShearBasic].filter(function(x){return x&&isFinite(x)&&x>0});if(sfs.length)localStorage.setItem('eng_wb_rf_bolt',JSON.stringify({sf:Math.min.apply(null,sfs),ts:Date.now()}))}catch(e){}}
+
+ReactDOM.render(<App/>,document.getElementById("root"));
+setTimeout(function(){setupCad("boltCadZone");initCadImage("eng_wb_img_bolt","boltCadZone")},600);
+</script>
+<a class="wb-back" href="Engineering_Workbook.html">← Workbook</a>
+<button class="pdf-btn" onclick="window.print()">⎙ Save as PDF</button>
+<div id="cadOv" class="cad-overlay" onclick="this.classList.remove('show')"></div>
+</body>
+</html>
