@@ -196,8 +196,13 @@ function R(){
   var frameCalc=null;
   if(W.tab&&W.tab.startsWith('c_')){var ci=W.calcs.findIndex(function(c){return c.id===W.tab});if(ci>=0){var c=W.calcs[ci];var t=TC[c.type];if(t&&t.ext)frameCalc={ci:ci,c:c,t:t}}}
   if(frameCalc){
-    h+='<div class="frame-bar"><button class="btn btn-s" onclick="W.tab=\'home\';R()">\u2190 Contents</button><span style="font-size:13px;font-weight:600;color:var(--bright)">'+esc(frameCalc.c.title||frameCalc.t.name)+'</span></div>';
-    h+='<iframe class="calc-frame" src="'+frameCalc.t.file+'" id="calcFrame"></iframe>';
+    var fc=frameCalc;
+    h+='<div class="frame-bar" style="border-left:3px solid rgba('+fc.t.rgb+',.5)">';
+    h+='<button class="btn btn-s" onclick="W.tab=\'home\';R()" style="flex-shrink:0">\u2190 Back to Contents</button>';
+    h+='<span style="font-size:13px;font-weight:600;color:'+fc.t.color+'">'+esc(fc.c.title||fc.t.name)+'</span>';
+    h+='<span style="font-size:10px;color:var(--muted);margin-left:4px">'+fc.t.name+'</span>';
+    h+='</div>';
+    h+='<iframe class="calc-frame" src="'+fc.t.file+'" id="calcFrame"></iframe>';
   }else{
     h+='<div class="content">';
     if(W.tab==='home')h+=homeHTML();
