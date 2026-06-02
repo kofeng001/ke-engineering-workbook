@@ -207,7 +207,7 @@ function R(){
   a.innerHTML=h;
   if(W.tab==='home')init3D();
 }
-function openCalcTab(id,idx){W.tab=id;var c=W.calcs.find(function(x){return x.id===id});if(c){c.modified=new Date().toISOString();sv()}else{R()}}
+function openCalcTab(id,idx){W.tab=id;var c=W.calcs.find(function(x){return x.id===id});if(c){c.modified=new Date().toISOString();sv();R()}else{R()}}
 
 // ═══════════════════════════════════════════════════════════════
 // LIBRARY
