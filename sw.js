@@ -1,4 +1,4 @@
-const CACHE = 'eng-workbook-v5';
+const CACHE = 'eng-workbook-v6';
 const FILES = [
   './',
   './Engineering_Workbook.html',
@@ -7,6 +7,7 @@ const FILES = [
   './interference_fit_calc.html',
   './lee_plug_calculator.html',
   './iso_tolerance_calculator.html',
+  './materials_database.csv',
   './manifest.json',
   './icon.png'
 ];
