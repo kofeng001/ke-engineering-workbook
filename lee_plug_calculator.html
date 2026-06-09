@@ -439,6 +439,10 @@ function bCard(p,pt,isM,uL,pU,cls,label,hole){
   if(!d){d=p.short||p.long;tl=p.short?'Short (Long N/A)':'Long (Short N/A)'}
   const f=(v,dp)=>isM?v.toFixed(dp||2):v.toFixed(4);
   const fR=v=>isM?v.toFixed(3):v.toFixed(4);
+  // Imperial-only metric equivalents (blank in metric mode)
+  const mm=(v,dp)=>isM?'':' ('+(v*25.4).toFixed(dp===undefined?3:dp)+' mm)';
+  const mmR=(lo,hi)=>isM?'':' ('+(lo*25.4).toFixed(3)+'\u2013'+(hi*25.4).toFixed(3)+' mm)';
+  const mpa3=(a,b,c)=>isM?'':' ('+(a*6.89476).toFixed(0)+' / '+(b*6.89476).toFixed(0)+' / '+(c*6.89476).toFixed(0)+' MPa)';
   const N=d.N,tol=isM?0.15:0.005;
   const match=Math.abs(hole-N)<tol;
   const fn=cls==='best'?(match?'\u2713 Exact match for your passage drill':'\u26A0 Your drill '+f(hole)+uL+' \u2192 plug needs \u00D8'+f(N)+uL+' passage'):'\u2193 Smaller alternative \u2014 reduce passage to \u00D8'+f(N)+uL;
@@ -453,26 +457,26 @@ function bCard(p,pt,isM,uL,pU,cls,label,hole){
   +'<div class="pnr"><span class="chip">AL: '+d.pn+'</span><span class="chip">SS: '+d.pnSS+'</span></div>'
   +'<div class="fn" style="color:'+(match&&cls==='best'?'var(--a2)':'var(--warn)')+'">'+fn+' &nbsp;('+tl+')</div>'
   +'<table class="dt">'
-  +'<tr><td>D Max (Plug OD)</td><td>'+f(p.dMax)+uL+'</td></tr>'
-  +'<tr><td>D Min</td><td>'+f(p.dMin)+uL+'</td></tr>'
-  +'<tr><td>C Nom (Overall Length)</td><td>'+f(d.C)+uL+'</td></tr>'
-  +'<tr><td>M Nom (Body Length)</td><td>'+f(d.M)+uL+'</td></tr>'
-  +'<tr><td>K Nom (Expansion \u00D8)</td><td>'+f(d.K)+uL+'</td></tr>'
-  +'<tr><td>L Nom (Pin Length)</td><td>'+f(d.L)+uL+'</td></tr>'
-  +'<tr><td>N Dia. Ref (Passage \u00D8)</td><td style="color:var(--a2)">'+f(N)+uL+'</td></tr>'
+  +'<tr><td>D Max (Plug OD)</td><td>'+f(p.dMax)+uL+mm(p.dMax)+'</td></tr>'
+  +'<tr><td>D Min</td><td>'+f(p.dMin)+uL+mm(p.dMin)+'</td></tr>'
+  +'<tr><td>C Nom (Overall Length)</td><td>'+f(d.C)+uL+mm(d.C)+'</td></tr>'
+  +'<tr><td>M Nom (Body Length)</td><td>'+f(d.M)+uL+mm(d.M)+'</td></tr>'
+  +'<tr><td>K Nom (Expansion \u00D8)</td><td>'+f(d.K)+uL+mm(d.K)+'</td></tr>'
+  +'<tr><td>L Nom (Pin Length)</td><td>'+f(d.L)+uL+mm(d.L)+'</td></tr>'
+  +'<tr><td>N Dia. Ref (Passage \u00D8)</td><td style="color:var(--a2)">'+f(N)+uL+mm(N)+'</td></tr>'
   +'<tr><td>Weight (AL / SS)</td><td>'+d.wt+'g / '+d.wtSS+'g</td></tr></table>'
   +'<div class="ss"><h4>Ream Diameters (Counterbore for plug)</h4>'
-  +'<div class="rp"><span class="l">Class 1'+rcL('c1')+itInfo('c1')+'</span><span class="v">'+fR(p.ream.c1[0])+' \u2013 '+fR(p.ream.c1[1])+uL+'</span></div>'
-  +'<div class="rp"><span class="l">Class 2'+rcL('c2')+itInfo('c2')+'</span><span class="v">'+fR(p.ream.c2[0])+' \u2013 '+fR(p.ream.c2[1])+uL+'</span></div>'
-  +'<div class="rp"><span class="l">Class 3'+rcL('c3')+itInfo('c3')+'</span><span class="v">'+fR(p.ream.c3[0])+' \u2013 '+fR(p.ream.c3[1])+uL+'</span></div></div>'
+  +'<div class="rp"><span class="l">Class 1'+rcL('c1')+itInfo('c1')+'</span><span class="v">'+fR(p.ream.c1[0])+' \u2013 '+fR(p.ream.c1[1])+uL+mmR(p.ream.c1[0],p.ream.c1[1])+'</span></div>'
+  +'<div class="rp"><span class="l">Class 2'+rcL('c2')+itInfo('c2')+'</span><span class="v">'+fR(p.ream.c2[0])+' \u2013 '+fR(p.ream.c2[1])+uL+mmR(p.ream.c2[0],p.ream.c2[1])+'</span></div>'
+  +'<div class="rp"><span class="l">Class 3'+rcL('c3')+itInfo('c3')+'</span><span class="v">'+fR(p.ream.c3[0])+' \u2013 '+fR(p.ream.c3[1])+uL+mmR(p.ream.c3[0],p.ream.c3[1])+'</span></div></div>'
   +'<div class="ss"><h4>Installation Hole</h4>'
-  +'<div class="rp"><span class="l">A Min (Ream Depth)</span><span class="v">'+f(d.A)+uL+'</span></div>'
-  +'<div class="rp"><span class="l">N Dia. Ref (Passage)</span><span class="v">'+f(N)+uL+'</span></div>'
-  +'<div class="rp"><span class="l">W Min (Boss Wall)</span><span class="v">'+f(d.W)+uL+'</span></div></div>'
+  +'<div class="rp"><span class="l">A Min (Ream Depth)</span><span class="v">'+f(d.A)+uL+mm(d.A)+'</span></div>'
+  +'<div class="rp"><span class="l">N Dia. Ref (Passage)</span><span class="v">'+f(N)+uL+mm(N)+'</span></div>'
+  +'<div class="rp"><span class="l">W Min (Boss Wall)</span><span class="v">'+f(d.W)+uL+mm(d.W)+'</span></div></div>'
   +'<div class="ss"><h4>Proof Pressure \u2014 Aluminium ('+pU+')</h4>'
-  +'<div class="rp"><span class="l">Class 1 / 2 / 3</span><span class="v">'+d.proof.c1+' / '+d.proof.c2+' / '+d.proof.c3+'</span></div>'
+  +'<div class="rp"><span class="l">Class 1 / 2 / 3</span><span class="v">'+d.proof.c1+' / '+d.proof.c2+' / '+d.proof.c3+mpa3(d.proof.c1,d.proof.c2,d.proof.c3)+'</span></div>'
   +'<h4 style="margin-top:10px">Proof Pressure \u2014 Stainless Steel ('+pU+')</h4>'
-  +'<div class="rp"><span class="l">Class 1 / 2 / 3</span><span class="v">'+d.proofSS.c1+' / '+d.proofSS.c2+' / '+d.proofSS.c3+'</span></div></div>'
+  +'<div class="rp"><span class="l">Class 1 / 2 / 3</span><span class="v">'+d.proofSS.c1+' / '+d.proofSS.c2+' / '+d.proofSS.c3+mpa3(d.proofSS.c1,d.proofSS.c2,d.proofSS.c3)+'</span></div></div>'
   +'</div></div>';
 }
 
