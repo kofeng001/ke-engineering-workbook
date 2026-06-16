@@ -410,10 +410,7 @@ svg text {
     <!-- LEFT COLUMN -->
     <div id="leftCol">
       <div class="card">
-        <div class="card-label" style="display:flex;justify-content:space-between;align-items:center;">
-          MATERIAL
-          <button class="btn btn-green" onclick="openCustomMatModal()" style="padding:3px 8px;font-size:.6rem;">+ CUSTOM</button>
-        </div>
+        <div class="card-label">MATERIAL</div>
         <select id="matSelect" onchange="recalc()"></select>
         <div class="mat-props" id="matProps"></div>
       </div>
@@ -433,16 +430,6 @@ svg text {
 
         <div class="input-row"><label>t</label><input type="number" id="inT" min="0" step="0.01" oninput="recalc()"><span class="suffix" id="sfT">in</span><span class="hint">Thickness</span></div>
         <div id="geomWarn" style="display:none;margin-top:8px;padding:6px 10px;background:rgba(255,60,40,.1);border:1px solid rgba(255,60,40,.3);border-radius:4px;font-size:.71rem;color:#ff6040;font-family:var(--mono);">⚠ Invalid geometry — check D &lt; W, D/2 &lt; e, all values &gt; 0</div>
-      </div>
-
-      <div class="card">
-        <div class="card-label">SAFETY THRESHOLD</div>
-        <div style="display:flex;align-items:center;gap:10px;">
-          <label style="font-size:.78rem;color:#8a9a7a;font-family:var(--mono);">Min Rf</label>
-          <input type="number" id="safeRf" value="1.5" min="0.5" max="5" step="0.1" oninput="recalc()" style="width:70px;padding:5px 8px;font-size:1rem;font-weight:700;text-align:center;background:var(--bg-input);border:1px solid var(--border);border-radius:4px;color:var(--accent-amber);font-family:var(--mono);outline:none;">
-          <div style="flex:1;font-size:.64rem;color:var(--text-dim);font-family:var(--mono);line-height:1.4;">Rf below this triggers ⚠ warnings</div>
-        </div>
-        <div class="threshold-btns" id="threshBtns"></div>
       </div>
 
       <div class="card">
@@ -479,65 +466,56 @@ svg text {
   </div>
 </div>
 
-<!-- Custom Material Modal -->
-<div class="modal-overlay" id="matModal" style="display:none;">
-  <div class="modal">
-    <h3 id="matModalTitle">+ ADD CUSTOM MATERIAL</h3>
-    <div class="form-row"><label>Name</label><input type="text" id="cmName" placeholder="e.g. Waspaloy 718"></div>
-    <div class="form-row"><label>F<sub>tu</sub></label><input type="number" id="cmFtu" step="1"><span class="unit">ksi</span></div>
-    <div class="form-row"><label>F<sub>ty</sub></label><input type="number" id="cmFty" step="1"><span class="unit">ksi</span></div>
-    <div class="form-row"><label>F<sub>su</sub></label><input type="number" id="cmFsu" step="1"><span class="unit">ksi</span></div>
-    <div class="form-row"><label>F<sub>bru</sub></label><input type="number" id="cmFbru" step="1"><span class="unit">ksi</span></div>
-    <div class="form-row"><label>F<sub>bry</sub></label><input type="number" id="cmFbry" step="1"><span class="unit">ksi</span></div>
-    <div class="form-row"><label>E</label><input type="number" id="cmE" step="100"><span class="unit">ksi</span></div>
-    <div class="btn-row">
-      <button class="btn btn-dim" onclick="closeMatModal()">CANCEL</button>
-      <button class="btn btn-red" id="cmDeleteBtn" style="display:none;" onclick="deleteCustomMat()">DELETE</button>
-      <button class="btn btn-green" onclick="saveCustomMat()">SAVE</button>
-    </div>
-  </div>
-</div>
+<!-- Custom material modal removed — materials governed at workbook level -->
 
 <!-- Embedded saved state (populated by Save HTML) -->
 <script id="savedState" type="application/json"></script>
 
 <script>
 /* ═══════════════════════════════════════════════
-   DATA
+   DATA — materials sourced from workbook (single source of truth)
+   Lug works internally in ksi; workbook stores SI (MPa) so we convert.
    ═══════════════════════════════════════════════ */
-const STOCK_MATERIALS = [
-  { name:"Steel AISI 4340 (200 ksi HT)",Ftu:200,Fty:176,Fsu:117,Fbru:308,Fbry:270,E:29000 },
-  { name:"Steel AISI 4340 (180 ksi HT)",Ftu:180,Fty:163,Fsu:108,Fbru:279,Fbry:243,E:29000 },
-  { name:"Steel AISI 4340 (150 ksi HT)",Ftu:150,Fty:132,Fsu:90,Fbru:234,Fbry:202,E:29000 },
-  { name:"Steel AISI 4130 (125 ksi HT)",Ftu:125,Fty:100,Fsu:75,Fbru:194,Fbry:156,E:29000 },
-  { name:"Stainless 17-4PH (H900)",Ftu:190,Fty:170,Fsu:114,Fbru:285,Fbry:255,E:28500 },
-  { name:"Stainless 17-4PH (H1025)",Ftu:155,Fty:145,Fsu:93,Fbru:232,Fbry:218,E:28500 },
-  { name:"Stainless Steel 304",Ftu:75,Fty:30,Fsu:45,Fbru:116,Fbry:46,E:28000 },
-  { name:"Stainless Steel 15-5PH (H1025)",Ftu:155,Fty:145,Fsu:93,Fbru:240,Fbry:218,E:28000 },
-  { name:"Aluminium 2024-T3 (Sheet)",Ftu:64,Fty:42,Fsu:40,Fbru:104,Fbry:72,E:10500 },
-  { name:"Aluminium 2024-T351 (Plate)",Ftu:64,Fty:42,Fsu:40,Fbru:104,Fbry:72,E:10500 },
+const _LUG_FALLBACK = [
   { name:"Aluminium 7075-T6 (Sheet)",Ftu:78,Fty:68,Fsu:47,Fbru:119,Fbry:105,E:10300 },
-  { name:"Aluminium 7075-T651 (Plate)",Ftu:76,Fty:66,Fsu:44,Fbru:116,Fbry:102,E:10300 },
-  { name:"Aluminium 6061-T6",Ftu:42,Fty:35,Fsu:27,Fbru:67,Fbry:56,E:9900 },
-  { name:"Titanium Ti-6Al-4V (Annealed)",Ftu:130,Fty:120,Fsu:82,Fbru:206,Fbry:192,E:16000 },
-  { name:"Titanium Ti-6Al-4V (STA)",Ftu:160,Fty:150,Fsu:100,Fbru:252,Fbry:237,E:16500 },
-  { name:"Inconel 718 (AMS 5663)",Ftu:180,Fty:150,Fsu:108,Fbru:279,Fbry:232,E:29400 },
+  { name:"Steel AISI 4340 (150 ksi HT)",Ftu:150,Fty:132,Fsu:90,Fbru:234,Fbry:202,E:29000 },
 ];
-
-let customMaterials = JSON.parse(localStorage.getItem('lugCalc_customMats') || '[]');
-let editingCustomIdx = -1;
+const KSI_PER_MPA = 1/6.89476;
+function loadWorkbookMatsKsi(){
+  try{
+    var raw=localStorage.getItem('eng_wb_mats');
+    if(!raw)return null;
+    var arr=JSON.parse(raw);
+    if(!Array.isArray(arr)||!arr.length)return null;
+    return arr.map(function(m){return{
+      name:m.name,
+      Ftu:(m.Ftu||0)*KSI_PER_MPA,
+      Fty:(m.Fty||0)*KSI_PER_MPA,
+      Fsu:(m.Fsu||0)*KSI_PER_MPA,
+      Fbru:(m.Fbru||0)*KSI_PER_MPA,
+      Fbry:(m.Fbry||0)*KSI_PER_MPA,
+      E:(m.E||0)*KSI_PER_MPA   // MPa -> ksi
+    };});
+  }catch(e){return null}
+}
+const STOCK_MATERIALS = loadWorkbookMatsKsi() || _LUG_FALLBACK;
 
 const LB_TO_N = 4.44822, IN_TO_MM = 25.4, KSI_TO_MPA = 6.89476;
 
+// RF thresholds inherited from workbook (query string) — colour coding only
+const _lugP = new URLSearchParams(location.search);
+const _RF_CRIT = (function(){var v=parseFloat(_lugP.get('rfCrit'));return isFinite(v)&&v>0?v:1.0})();
+const _RF_OPT  = (function(){var v=parseFloat(_lugP.get('rfOpt'));return isFinite(v)&&v>0?v:1.5})();
+
 let state = {
-  matIdx: 10, P: 5000, W: 1.5, D: 0.5, e: 0.75, t: 0.375,
-  safeRf: 1.5, isMetric: true, eCentred: true
+  matIdx: 0, P: 5000, W: 1.5, D: 0.5, e: 0.75, t: 0.375,
+  safeRf: _RF_OPT, isMetric: true, eCentred: true
 };
 
 /* ═══════════════════════════════════════════════
    HELPERS
    ═══════════════════════════════════════════════ */
-function allMaterials() { return [...STOCK_MATERIALS, ...customMaterials.map(m=>({...m,custom:true}))]; }
+function allMaterials() { return STOCK_MATERIALS; }
 function getMat() { return allMaterials()[state.matIdx] || STOCK_MATERIALS[0]; }
 function toLen(v) { return state.isMetric ? v*IN_TO_MM : v; }
 function fromLen(v) { return state.isMetric ? v/IN_TO_MM : v; }
@@ -553,7 +531,7 @@ function fmt(v) { if(!isFinite(v)) return '—'; if(v>=1e5) return v.toFixed(0);
 function fmtRf(v) { return (isFinite(v)&&v>0)?v.toFixed(2):'—'; }
 function fmtF(v) { return fmt(state.isMetric?v*LB_TO_N:v); }
 function fmtA(v) { const a=state.isMetric?v*IN_TO_MM*IN_TO_MM:v; return a.toFixed(state.isMetric?1:4); }
-function rfCol(rf) { if(!isFinite(rf)||rf<=0) return '#888'; if(rf<1) return '#ff3030'; if(rf<state.safeRf) return '#e0a030'; return '#40c040'; }
+function rfCol(rf) { if(!isFinite(rf)||rf<=0) return '#888'; if(rf<_RF_CRIT) return '#ff3030'; if(rf<_RF_OPT) return '#e0a030'; return '#40c040'; }
 
 /* ═══════════════════════════════════════════════
    UNIT TOGGLE
@@ -638,7 +616,7 @@ function readInputs() {
   if (!state.eCentred) state.e = fromLen(parseFloat(document.getElementById('inE').value)||0);
   else state.e = state.W / 2;
   state.t = fromLen(parseFloat(document.getElementById('inT').value)||0);
-  state.safeRf = parseFloat(document.getElementById('safeRf').value)||1.0;
+  state.safeRf = _RF_OPT;
   state.matIdx = parseInt(document.getElementById('matSelect').value)||0;
 }
 
@@ -697,7 +675,6 @@ function recalc() {
     <span class="lbl">F<sub>su</sub></span><span class="val">${state.isMetric?(m.Fsu*KSI_TO_MPA).toFixed(0):m.Fsu} ${stressU()}</span>
     <span class="lbl">F<sub>bru</sub></span><span class="val">${state.isMetric?(m.Fbru*KSI_TO_MPA).toFixed(0):m.Fbru} ${stressU()}</span>
     <span class="lbl">E</span><span class="val">${state.isMetric?(m.E*KSI_TO_MPA/1000).toFixed(1):(m.E/1000).toFixed(1)} ${modU()}</span>`;
-  if (m.custom) mp.innerHTML+=`<span></span><span><button class="btn btn-dim" style="padding:2px 8px;font-size:.55rem;margin-top:4px;" onclick="editCustomMat(${state.matIdx-STOCK_MATERIALS.length})">EDIT</button></span>`;
 
   document.getElementById('geomWarn').style.display = r.valid?'none':'block';
 
@@ -860,12 +837,7 @@ function renderCalcDetail(r, m) {
       P<sub>h</sub> = K<sub>h</sub> × F<sub>tu</sub> × 2 × A<sub>hoop</sub> = <b>${fmtF(r.hoop.P)} ${fu}</b></div>`;
 }
 
-function renderThresholdBtns() {
-  document.getElementById('threshBtns').innerHTML=[1.0,1.25,1.5,2.0].map(v=>{
-    const a=Math.abs(state.safeRf-v)<0.01;
-    return `<button style="font-weight:${a?700:400};background:${a?'var(--border)':'transparent'};border:1px solid ${a?'#5a7a5a':'var(--border)'};color:${a?'#c0e0a0':'var(--text-muted)'};font-family:var(--mono);" onclick="document.getElementById('safeRf').value=${v};recalc();">${v.toFixed(v%1===0?1:2)}</button>`;
-  }).join('');
-}
+function renderThresholdBtns() { /* threshold UI removed — RF governed at workbook level */ }
 
 /* ═══════════════════════════════════════════════
    3D ISOMETRIC LUG (Canvas)
@@ -958,45 +930,12 @@ function arrHead(ctx,from,to,color,size){
 /* ═══════════════════════════════════════════════
    CUSTOM MATERIALS
    ═══════════════════════════════════════════════ */
-function openCustomMatModal(prefill){
-  editingCustomIdx=-1;
-  document.getElementById('matModalTitle').textContent='+ ADD CUSTOM MATERIAL';
-  document.getElementById('cmDeleteBtn').style.display='none';
-  document.getElementById('cmName').value=prefill?.name||'';
-  document.getElementById('cmFtu').value=prefill?.Ftu||'';
-  document.getElementById('cmFty').value=prefill?.Fty||'';
-  document.getElementById('cmFsu').value=prefill?.Fsu||'';
-  document.getElementById('cmFbru').value=prefill?.Fbru||'';
-  document.getElementById('cmFbry').value=prefill?.Fbry||'';
-  document.getElementById('cmE').value=prefill?.E||'';
-  document.getElementById('matModal').style.display='flex';
-}
-function editCustomMat(idx){
-  editingCustomIdx=idx;const m=customMaterials[idx];
-  document.getElementById('matModalTitle').textContent='✎ EDIT CUSTOM MATERIAL';
-  document.getElementById('cmDeleteBtn').style.display='inline-block';
-  document.getElementById('cmName').value=m.name;document.getElementById('cmFtu').value=m.Ftu;
-  document.getElementById('cmFty').value=m.Fty;document.getElementById('cmFsu').value=m.Fsu;
-  document.getElementById('cmFbru').value=m.Fbru;document.getElementById('cmFbry').value=m.Fbry;
-  document.getElementById('cmE').value=m.E;
-  document.getElementById('matModal').style.display='flex';
-}
-function closeMatModal(){ document.getElementById('matModal').style.display='none'; }
-function saveCustomMat(){
-  const mat={name:document.getElementById('cmName').value.trim()||'Custom Material',
-    Ftu:parseFloat(document.getElementById('cmFtu').value)||0,Fty:parseFloat(document.getElementById('cmFty').value)||0,
-    Fsu:parseFloat(document.getElementById('cmFsu').value)||0,Fbru:parseFloat(document.getElementById('cmFbru').value)||0,
-    Fbry:parseFloat(document.getElementById('cmFbry').value)||0,E:parseFloat(document.getElementById('cmE').value)||0,custom:true};
-  if(editingCustomIdx>=0) customMaterials[editingCustomIdx]=mat;
-  else{customMaterials.push(mat);state.matIdx=STOCK_MATERIALS.length+customMaterials.length-1;}
-  localStorage.setItem('lugCalc_customMats',JSON.stringify(customMaterials));
-  populateMatSelect();document.getElementById('matSelect').value=state.matIdx;closeMatModal();recalc();
-}
-function deleteCustomMat(){
-  if(editingCustomIdx<0) return; if(!confirm('Delete this custom material?')) return;
-  customMaterials.splice(editingCustomIdx,1);localStorage.setItem('lugCalc_customMats',JSON.stringify(customMaterials));
-  state.matIdx=0;populateMatSelect();closeMatModal();recalc();
-}
+// Custom material UI removed — materials governed at workbook level.
+function openCustomMatModal(){}
+function editCustomMat(){}
+function closeMatModal(){}
+function saveCustomMat(){}
+function deleteCustomMat(){}
 
 /* ═══════════════════════════════════════════════
    SAVE AS PDF (print dialog)
@@ -1010,9 +949,6 @@ function saveHTML() {
   readInputs();
   const saveData = {
     state: {...state},
-    projectTitle: document.getElementById('projectTitle').value,
-    engNotes: document.getElementById('engNotes').value,
-    customMaterials: customMaterials,
     savedAt: new Date().toISOString()
   };
 
@@ -1031,8 +967,7 @@ function saveHTML() {
   const blob = new Blob([html], {type: 'text/html'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  const title = document.getElementById('projectTitle').value.trim();
-  a.download = (title ? title.replace(/[^a-zA-Z0-9_\- ]/g,'').replace(/\s+/g,'_') : 'Lug_Analysis') + '.html';
+  a.download = 'Lug_Analysis.html';
   a.href = url;
   document.body.appendChild(a);
   a.click();
@@ -1045,13 +980,10 @@ function saveHTML() {
    ═══════════════════════════════════════════════ */
 function resetAll() {
   if (!confirm('Reset all inputs to defaults?')) return;
-  state = { matIdx:10, P:5000, W:1.5, D:0.5, e:0.75, t:0.375, safeRf:1.5, isMetric:false, eCentred:true };
-  document.getElementById('projectTitle').value='';
-  document.getElementById('engNotes').value='';
-  document.getElementById('safeRf').value='1.5';
+  state = { matIdx:0, P:5000, W:1.5, D:0.5, e:0.75, t:0.375, safeRf:_RF_OPT, isMetric:true, eCentred:true };
   const tog=document.getElementById('eCentreToggle'),lbl=document.getElementById('eCentreLabel'),inp=document.getElementById('inE');
   tog.classList.add('on');lbl.classList.add('active');lbl.textContent='e = W/2 (centred hole)';inp.disabled=true;
-  setUnit(false);
+  setUnit(true);
   populateMatSelect();populateInputs();recalc();
 }
 
@@ -1063,16 +995,9 @@ function loadSavedState() {
   if (!ssTag || !ssTag.textContent.trim()) return false;
   try {
     const data = JSON.parse(ssTag.textContent);
-    if (data.customMaterials) {
-      customMaterials = data.customMaterials;
-      localStorage.setItem('lugCalc_customMats', JSON.stringify(customMaterials));
-    }
     if (data.state) {
       state = {...state, ...data.state};
     }
-    if (data.projectTitle) document.getElementById('projectTitle').value = data.projectTitle;
-    if (data.engNotes) document.getElementById('engNotes').value = data.engNotes;
-    document.getElementById('safeRf').value = state.safeRf;
 
     // Sync edge distance toggle UI
     const tog=document.getElementById('eCentreToggle'),lbl=document.getElementById('eCentreLabel'),inp=document.getElementById('inE');
@@ -1084,11 +1009,6 @@ function loadSavedState() {
     return true;
   } catch(e) { return false; }
 }
-
-/* ═══════════════════════════════════════════════
-   MODAL CLOSE ON OUTSIDE CLICK
-   ═══════════════════════════════════════════════ */
-document.getElementById('matModal').addEventListener('click', function(ev){ if(ev.target===this) closeMatModal(); });
 
 /* ═══════════════════════════════════════════════
    INIT

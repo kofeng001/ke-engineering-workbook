@@ -405,11 +405,32 @@ const INIT_MATS=[
   {name:"Inconel 718",E:205,v:.29,CTE:13,Yc:1034,UTSc:1241,Sc:690,Bc:1551,Yh:980,UTSh:1170,Sh:650,Bh:1470,cust:false},
 ];
 
+// ── Workbook materials (single source of truth) ──────────────────
+function loadWorkbookMats(){
+  try{
+    var raw=localStorage.getItem('eng_wb_mats');
+    if(!raw)return null;
+    var arr=JSON.parse(raw);
+    if(!Array.isArray(arr)||!arr.length)return null;
+    // Map hub SI schema -> bolt schema (E in GPa; cold props from SI; hot=0)
+    var mapped=arr.map(function(m){return{
+      name:m.name,
+      E:(m.E||0)/1000,           // MPa -> GPa
+      v:m.v||0.3,
+      CTE:(m.alpha||0)*1e6,      // 1/K -> µm/m·K
+      Yc:m.Fty||0, UTSc:m.Ftu||0, Sc:m.Fsu||0, Bc:m.Fbru||0,
+      Yh:0, UTSh:0, Sh:0, Bh:0,
+      cust:false
+    };});
+    return [{name:"— Select —",E:0,v:0,CTE:0,Yc:0,UTSc:0,Sc:0,Bc:0,Yh:0,UTSh:0,Sh:0,Bh:0,cust:false}].concat(mapped);
+  }catch(e){return null}
+}
+
 // ── Shared Context ───────────────────────────────────────────────
 const AppCtx=createContext();
-// Default safety factor thresholds
-const SF_CRIT_DEFAULT=1.2;
-const SF_OPT_DEFAULT=1.5;
+// RF thresholds inherited from workbook (query string) — colour coding only
+const SF_CRIT_DEFAULT=(function(){var p=new URLSearchParams(location.search);var v=parseFloat(p.get('rfCrit'));return isFinite(v)&&v>0?v:1.2})();
+const SF_OPT_DEFAULT=(function(){var p=new URLSearchParams(location.search);var v=parseFloat(p.get('rfOpt'));return isFinite(v)&&v>0?v:1.5})();
 
 // ── Helpers ──────────────────────────────────────────────────────
 const fm=(v,d=1)=>(v==null||isNaN(v)||!isFinite(v))?"—":Number(v).toFixed(d);
@@ -568,43 +589,16 @@ function LubSel({label,idx,setIdx,ccof,setCcof}){
 }
 
 function MatSel({label,value,onChange,target}){
-  const{mats,setShowMatForm}=useContext(AppCtx);
+  const{mats}=useContext(AppCtx);
   return <div className="row"><span className="row-label">{label}</span>
-    <select className="row-select" value={value} onChange={e=>{if(e.target.value==="__add__"){setShowMatForm(target);return;}onChange(parseInt(e.target.value));}}>
-      {mats.map((o,i)=><option key={i} value={i}>{o.name}{o.cust?" ✦":""}</option>)}
-      <option value="__add__">＋ Add Custom Material…</option>
+    <select className="row-select" value={value} onChange={e=>{onChange(parseInt(e.target.value));}}>
+      {mats.map((o,i)=><option key={i} value={i}>{o.name}</option>)}
     </select>
   </div>;
 }
 
-function MatForm({onAdd,onCancel}){
-  const[s,sS]=useState({n:"Custom Material",E:200,v:.3,CTE:12,Yc:500,UTSc:700,Sc:0,Bc:0,Yh:0,UTSh:0,Sh:0,Bh:0});
-  const u=(k,v)=>sS(p=>({...p,[k]:v}));
-  const FI=({l,k,un})=><div className="form-row"><span className="form-label">{l}</span><input type="number" className="form-input" value={s[k]} onChange={e=>u(k,parseFloat(e.target.value)||0)} step={1}/>{un&&<span className="form-unit">{un}</span>}</div>;
-  return <div className="custom-form">
-    <div style={{fontSize:10,fontWeight:700,color:"var(--accent)",marginBottom:8}}>ADD CUSTOM MATERIAL</div>
-    <div className="form-row"><span className="form-label">Name</span><input className="form-input-wide" value={s.n} onChange={e=>u("n",e.target.value)}/></div>
-    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"0 12px"}}>
-      <FI l="Young's Mod." k="E" un="GPa"/><FI l="Poisson's" k="v"/>
-      <FI l="CTE" k="CTE" un="μm/m·K"/><div/>
-      <div style={{gridColumn:"span 2",fontSize:9,color:"#5a6a7a",fontWeight:600,margin:"6px 0 2px"}}>COLD / ROOM TEMP</div>
-      <FI l="Yield" k="Yc" un="MPa"/><FI l="UTS" k="UTSc" un="MPa"/><FI l="Shear" k="Sc" un="MPa"/><FI l="Bearing" k="Bc" un="MPa"/>
-      <div style={{gridColumn:"span 2",fontSize:9,color:"#5a6a7a",fontWeight:600,margin:"6px 0 2px"}}>HOT / RUNNING (0 = use cold)</div>
-      <FI l="Yield" k="Yh" un="MPa"/><FI l="UTS" k="UTSh" un="MPa"/><FI l="Shear" k="Sh" un="MPa"/><FI l="Bearing" k="Bh" un="MPa"/>
-    </div>
-    <div style={{display:"flex",gap:8,marginTop:10}}>
-      <button className="btn-sm" style={{background:"var(--accent2)",color:"var(--bright)"}} onClick={()=>onAdd({name:s.n||"Custom",E:s.E,v:s.v,CTE:s.CTE,Yc:s.Yc,UTSc:s.UTSc,Sc:s.Sc,Bc:s.Bc,Yh:s.Yh,UTSh:s.UTSh,Sh:s.Sh,Bh:s.Bh,cust:true})}>Add Material</button>
-      <button className="btn-sm" style={{background:"#1a1a22",color:"#888"}} onClick={onCancel}>Cancel</button>
-    </div>
-  </div>;
-}
-
 function MatSelWrap({label,value,onChange,target}){
-  const{showMatForm,setShowMatForm,addMat}=useContext(AppCtx);
-  return <>
-    <MatSel label={label} value={value} onChange={onChange} target={target}/>
-    {showMatForm===target&&<MatForm onAdd={m=>{addMat(m,target,onChange);}} onCancel={()=>setShowMatForm(null)}/>}
-  </>;
+  return <MatSel label={label} value={value} onChange={onChange} target={target}/>;
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -961,18 +955,11 @@ function Advanced(){
 // ══════════════════════════════════════════════════════════════════
 function App(){
   const[mode,sMode]=useState("basic");
-  const[mats,sMats]=useState(INIT_MATS);
-  const[showMatForm,setShowMatForm]=useState(null);
-  const[sfCrit,setSfCrit]=useState(SF_CRIT_DEFAULT);
-  const[sfOpt,setSfOpt]=useState(SF_OPT_DEFAULT);
+  const[mats,sMats]=useState(loadWorkbookMats()||INIT_MATS);
+  const[sfCrit]=useState(SF_CRIT_DEFAULT);
+  const[sfOpt]=useState(SF_OPT_DEFAULT);
 
-  const addMat=useCallback((mat,target,setIdx)=>{
-    const nl=[...mats,mat];sMats(nl);
-    setIdx(nl.length-1);
-    setShowMatForm(null);
-  },[mats]);
-
-  const ctx={mats,sMats,showMatForm,setShowMatForm,addMat,sfCrit,setSfCrit,sfOpt,setSfOpt};
+  const ctx={mats,sMats,showMatForm:null,setShowMatForm:function(){},addMat:function(){},sfCrit,setSfCrit:function(){},sfOpt,setSfOpt:function(){}};
 
   return <AppCtx.Provider value={ctx}>
     <div style={{display:"flex",flexDirection:"column",height:"100vh"}}>
@@ -982,12 +969,6 @@ function App(){
           <div style={{fontSize:10,color:"var(--dim)",marginTop:1,letterSpacing:".3px"}}>Tightening torque · stiffness analysis · safety factors</div></div><div id="boltCadZone" class="cad-zone" style={{maxWidth:160,padding:8}}></div><div>
         </div>
         <div style={{display:"flex",alignItems:"center",gap:16}}>
-          <div style={{display:"flex",alignItems:"center",gap:6}}>
-            <span style={{fontSize:9,color:"var(--dim)",fontFamily:"var(--sans)",whiteSpace:"nowrap"}}>SF Critical</span>
-            <input type="number" className="row-input" style={{width:50,fontSize:11,padding:"3px 6px"}} value={sfCrit} onChange={e=>setSfCrit(parseFloat(e.target.value)||1)} step={.1} min={1}/>
-            <span style={{fontSize:9,color:"var(--dim)",fontFamily:"var(--sans)",whiteSpace:"nowrap"}}>Optimal</span>
-            <input type="number" className="row-input" style={{width:50,fontSize:11,padding:"3px 6px"}} value={sfOpt} onChange={e=>setSfOpt(parseFloat(e.target.value)||1)} step={.1} min={1}/>
-          </div>
           <div style={{display:"flex",gap:2,background:"var(--surface)",borderRadius:6,padding:2}}>
             <button style={{padding:"6px 18px",border:"none",borderRadius:5,fontSize:11,fontWeight:600,fontFamily:"var(--sans)",cursor:"pointer",background:mode==="basic"?"var(--accent2)":"transparent",color:mode==="basic"?"var(--bright)":"var(--dim)",transition:"all .15s"}} onClick={()=>sMode("basic")}>Basic</button>
             <button style={{padding:"6px 18px",border:"none",borderRadius:5,fontSize:11,fontWeight:600,fontFamily:"var(--sans)",cursor:"pointer",background:mode==="advanced"?"var(--accent2)":"transparent",color:mode==="advanced"?"var(--bright)":"var(--dim)",transition:"all .15s"}} onClick={()=>sMode("advanced")}>Advanced</button>

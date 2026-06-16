@@ -556,49 +556,11 @@ svg text {
     <div class="pt">Materials</div>
     <div class="ig">
       <label>Hub Material</label>
-      <select id="hubMat">
-        <optgroup label="── Steel ──">
-          <option value="s275">S275 Structural</option>
-          <option value="s355" selected>S355 Structural</option>
-          <option value="s690">S690 High Strength</option>
-          <option value="m4140">4140 Q&amp;T (655 MPa)</option>
-          <option value="en24">En24 / 817M40 (850 MPa)</option>
-          <option value="ss304">Stainless 304</option>
-          <option value="ss316">Stainless 316</option>
-          <option value="h13">H13 Tool Steel</option>
-        </optgroup>
-        <optgroup label="── Aluminium ──">
-          <option value="al6061">6061-T6</option>
-          <option value="al7075">7075-T6</option>
-          <option value="al2024">2024-T4</option>
-          <option value="al5052">5052-H32</option>
-          <option value="al6082">6082-T6</option>
-        </optgroup>
-        <optgroup label="── Custom ──" id="hubCustomGrp" style="display:none"></optgroup>
-      </select>
+      <select id="hubMat"></select>
     </div>
     <div class="ig">
       <label>Shaft Material</label>
-      <select id="shaftMat">
-        <optgroup label="── Steel ──">
-          <option value="s275">S275 Structural</option>
-          <option value="s355">S355 Structural</option>
-          <option value="s690">S690 High Strength</option>
-          <option value="m4140" selected>4140 Q&amp;T (655 MPa)</option>
-          <option value="en24">En24 / 817M40 (850 MPa)</option>
-          <option value="ss304">Stainless 304</option>
-          <option value="ss316">Stainless 316</option>
-          <option value="h13">H13 Tool Steel</option>
-        </optgroup>
-        <optgroup label="── Aluminium ──">
-          <option value="al6061">6061-T6</option>
-          <option value="al7075">7075-T6</option>
-          <option value="al2024">2024-T4</option>
-          <option value="al5052">5052-H32</option>
-          <option value="al6082">6082-T6</option>
-        </optgroup>
-        <optgroup label="── Custom ──" id="shaftCustomGrp" style="display:none"></optgroup>
-      </select>
+      <select id="shaftMat"></select>
     </div>
     <div id="matTable" style="margin-top:8px;"></div>
   </div>
@@ -615,43 +577,6 @@ svg text {
       <div class="iwu"><input type="number" id="tHot" value="120" step="1"><span class="ub">°C</span></div>
     </div>
     <div class="hint">Hub heated for assembly. Hot temp shows in-service interference shift.</div>
-  </div>
-
-  <!-- CUSTOM MATERIAL -->
-  <div class="panel">
-    <button class="collapse-hdr" onclick="togglePanel('cmatBody','cmatArr')">
-      <span class="c-arrow" id="cmatArr">▶</span>
-      Add Custom Material
-    </button>
-    <div class="collapse-body" id="cmatBody">
-      <div class="ig" style="margin-bottom:8px;">
-        <label>Material Name</label>
-        <input type="text" class="bare" id="cName" placeholder="e.g. Titanium Ti-6Al-4V">
-      </div>
-      <div class="g2" style="margin-bottom:8px;">
-        <div class="ig" style="margin-bottom:0;">
-          <label>Modulus E</label>
-          <div class="iwu"><input type="number" id="cE" placeholder="114" min="0.1" step="0.1"><span class="ub">GPa</span></div>
-        </div>
-        <div class="ig" style="margin-bottom:0;">
-          <label>Poisson ν</label>
-          <div class="iwu"><input type="number" id="cNu" placeholder="0.34" min="0.01" max="0.49" step="0.01"><span class="ub">—</span></div>
-        </div>
-      </div>
-      <div class="g2">
-        <div class="ig" style="margin-bottom:0;">
-          <label>Yield σ<sub>y</sub></label>
-          <div class="iwu"><input type="number" id="cSy" placeholder="880" min="1" step="1"><span class="ub">MPa</span></div>
-        </div>
-        <div class="ig" style="margin-bottom:0;">
-          <label>CTE α</label>
-          <div class="iwu"><input type="number" id="cCTE" placeholder="9.0" min="0.1" step="0.1" title="Coefficient of Thermal Expansion μm/m·K (= 1×10⁻⁶ /°C)"><span class="ub">µ/m·K</span></div>
-        </div>
-      </div>
-      <div class="cmat-err" id="cmatErr"></div>
-      <button class="btn primary" onclick="addCustomMaterial()">+ Add to Library</button>
-      <div class="cmat-list" id="cmatList"></div>
-    </div>
   </div>
 
 </div><!-- end left col -->
@@ -726,83 +651,37 @@ if(_wbEmbed){try{var _s=document.createElement('style');_s.textContent='.wb-back
 const _exp = {};
 
 // ══════════════════════════════════════════════════════════════
-// MATERIAL DATABASE  E=MPa, CTE=μm/m·K
+// MATERIAL DATABASE — sourced from workbook (single source of truth)
+// schema here: {name, E(MPa), nu, Sy(MPa), cte(µm/m·K)}
 // ══════════════════════════════════════════════════════════════
-const MAT = {
-  s275:  {name:'S275',        E:200e3,nu:.30,Sy:275, cte:12.0},
-  s355:  {name:'S355',        E:200e3,nu:.30,Sy:355, cte:12.0},
-  s690:  {name:'S690',        E:210e3,nu:.30,Sy:690, cte:12.0},
-  m4140: {name:'4140 Q&T',    E:205e3,nu:.30,Sy:655, cte:12.3},
-  en24:  {name:'En24/817M40', E:205e3,nu:.30,Sy:850, cte:12.3},
-  ss304: {name:'SS 304',      E:193e3,nu:.29,Sy:215, cte:17.2},
-  ss316: {name:'SS 316',      E:193e3,nu:.29,Sy:205, cte:16.0},
-  h13:   {name:'H13 Tool',    E:215e3,nu:.30,Sy:1380,cte:11.5},
-  al6061:{name:'6061-T6',     E:69e3, nu:.33,Sy:276, cte:23.6},
-  al7075:{name:'7075-T6',     E:71e3, nu:.33,Sy:503, cte:23.4},
-  al2024:{name:'2024-T4',     E:73e3, nu:.33,Sy:324, cte:23.2},
-  al5052:{name:'5052-H32',    E:70e3, nu:.33,Sy:193, cte:23.8},
-  al6082:{name:'6082-T6',     E:70e3, nu:.33,Sy:260, cte:23.0},
+const MAT_FALLBACK = {
+  s355:  {name:'S355',        E:210e3,nu:.30,Sy:355, cte:12.0},
+  al7075:{name:'7075-T6',     E:71e3, nu:.33,Sy:469, cte:23.6},
 };
-
-const customMats={};let customCount=0;
+function buildMatFromWorkbook(){
+  try{
+    var raw=localStorage.getItem('eng_wb_mats');
+    if(!raw)return null;
+    var arr=JSON.parse(raw);
+    if(!Array.isArray(arr)||!arr.length)return null;
+    var out={};
+    arr.forEach(function(m){
+      out[m.id||m.name]={name:m.name,E:m.E||0,nu:m.v||0.3,Sy:m.Fty||0,cte:(m.alpha||0)*1e6};
+    });
+    return out;
+  }catch(e){return null}
+}
+const MAT = buildMatFromWorkbook() || MAT_FALLBACK;
 
 function togglePanel(bId,aId){
   const open=document.getElementById(bId).classList.toggle('open');
   document.getElementById(aId).classList.toggle('open',open);
 }
-function addCustomMaterial(){
-  const err=document.getElementById('cmatErr'); err.style.display='none';
-  const name=document.getElementById('cName').value.trim();
-  const E=parseFloat(document.getElementById('cE').value);
-  const nu=parseFloat(document.getElementById('cNu').value);
-  const Sy=parseFloat(document.getElementById('cSy').value);
-  const cte=parseFloat(document.getElementById('cCTE').value);
-  if(!name)                     return showCErr('Please enter a material name.');
-  if(isNaN(E)||E<=0)            return showCErr('E must be positive (GPa).');
-  if(isNaN(nu)||nu<=0||nu>=.5)  return showCErr('ν must be between 0.01 and 0.49.');
-  if(isNaN(Sy)||Sy<=0)          return showCErr('σ_y must be positive (MPa).');
-  if(isNaN(cte)||cte<=0)        return showCErr('CTE must be positive (μm/m·K).');
-  const key='custom_'+(++customCount);
-  const mat={name,E:E*1000,nu,Sy,cte};
-  customMats[key]=mat; MAT[key]=mat;
-  ['hubCustomGrp','shaftCustomGrp'].forEach(gid=>{
-    const grp=document.getElementById(gid); grp.style.display='';
-    const opt=document.createElement('option');
-    opt.value=key; opt.textContent=name; opt.id='copt_'+key+'_'+gid;
-    grp.appendChild(opt);
-  });
-  renderCustomList();
-  ['cName','cE','cNu','cSy','cCTE'].forEach(id=>document.getElementById(id).value='');
-  calculate();
-}
-function showCErr(msg){const el=document.getElementById('cmatErr');el.textContent='⚠ '+msg;el.style.display='block';}
-function removeCustomMaterial(key){
-  delete MAT[key]; delete customMats[key];
-  ['hubCustomGrp','shaftCustomGrp'].forEach(gid=>{
-    const opt=document.getElementById('copt_'+key+'_'+gid);
-    if(opt)opt.remove();
-    const grp=document.getElementById(gid);
-    if(grp&&!grp.children.length)grp.style.display='none';
-  });
-  ['hubMat','shaftMat'].forEach(sid=>{
-    const sel=document.getElementById(sid);
-    if(sel.value===key)sel.selectedIndex=0;
-  });
-  renderCustomList(); calculate();
-}
-function renderCustomList(){
-  const list=document.getElementById('cmatList');
-  const keys=Object.keys(customMats);
-  if(!keys.length){list.innerHTML='';return;}
-  list.innerHTML=keys.map(k=>{
-    const m=customMats[k];
-    return`<div class="cmat-item">
-      <div><div class="cmat-name">${m.name}</div>
-      <div class="cmat-props">E=${(m.E/1e3).toFixed(0)} GPa &nbsp;ν=${m.nu} &nbsp;σ_y=${m.Sy} MPa &nbsp;α=${m.cte} µ/m·K</div></div>
-      <button class="cmat-del" onclick="removeCustomMaterial('${k}')" title="Remove">✕</button>
-    </div>`;
-  }).join('');
-}
+// Custom materials removed — materials are governed at the workbook level.
+function addCustomMaterial(){}
+function showCErr(){}
+function removeCustomMaterial(){}
+function renderCustomList(){}
 
 // ══════════════════════════════════════════════════════════════
 // ISO 286 — IT grades & fundamental deviations
@@ -1546,6 +1425,18 @@ function onShaftFitChange(){
 }
 
 // ── Event wiring ──
+// Populate hub/shaft material dropdowns from workbook MAT (single source of truth)
+(function populateMatSelects(){
+  var keys=Object.keys(MAT);
+  var opts=keys.map(function(k){return'<option value="'+k+'">'+(MAT[k].name||k)+'</option>'}).join('');
+  var hub=document.getElementById('hubMat'),sh=document.getElementById('shaftMat');
+  if(hub)hub.innerHTML=opts;
+  if(sh)sh.innerHTML=opts;
+  // sensible defaults: hub first steel-ish, shaft second entry if present
+  if(hub&&keys.length)hub.value=keys[0];
+  if(sh&&keys.length)sh.value=keys[keys.length>1?1:0];
+})();
+
 ['dNom','dHub','dShaft','tAmb','tHot','cLen','mu','holeEI','holeES','shaftEI','shaftES'].forEach(id=>
   document.getElementById(id).addEventListener('input',calculate));
 ['holeFit','shaftFit','hubMat','shaftMat'].forEach(id=>
