@@ -720,6 +720,8 @@ svg text {
 </div><!-- end app -->
 
 <script>
+var _wbP=new URLSearchParams(location.search);var _wbEmbed=_wbP.get('embed')==='1';var _wbKey=(_wbP.get('wb')&&_wbP.get('item'))?('eng_wb_rf_'+_wbP.get('wb')+'_'+_wbP.get('item')):'eng_wb_rf_intfit';
+if(_wbEmbed){try{var _s=document.createElement('style');_s.textContent='.wb-back,.pdf-btn{display:none!important}';document.head.appendChild(_s)}catch(e){}}
 // ── Export data store ──
 const _exp = {};
 
@@ -873,7 +875,13 @@ function stresses(p,d,Do,Di){
   const hvm=Math.sqrt(hi*hi+hi*p+p*p);
   let si,svm;
   if(Di<.001){si=-p;svm=p;}
-  else{const k=(d*d+Di*Di)/(d*d-Di*Di);si=-p*k;svm=p*Math.sqrt(k*k+k+1);}
+  else{
+    const k=(d*d+Di*Di)/(d*d-Di*Di);
+    si=-p*k;                              // hoop at interface (compressive)
+    const vm_iface=p*Math.sqrt(k*k-k+1);  // VM at shaft OD / interface
+    const vm_bore =2*p*d*d/(d*d-Di*Di);   // VM at shaft bore (free surface) — usually governs
+    svm=Math.max(vm_iface,vm_bore);
+  }
   return{hub_i:hi,hub_o:ho,hub_vm:hvm,sh_i:si,sh_vm:svm};
 }
 function shapeChange(p,d,Do,Di,mH,mS){
@@ -883,7 +891,7 @@ function shapeChange(p,d,Do,Di,mH,mS){
   return{dHub:dH,dShaft:dS,total:dH+dS};
 }
 // Torque [N·m] and Axial [kN]
-function torque(p,d,L,mu){return mu*p*Math.PI*d*d*L/2/1e6;}   // d,L mm → N·m
+function torque(p,d,L,mu){return mu*p*Math.PI*d*d*L/2/1e3;}   // N·mm → N·m
 function axialForce(p,d,L,mu){return mu*p*Math.PI*d*L/1e3;}    // → kN
 // Thermal
 function thermalDelta(delta_amb,d,mH,mS,dT){
@@ -1411,7 +1419,7 @@ function exportToImage(){
   const SFhMax=(e.mH.Sy/e.st_max_hub_vm).toFixed(2);
   const SFsMin=hasMn?(e.mS.Sy/e.st_min_sh_vm).toFixed(2):nc;
   const SFsMax=(e.mS.Sy/e.st_max_sh_vm).toFixed(2);
-  try{var _sfs=[parseFloat(SFhMax),parseFloat(SFsMax)];if(hasMn){_sfs.push(parseFloat(SFhMin),parseFloat(SFsMin))}_sfs=_sfs.filter(function(x){return isFinite(x)&&x>0});if(_sfs.length)localStorage.setItem('eng_wb_rf_intfit',JSON.stringify({sf:Math.min.apply(null,_sfs),ts:Date.now()}))}catch(ex){}
+  try{var _sfs=[parseFloat(SFhMax),parseFloat(SFsMax)];if(hasMn){_sfs.push(parseFloat(SFhMin),parseFloat(SFsMin))}_sfs=_sfs.filter(function(x){return isFinite(x)&&x>0});if(_sfs.length)localStorage.setItem(_wbKey,JSON.stringify({sf:Math.min.apply(null,_sfs),ts:Date.now()}))}catch(ex){}
 
   row('Diametral interference δ',
     hasMn?ff(e.dMin*1e3,2)+' μm':nc, ff(e.dMax*1e3,2)+' μm',

@@ -1016,7 +1016,9 @@ function setupCad(id){var c=document.getElementById(id);if(!c)return;
 }
 function loadCadFile(f,c){if(!f||!f.type.startsWith('image/'))return;var r=new FileReader();r.onload=function(e){try{localStorage.setItem(_cadKey,e.target.result)}catch(ex){}renderCad(c,e.target.result)};r.readAsDataURL(f)}
 
-function exportBoltRF(res){if(!res)return;try{var sfs=[res.sfVMbasic,res.sfShearBasic].filter(function(x){return x&&isFinite(x)&&x>0});if(sfs.length)localStorage.setItem('eng_wb_rf_bolt',JSON.stringify({sf:Math.min.apply(null,sfs),ts:Date.now()}))}catch(e){}}
+var _wbP=new URLSearchParams(location.search);var _wbEmbed=_wbP.get('embed')==='1';var _wbKey=(_wbP.get('wb')&&_wbP.get('item'))?('eng_wb_rf_'+_wbP.get('wb')+'_'+_wbP.get('item')):'eng_wb_rf_bolt';
+function exportBoltRF(res){if(!res)return;try{var sfs=[res.sfVMbasic,res.sfShearBasic].filter(function(x){return x&&isFinite(x)&&x>0});if(sfs.length)localStorage.setItem(_wbKey,JSON.stringify({sf:Math.min.apply(null,sfs),ts:Date.now()}))}catch(e){}}
+if(_wbEmbed){try{var _s=document.createElement('style');_s.textContent='.wb-back,.pdf-btn{display:none!important}';document.head.appendChild(_s)}catch(e){}}
 
 ReactDOM.render(<App/>,document.getElementById("root"));
 setTimeout(function(){setupCad("boltCadZone");initCadImage("eng_wb_img_bolt","boltCadZone")},600);
