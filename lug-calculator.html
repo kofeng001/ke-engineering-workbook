@@ -705,6 +705,7 @@ function recalc() {
   renderThresholdBtns();
   draw3DLug();
   exportLugRF();
+  _stQ();
 }
 
 /* ═══════════════════════════════════════════════
@@ -988,26 +989,55 @@ function resetAll() {
 }
 
 /* ═══════════════════════════════════════════════
-   LOAD SAVED STATE
+   WORKBOOK STATE PERSISTENCE
+   The lug stores its inputs internally in imperial units
+   (isMetric only affects display), so the internal state object is
+   persisted rather than the displayed field values — restoring the
+   displayed values would double-convert on a unit switch.
+   Scoped per workbook item when embedded.
    ═══════════════════════════════════════════════ */
+var _stP=new URLSearchParams(location.search);
+var _stKey=(_stP.get('wb')&&_stP.get('item'))
+  ? ('eng_wb_state_'+_stP.get('wb')+'_'+_stP.get('item'))
+  : 'eng_wb_state_lug';
+var _stReady=false,_stT=null;
+function wbSaveState(){
+  if(!_stReady)return;
+  try{
+    localStorage.setItem(_stKey,JSON.stringify({v:1,ts:Date.now(),state:{
+      P:state.P,W:state.W,D:state.D,e:state.e,t:state.t,
+      matIdx:state.matIdx,isMetric:state.isMetric,eCentred:state.eCentred
+    }}));
+  }catch(e){}
+}
+function _stQ(){clearTimeout(_stT);_stT=setTimeout(wbSaveState,250)}
+window.addEventListener('pagehide',function(){clearTimeout(_stT);wbSaveState()});
+document.addEventListener('visibilitychange',function(){
+  if(document.visibilityState==='hidden'){clearTimeout(_stT);wbSaveState()}
+});
+
 function loadSavedState() {
-  const ssTag = document.getElementById('savedState');
-  if (!ssTag || !ssTag.textContent.trim()) return false;
+  let data = null;
   try {
-    const data = JSON.parse(ssTag.textContent);
-    if (data.state) {
-      state = {...state, ...data.state};
-    }
+    const raw = localStorage.getItem(_stKey);
+    if (raw) data = JSON.parse(raw);
+  } catch(e) { data = null; }
+  // Legacy: state baked into the page as a <script id="savedState"> tag
+  if (!data) {
+    const ssTag = document.getElementById('savedState');
+    if (!ssTag || !ssTag.textContent.trim()) return false;
+    try { data = JSON.parse(ssTag.textContent); } catch(e) { return false; }
+  }
+  if (!data || !data.state) return false;
+  state = {...state, ...data.state};
 
-    // Sync edge distance toggle UI
-    const tog=document.getElementById('eCentreToggle'),lbl=document.getElementById('eCentreLabel'),inp=document.getElementById('inE');
-    tog.classList.toggle('on',state.eCentred);
-    lbl.classList.toggle('active',state.eCentred);
-    lbl.textContent=state.eCentred?'e = W/2 (centred hole)':'Custom edge distance';
-    inp.disabled=state.eCentred;
-
-    return true;
-  } catch(e) { return false; }
+  // Sync edge distance toggle UI
+  const tog=document.getElementById('eCentreToggle'),lbl=document.getElementById('eCentreLabel'),inp=document.getElementById('inE');
+  tog.classList.toggle('on',state.eCentred);
+  lbl.classList.toggle('active',state.eCentred);
+  lbl.textContent=state.eCentred?'e = W/2 (centred hole)':'Custom edge distance';
+  inp.disabled=state.eCentred;
+  return true;
 }
 
 /* ═══════════════════════════════════════════════
@@ -1028,7 +1058,11 @@ function setupCad(id){var c=document.getElementById(id);if(!c)return;
   c.addEventListener('dragleave',function(){c.style.borderColor=''});
   c.addEventListener('drop',function(e){e.preventDefault();c.style.borderColor='';if(e.dataTransfer.files.length)loadCadFile(e.dataTransfer.files[0],c)});
 }
-function loadCadFile(f,c){if(!f||!f.type.startsWith('image/'))return;var r=new FileReader();r.onload=function(e){try{localStorage.setItem(_cadKey,e.target.result)}catch(ex){}renderCad(c,e.target.result)};r.readAsDataURL(f)}
+function loadCadFile(f,c){if(!f||!f.type.startsWith('image/'))return;var r=new FileReader();r.onload=function(e){
+  var saved=true;try{localStorage.setItem(_cadKey,e.target.result)}catch(ex){saved=false}
+  renderCad(c,e.target.result);
+  if(!saved)alert('Image shown but NOT saved \u2014 browser storage is full.\n\nThis image will be lost when the page reloads. Remove a large CAD image from another calculation, or use a smaller/compressed image.');
+};r.readAsDataURL(f)}
 var _wbP=new URLSearchParams(location.search);var _wbEmbed=_wbP.get('embed')==='1';var _wbKey=(_wbP.get('wb')&&_wbP.get('item'))?('eng_wb_rf_'+_wbP.get('wb')+'_'+_wbP.get('item')):'eng_wb_rf_lug';
 function exportLugRF(){try{var r=calculate();if(r&&r.minRf&&isFinite(r.minRf))localStorage.setItem(_wbKey,JSON.stringify({rf:r.minRf,mode:r.crit,ts:Date.now()}))}catch(e){}}
 if(_wbEmbed){try{var _s=document.createElement('style');_s.textContent='.wb-back,.pdf-btn{display:none!important}';document.head.appendChild(_s)}catch(e){}}
@@ -1036,12 +1070,15 @@ const hadSaved = loadSavedState();
 populateMatSelect();
 if (hadSaved) {
   document.getElementById('matSelect').value = state.matIdx;
-  setUnit(state.isMetric);
-} else {
-  populateInputs();
+  // set the toggle UI without re-running populateInputs twice
+  document.querySelectorAll('#unitToggle button').forEach(b =>
+    b.classList.toggle('active', b.dataset.metric===String(state.isMetric)));
 }
+populateInputs();
 recalc();
-setupCad("lugCadZone");initCadImage("eng_wb_img_lug","lugCadZone");
+_stReady = true;
+var _imgKey=(_stP.get('wb')&&_stP.get('item'))?('eng_wb_img_'+_stP.get('wb')+'_'+_stP.get('item')):'eng_wb_img_lug';
+setupCad("lugCadZone");initCadImage(_imgKey,"lugCadZone");
 </script>
 <button class="pdf-btn" onclick="window.print()">⎙ Save as PDF</button>
 <div id="cadOv" class="cad-overlay" onclick="this.classList.remove('show')"></div>

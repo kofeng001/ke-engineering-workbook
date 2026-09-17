@@ -165,6 +165,27 @@ var TC={
   review:{name:'Review',   file:null,                          hasRF:false,ext:false, icon:'\u25A1', color:'#8a8a96', rgb:'138,138,150', desc:'Minutes · actions · attendees'}
 };
 function rfKey(itemId){return 'eng_wb_rf_'+activeWBId+'_'+itemId}
+function stKey(itemId){return 'eng_wb_state_'+activeWBId+'_'+itemId}
+// Per-item side data (inputs, RF badge, CAD image) lives in its own
+// localStorage keys so the calculators can read/write it from inside their
+// iframes. Collect it for export and purge it on delete.
+function itemKeys(wbId,itemId){return ['eng_wb_state_'+wbId+'_'+itemId,'eng_wb_rf_'+wbId+'_'+itemId,'eng_wb_img_'+wbId+'_'+itemId]}
+function collectSide(wbId,calcs){
+  var out={};
+  (calcs||[]).forEach(function(c){
+    itemKeys(wbId,c.id).forEach(function(k){
+      try{var v=localStorage.getItem(k);if(v!=null)out[k.replace(wbId,'{WB}')]=v}catch(e){}
+    });
+  });
+  return out;
+}
+function restoreSide(wbId,side){
+  if(!side)return;
+  Object.keys(side).forEach(function(k){
+    try{localStorage.setItem(k.replace('{WB}',wbId),side[k])}catch(e){}
+  });
+}
+function purgeItem(wbId,itemId){itemKeys(wbId,itemId).forEach(function(k){try{localStorage.removeItem(k)}catch(e){}})}
 function getRF(itemId){try{var d=JSON.parse(localStorage.getItem(rfKey(itemId)));var v=d.rf||d.sf;return(v&&isFinite(v)&&v>0)?v:null}catch(e){return null}}
 function rfCol(v){var crit=(W&&W.rfCrit)||1.2,opt=(W&&W.rfOpt)||1.5;return v<crit?'var(--danger)':v<opt?'var(--warn)':'var(--good)'}
 function rfBadge(v){if(v==null)return'\u2014';var c=rfCol(v);return'<span style="padding:2px 9px;border-radius:5px;font-size:11px;font-weight:600;font-family:var(--mono);background:'+c+'12;color:'+c+';border:1px solid '+c+'25">'+v.toFixed(2)+'</span>'}
@@ -248,10 +269,10 @@ function showGlobalMats(){VIEW='lib-mat';renderLibrary()}
 function createWB(){var name=prompt('Workbook name:','');if(name===null)return;var id='wb_'+Date.now();var now=new Date().toISOString();var idx=getIndex();idx.push({id:id,name:name||'Untitled',author:'',modified:now,created:now,items:0});saveIndex(idx);var f=freshState();f.project=name||'';f.created=now;f.modified=now;saveWBData(id,f);openWB(id)}
 function openWB(id){activeWBId=id;setActiveId(id);W=freshState();var ld=loadWBData(id);if(ld){for(var k in ld)W[k]=ld[k]};R()}
 function goLibrary(){activeWBId=null;setActiveId(null);VIEW='lib';renderLibrary()}
-function deleteWB(id){var idx=getIndex();var e=idx.find(function(x){return x.id===id});if(!confirm('Delete "'+(e?e.name:'this workbook')+'"?'))return;idx=idx.filter(function(x){return x.id!==id});saveIndex(idx);deleteWBData(id);if(activeWBId===id){activeWBId=null;setActiveId(null)}renderLibrary()}
+function deleteWB(id){var idx=getIndex();var e=idx.find(function(x){return x.id===id});if(!confirm('Delete "'+(e?e.name:'this workbook')+'"?'))return;var wd=loadWBData(id);if(wd&&wd.calcs)wd.calcs.forEach(function(c){purgeItem(id,c.id)});idx=idx.filter(function(x){return x.id!==id});saveIndex(idx);deleteWBData(id);if(activeWBId===id){activeWBId=null;setActiveId(null)}renderLibrary()}
 function renameWB(id){var idx=getIndex();var e=idx.find(function(x){return x.id===id});if(!e)return;var nn=prompt('Rename workbook:',e.name);if(nn===null)return;e.name=nn||'Untitled';saveIndex(idx);var data=loadWBData(id);if(data){data.project=e.name;data.modified=new Date().toISOString();saveWBData(id,data);if(activeWBId===id)W.project=e.name}renderLibrary()}
-function exportWB(){var n=prompt('Export as:',W.project?W.project.replace(/\s+/g,'_'):'Workbook');if(!n)return;var d=JSON.parse(JSON.stringify(W));delete d.tab;d.materials=G_mats;d.savedAt=new Date().toISOString();d.version='6.0';var b=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=n.replace(/\s+/g,'_')+'.json';a.click();URL.revokeObjectURL(a.href)}
-function importWB(){var inp=document.createElement('input');inp.type='file';inp.accept='.json';inp.onchange=function(ev){var f=ev.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(e){try{var d=JSON.parse(e.target.result);var id='wb_'+Date.now();var now2=new Date().toISOString();var idx=getIndex();idx.push({id:id,name:d.project||f.name.replace('.json',''),author:d.author||'',modified:now2,created:d.created||now2,items:d.calcs?d.calcs.length:0});saveIndex(idx);if(d.materials){G_mats=d.materials;saveGlobalMats()}delete d.materials;saveWBData(id,d);openWB(id)}catch(err){alert('Failed: '+err.message)}};r.readAsText(f)};inp.click()}
+function exportWB(){var n=prompt('Export as:',W.project?W.project.replace(/\s+/g,'_'):'Workbook');if(!n)return;var d=JSON.parse(JSON.stringify(W));delete d.tab;d.materials=G_mats;d.side=collectSide(activeWBId,W.calcs);d.savedAt=new Date().toISOString();d.version='7.0';var b=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=n.replace(/\s+/g,'_')+'.json';a.click();URL.revokeObjectURL(a.href)}
+function importWB(){var inp=document.createElement('input');inp.type='file';inp.accept='.json';inp.onchange=function(ev){var f=ev.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(e){try{var d=JSON.parse(e.target.result);var id='wb_'+Date.now();var now2=new Date().toISOString();var idx=getIndex();idx.push({id:id,name:d.project||f.name.replace('.json',''),author:d.author||'',modified:now2,created:d.created||now2,items:d.calcs?d.calcs.length:0});saveIndex(idx);if(d.materials){G_mats=d.materials;saveGlobalMats()}delete d.materials;restoreSide(id,d.side);delete d.side;saveWBData(id,d);openWB(id)}catch(err){alert('Failed: '+err.message)}};r.readAsText(f)};inp.click()}
 
 // ═══════════════════════════════════════════════════════════════
 // HOME PAGE
@@ -454,7 +475,7 @@ function addRevImg(ci){var inp=document.createElement('input');inp.type='file';i
 // WORKBOOK ACTIONS
 // ═══════════════════════════════════════════════════════════════
 function addC(type){var t=TC[type];var title=prompt(t.name+' title:','');if(title===null)return;var now=new Date().toISOString();var c={id:'c_'+(W._n++),type:type,title:title||'',created:now,modified:now};if(type==='notes')c.data={entries:[]};if(type==='review')c.data={date:'',agenda:'',attendees:'',minutes:'',actions:[],images:[]};W.calcs.push(c);sv();W.tab=c.id;R()}
-function remC(i){if(!confirm('Remove "'+(W.calcs[i].title||'this item')+'"?'))return;W.calcs.splice(i,1);R()}
+function remC(i){if(!confirm('Remove "'+(W.calcs[i].title||'this item')+'"?'))return;purgeItem(activeWBId,W.calcs[i].id);W.calcs.splice(i,1);sv();R()}
 
 // ═══════════════════════════════════════════════════════════════
 // 3D VIEWER (same as before, compact)

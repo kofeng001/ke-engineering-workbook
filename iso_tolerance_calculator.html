@@ -337,21 +337,21 @@ const SHAFT_ES = {
 
 // k,m,n: ei values (positive, µm)
 const SHAFT_EI = {
-  k:  [  0,   1,   1,   1,   1,   2,   2,   2,   2,   2,   2,   3,   3,   3,   3,   3,   4,   4,   4,   4,   4,   5,   5,   5,   5],
+  k:  [  0,   1,   1,   1,   1,   2,   2,   2,   2,   2,   2,   3,   3,   3,   3,   3,   4,   4,   4,   4,   4,   4,   4,   5,   5],
   m:  [  2,   4,   6,   7,   7,   8,   8,   9,   9,  11,  11,  13,  13,  15,  15,  17,  17,  20,  20,  21,  21,  23,  23,  25,  25],
   n:  [  4,   8,  10,  12,  12,  15,  15,  17,  17,  20,  20,  23,  23,  27,  27,  31,  31,  34,  34,  37,  37,  40,  40,  45,  45],
   p:  [ 6, 12, 15, 18, 18, 22, 22, 26, 26, 32, 32, 37, 37, 43, 43, 43, 50, 50, 50, 56, 56, 62, 62, 68, 68],
   r:  [ 10, 15, 19, 23, 23, 28, 28, 34, 34, 41, 43, 51, 54, 63, 65, 68, 77, 80, 84, 94, 98,108,114,126,132],
   s:  [ 14, 19, 23, 28, 28, 35, 35, 43, 43, 53, 59, 71, 79, 92,100,108,122,130,140,158,170,190,208,232,252],
-  t:  [  0,  0,  0,  0,  0, 41, 48, 54, 70, 66, 75, 91,104,122,134,146,166,180,196,218,240,268,294,330,360],
+  t:  [  0,  0,  0,  0,  0,  0, 41, 48, 54, 66, 75, 91,104,122,134,146,166,180,196,218,240,268,294,330,360],
   u:  [ 18, 23, 28, 33, 33, 41, 48, 60, 70, 87,102,124,144,170,190,210,236,258,284,315,350,390,435,490,540],
-  v:  [  0,  0,  0,  0,  0,  0,  0, 68, 80,102,120,146,172,202,228,252,284,310,340,385,425,475,530,595,660],
-  x:  [ 20, 26, 34, 40, 45, 47, 54, 64, 76, 94,114,144,174,210,236,258,284,315,350,390,435,490,549,619,689],
-  y:  [  0,  0,  0,  0,  0, 53, 64, 80,100,120,148,180,220,260,300,340,380,420,460,510,560,620,680,760,840],
-  z:  [ 26, 32, 40, 48, 53, 60, 66, 80,100,120,148,180,220,260,300,340,380,420,460,510,560,620,680,760,840],
-  za: [ 32, 40, 50, 60, 68, 80, 90,110,135,160,200,240,290,340,390,440,490,540,600,660,740,820,920,1020,1120],
-  zb: [ 40, 50, 60, 73, 80, 96,108,130,160,190,236,280,330,390,450,510,570,630,700,780,860,960,1060,1180,1300],
-  zc: [ 60, 74, 90,106,114,132,150,180,210,250,300,360,430,500,570,640,720,800,880,980,1080,1200,1340,1480,1620],
+  v:  [  0,  0,  0,  0, 39, 47, 55, 68, 81,102,120,146,172,202,228,252,284,310,340,385,425,475,530,595,660],
+  x:  [ 20, 28, 34, 40, 45, 54, 64, 80, 97,122,146,178,210,248,280,310,350,385,425,475,525,590,660,740,820],
+  y:  [  0,  0,  0,  0,  0, 63, 75, 94,114,144,174,214,254,300,340,380,425,470,520,580,650,730,820,920,1000],
+  z:  [ 26, 35, 42, 50, 60, 73, 88,112,136,172,210,258,310,365,415,465,520,575,640,710,790,900,1000,1100,1250],
+  za: [ 32, 42, 52, 64, 77, 98,118,148,180,226,274,335,400,470,535,600,670,740,820,920,1000,1150,1300,1450,1600],
+  zb: [ 40, 50, 67, 90,108,136,160,200,242,300,360,445,525,620,700,780,880,960,1050,1200,1300,1500,1650,1850,2100],
+  zc: [ 60, 80, 97,130,150,188,218,274,325,405,480,585,690,800,900,1000,1150,1250,1350,1550,1700,1900,2100,2400,2600],
 };
 
 function getDevIdx(d) {
@@ -374,10 +374,8 @@ function shaftLimits(d, letter, grade) {
     ei = -it / 2;
     es = it / 2;
   } else if (L === 'j') {
-    // j: for grades <=8, special formula; simplified: use js-like but asymmetric
-    // ISO 286: for j, IT5-IT8: es = special table. Approximate: same as js
-    ei = -it / 2;
-    es = it / 2;
+    // j is grade-specific in ISO 286 and not symmetric — not supported (use js)
+    return null;
   } else if (SHAFT_ES[L] !== undefined) {
     // Letters a-h: fundamental deviation is UPPER (es), negative
     es = SHAFT_ES[L][idx];
@@ -390,6 +388,8 @@ function shaftLimits(d, letter, grade) {
       return null;
     }
     ei = SHAFT_EI[L][idx];
+    // ISO 286-1: k has ei > 0 only for grades IT4 to IT7; otherwise ei = 0
+    if (L === 'k' && (grade < 4 || grade > 7)) ei = 0;
     es = ei + it;
   } else {
     return null;
@@ -403,10 +403,11 @@ function shaftLimits(d, letter, grade) {
 }
 
 // Hole limits: fundamental deviation is the mirror of the shaft
-// Uppercase letter X -> lowercase x shaft deviation, then negate
 // H: EI = 0 (lower deviation), ES = EI + IT
 // A-H: EI = -es(corresponding lowercase), ES = EI + IT
-// K-ZC: ES = -ei(corresponding lowercase), EI = ES - IT
+// K-ZC: ES = -ei(corresponding lowercase) + Δ, EI = ES - IT
+// Δ correction (ISO 286-1 Table 3): for sizes > 3 mm, Δ = IT(n) − IT(n−1) applies to
+// K, M, N up to and including IT8, and P to ZC up to and including IT7.
 function holeLimits(d, letter, grade) {
   const it = getIT(d, grade);
   if (it == null) return null;
@@ -420,8 +421,8 @@ function holeLimits(d, letter, grade) {
     EI = -it / 2;
     ES = it / 2;
   } else if (L === 'J') {
-    EI = -it / 2;
-    ES = it / 2;
+    // J is grade-specific in ISO 286 and not symmetric — not supported (use JS)
+    return null;
   } else if (SHAFT_ES[l] !== undefined) {
     // A-H: hole EI = -es(shaft)
     EI = -SHAFT_ES[l][idx];
@@ -429,7 +430,20 @@ function holeLimits(d, letter, grade) {
   } else if (SHAFT_EI[l] !== undefined) {
     const vals = SHAFT_EI[l];
     if (!vals || vals[idx] === 0 && (l === 't' || l === 'v' || l === 'y')) return null;
-    ES = -SHAFT_EI[l][idx];
+    let ei = vals[idx];
+    // Mirror of the shaft k rule: K has fundamental deviation ≠ 0 only for IT ≤ 8
+    if (l === 'k' && grade > 8) ei = 0;
+    // Δ correction (only for sizes over 3 mm)
+    let delta = 0;
+    const needsDelta = (['k','m','n'].includes(l) && grade <= 8) ||
+                       (grade <= 7 && !['k','m','n'].includes(l));
+    if (needsDelta && d > 3) {
+      const itPrev = getIT(d, grade - 1);
+      if (itPrev != null) delta = it - itPrev;
+    }
+    ES = -ei + delta;
+    // ISO 286-1 special case: M6, sizes over 250 up to 315: ES = −9 (not −11)
+    if (l === 'm' && grade === 6 && d > 250 && d <= 315) ES = -9;
     EI = ES - it;
   } else {
     return null;
@@ -445,8 +459,8 @@ function holeLimits(d, letter, grade) {
 // ═══════════════════════════════════════════════════════════
 // UI SETUP
 // ═══════════════════════════════════════════════════════════
-const HOLE_LETTERS = ['A','B','C','CD','D','E','EF','F','FG','G','H','J','JS','K','M','N','P','R','S','T','U','V','X','Y','Z','ZA','ZB','ZC'];
-const SHAFT_LETTERS = ['a','b','c','cd','d','e','ef','f','fg','g','h','j','js','k','m','n','p','r','s','t','u','v','x','y','z','za','zb','zc'];
+const HOLE_LETTERS = ['A','B','C','CD','D','E','EF','F','FG','G','H','JS','K','M','N','P','R','S','T','U','V','X','Y','Z','ZA','ZB','ZC'];
+const SHAFT_LETTERS = ['a','b','c','cd','d','e','ef','f','fg','g','h','js','k','m','n','p','r','s','t','u','v','x','y','z','za','zb','zc'];
 const GRADES = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18];
 
 function populateSelects() {
@@ -915,11 +929,64 @@ function drawRangeBar(minCl, maxCl, fitType) {
 // ═══════════════════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════════════════
+/* ══════════════════════════════════════════════════════════════
+   WORKBOOK STATE PERSISTENCE
+   Saves every id'd form control to localStorage. When this page is
+   embedded in a workbook it is scoped per item
+   (eng_wb_state_<wbId>_<itemId>), so each workbook entry keeps its
+   own inputs; standalone it falls back to a single shared key.
+   Keep this block in sync across all calculators.
+   ══════════════════════════════════════════════════════════════ */
+var _stP=new URLSearchParams(location.search);
+var _stKey=(_stP.get('wb')&&_stP.get('item'))
+  ?('eng_wb_state_'+_stP.get('wb')+'_'+_stP.get('item'))
+  :'eng_wb_state_iso';
+var _stReady=false,_stT=null;
+function _stEls(){
+  return [].slice.call(document.querySelectorAll('input[id],select[id],textarea[id]'))
+    .filter(function(el){return el.type!=='file'&&el.type!=='button'&&el.type!=='submit'});
+}
+function wbSaveState(){
+  if(!_stReady)return;
+  try{
+    var s={};
+    _stEls().forEach(function(el){
+      s[el.id]=(el.type==='checkbox'||el.type==='radio')?el.checked:el.value;
+    });
+    var p={v:1,f:s,ts:Date.now()};
+    if(typeof wbExtraState==='function'){try{p.x=wbExtraState()}catch(e){}}
+    localStorage.setItem(_stKey,JSON.stringify(p));
+  }catch(e){}
+}
+function wbRestoreState(){
+  try{
+    var raw=localStorage.getItem(_stKey);if(!raw)return null;
+    var d=JSON.parse(raw);if(!d||!d.f)return null;
+    _stEls().forEach(function(el){
+      if(!(el.id in d.f))return;
+      if(el.type==='checkbox'||el.type==='radio'){el.checked=!!d.f[el.id];return}
+      el.value=d.f[el.id];
+      // option list changed since save — fall back to the first option
+      if(el.tagName==='SELECT'&&el.selectedIndex<0&&el.options.length)el.selectedIndex=0;
+    });
+    return d;
+  }catch(e){return null}
+}
+function _stQ(){clearTimeout(_stT);_stT=setTimeout(wbSaveState,250)}
+document.addEventListener('input',_stQ,true);
+document.addEventListener('change',function(){clearTimeout(_stT);wbSaveState()},true);
+window.addEventListener('pagehide',function(){clearTimeout(_stT);wbSaveState()});
+document.addEventListener('visibilitychange',function(){
+  if(document.visibilityState==='hidden'){clearTimeout(_stT);wbSaveState()}
+});
+
 populateSelects();
 ['nomSize','holeDev','holeGrade','shaftDev','shaftGrade'].forEach(id => {
   document.getElementById(id).addEventListener(id === 'nomSize' ? 'input' : 'change', calculate);
 });
+wbRestoreState();          // after selects are populated so option values resolve
 calculate();
+_stReady=true;
 
 var _cadKey='';
 function initCadImage(key,id){_cadKey=key;var c=document.getElementById(id);if(!c)return;var s=null;try{s=localStorage.getItem(_cadKey)}catch(e){}renderCad(c,s)}
@@ -935,9 +1002,14 @@ function setupCad(id){var c=document.getElementById(id);if(!c)return;
   c.addEventListener('dragleave',function(){c.style.borderColor=''});
   c.addEventListener('drop',function(e){e.preventDefault();c.style.borderColor='';if(e.dataTransfer.files.length)loadCadFile(e.dataTransfer.files[0],c)});
 }
-function loadCadFile(f,c){if(!f||!f.type.startsWith('image/'))return;var r=new FileReader();r.onload=function(e){try{localStorage.setItem(_cadKey,e.target.result)}catch(ex){}renderCad(c,e.target.result)};r.readAsDataURL(f)}
+function loadCadFile(f,c){if(!f||!f.type.startsWith('image/'))return;var r=new FileReader();r.onload=function(e){
+  var saved=true;try{localStorage.setItem(_cadKey,e.target.result)}catch(ex){saved=false}
+  renderCad(c,e.target.result);
+  if(!saved)alert('Image shown but NOT saved \u2014 browser storage is full.\n\nThis image will be lost when the page reloads. Remove a large CAD image from another calculation, or use a smaller/compressed image.');
+};r.readAsDataURL(f)}
 
-setupCad("isoCadZone");initCadImage("eng_wb_img_iso","isoCadZone");
+var _imgKey=(_stP.get('wb')&&_stP.get('item'))?('eng_wb_img_'+_stP.get('wb')+'_'+_stP.get('item')):'eng_wb_img_iso';
+setupCad("isoCadZone");initCadImage(_imgKey,"isoCadZone");
 </script>
 <button class="pdf-btn" onclick="window.print()">⎙ Save as PDF</button>
 <div id="cadOv" class="cad-overlay" onclick="this.classList.remove('show')"></div>

@@ -370,6 +370,9 @@ tbody tr:hover { background: #2a2a2f !important; }
 }
 
 /* ── Number formatting ── */
+/* Project title / notes fields */
+#projTitle, #projNotes { width:100%; padding:7px 9px; font-size:11.5px; box-sizing:border-box; }
+#projNotes { resize:vertical; line-height:1.5; min-height:56px; }
 input[type=number] { -moz-appearance: textfield !important; }
 input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none !important; }
 
@@ -454,6 +457,19 @@ svg text {
      LEFT COLUMN
 ══════════════════════════════ -->
 <div>
+
+  <!-- PROJECT -->
+  <div class="panel">
+    <div class="pt">Project</div>
+    <div class="ig">
+      <label>Calculation Title</label>
+      <input type="text" id="projTitle" placeholder="e.g. Upright bearing housing press fit">
+    </div>
+    <div class="ig">
+      <label>Notes / Assumptions</label>
+      <textarea id="projNotes" rows="3" placeholder="Assumptions, references, sign-off notes — included in the exported image."></textarea>
+    </div>
+  </div>
 
   <!-- GEOMETRY -->
   <div class="panel">
@@ -695,14 +711,14 @@ const IT_TBL=[
 ];
 // Shaft lower deviation ei (μm): cols = [maxD, p, r, s, t, u, x]
 const SHAFT_FD_TBL=[
-  [6,12,15,19,null,23,26],[10,15,19,23,null,28,34],[14,18,23,28,null,33,40],
-  [18,18,23,28,null,33,45],[24,22,28,35,41,41,47],[30,22,28,35,48,48,54],
-  [40,26,34,43,54,60,64],[50,26,34,43,70,70,76],[65,32,41,53,66,87,94],
-  [80,32,43,59,75,102,114],[100,37,51,71,91,124,144],[120,37,54,79,104,144,174],
-  [140,43,63,92,122,170,210],[160,43,65,100,134,190,236],[180,43,68,108,146,210,258],
-  [200,50,77,122,166,236,284],[225,50,80,130,180,258,315],[250,50,84,140,196,284,350],
-  [280,56,94,158,218,315,390],[315,56,98,170,240,350,435],[355,62,108,190,268,390,490],
-  [400,62,114,208,294,435,549],[450,68,126,232,330,490,619],[500,68,132,252,360,540,689]
+  [6,12,15,19,null,23,28],[10,15,19,23,null,28,34],[14,18,23,28,null,33,40],
+  [18,18,23,28,null,33,45],[24,22,28,35,null,41,54],[30,22,28,35,41,48,64],
+  [40,26,34,43,48,60,80],[50,26,34,43,54,70,97],[65,32,41,53,66,87,122],
+  [80,32,43,59,75,102,146],[100,37,51,71,91,124,178],[120,37,54,79,104,144,210],
+  [140,43,63,92,122,170,248],[160,43,65,100,134,190,280],[180,43,68,108,146,210,310],
+  [200,50,77,122,166,236,350],[225,50,80,130,180,258,385],[250,50,84,140,196,284,425],
+  [280,56,94,158,218,315,475],[315,56,98,170,240,350,525],[355,62,108,190,268,390,590],
+  [400,62,114,208,294,435,660],[450,68,126,232,330,490,740],[500,68,132,252,360,540,820]
 ];
 const SHAFT_FD_IDX={p:1,r:2,s:3,t:4,u:5,x:6};
 
@@ -1118,8 +1134,8 @@ function calculate(){
     const ph_min=dh_min>1e-6?contactPressure(dh_min,d,Do,Di,mH,mS):0;
     Object.assign(_exp,{
       ready:true,
-      title:document.getElementById('projTitle').value.trim()||'INTERFERENCE FIT ANALYSIS',
-      notes:document.getElementById('projNotes').value.trim(),
+      title:(document.getElementById('projTitle')||{}).value?.trim()||'INTERFERENCE FIT ANALYSIS',
+      notes:(document.getElementById('projNotes')||{}).value?.trim()||'',
       d,Do,Di,L,mu,wR:Do/d,holeName,shaftName,mH,mS,
       dMin:Math.max(dMin,0),dMax,p_min:pm,p_max:px,
       st_min_hub_i:sm.hub_i,st_min_hub_vm:sm.hub_vm,st_min_sh_vm:sm.sh_vm,
@@ -1132,6 +1148,13 @@ function calculate(){
       F_hot_min:axialForce(ph_min,d,L,mu),F_hot_max:axialForce(ph_max,d,L,mu),
       tAmb,tHot,T_preheat,T_rec,net_um,warnings:_warns,
     });
+    // Export minimum SF to workbook badge (hub + shaft VM at both material conditions)
+    try{
+      var _sfs=[mH.Sy/sx.hub_vm, mS.Sy/sx.sh_vm];
+      if(_exp.dMin>1e-6){_sfs.push(mH.Sy/sm.hub_vm, mS.Sy/sm.sh_vm);}
+      _sfs=_sfs.filter(function(x){return isFinite(x)&&x>0});
+      if(_sfs.length)localStorage.setItem(_wbKey,JSON.stringify({sf:Math.min.apply(null,_sfs),ts:Date.now()}));
+    }catch(ex){}
   }
 
   drawDiagram(d,Do,Di,contactPressure(dMax,d,Do,Di,mH,mS),mH,mS);
@@ -1437,12 +1460,66 @@ function onShaftFitChange(){
   if(sh&&keys.length)sh.value=keys[keys.length>1?1:0];
 })();
 
-['dNom','dHub','dShaft','tAmb','tHot','cLen','mu','holeEI','holeES','shaftEI','shaftES'].forEach(id=>
+['dNom','dHub','dShaft','tAmb','tHot','cLen','mu','holeEI','holeES','shaftEI','shaftES','projTitle','projNotes'].forEach(id=>
   document.getElementById(id).addEventListener('input',calculate));
 ['holeFit','shaftFit','hubMat','shaftMat'].forEach(id=>
   document.getElementById(id).addEventListener('change',calculate));
 
+/* ══════════════════════════════════════════════════════════════
+   WORKBOOK STATE PERSISTENCE
+   Saves every id'd form control to localStorage. When this page is
+   embedded in a workbook it is scoped per item
+   (eng_wb_state_<wbId>_<itemId>), so each workbook entry keeps its
+   own inputs; standalone it falls back to a single shared key.
+   Keep this block in sync across all calculators.
+   ══════════════════════════════════════════════════════════════ */
+var _stP=new URLSearchParams(location.search);
+var _stKey=(_stP.get('wb')&&_stP.get('item'))
+  ?('eng_wb_state_'+_stP.get('wb')+'_'+_stP.get('item'))
+  :'eng_wb_state_intfit';
+var _stReady=false,_stT=null;
+function _stEls(){
+  return [].slice.call(document.querySelectorAll('input[id],select[id],textarea[id]'))
+    .filter(function(el){return el.type!=='file'&&el.type!=='button'&&el.type!=='submit'});
+}
+function wbSaveState(){
+  if(!_stReady)return;
+  try{
+    var s={};
+    _stEls().forEach(function(el){
+      s[el.id]=(el.type==='checkbox'||el.type==='radio')?el.checked:el.value;
+    });
+    var p={v:1,f:s,ts:Date.now()};
+    if(typeof wbExtraState==='function'){try{p.x=wbExtraState()}catch(e){}}
+    localStorage.setItem(_stKey,JSON.stringify(p));
+  }catch(e){}
+}
+function wbRestoreState(){
+  try{
+    var raw=localStorage.getItem(_stKey);if(!raw)return null;
+    var d=JSON.parse(raw);if(!d||!d.f)return null;
+    _stEls().forEach(function(el){
+      if(!(el.id in d.f))return;
+      if(el.type==='checkbox'||el.type==='radio'){el.checked=!!d.f[el.id];return}
+      el.value=d.f[el.id];
+      // option list changed since save — fall back to the first option
+      if(el.tagName==='SELECT'&&el.selectedIndex<0&&el.options.length)el.selectedIndex=0;
+    });
+    return d;
+  }catch(e){return null}
+}
+function _stQ(){clearTimeout(_stT);_stT=setTimeout(wbSaveState,250)}
+document.addEventListener('input',_stQ,true);
+document.addEventListener('change',function(){clearTimeout(_stT);wbSaveState()},true);
+window.addEventListener('pagehide',function(){clearTimeout(_stT);wbSaveState()});
+document.addEventListener('visibilitychange',function(){
+  if(document.visibilityState==='hidden'){clearTimeout(_stT);wbSaveState()}
+});
+
+wbRestoreState();          // after material selects are populated
+onHoleFitChange();onShaftFitChange();   // re-sync custom-deviation field visibility
 calculate();
+_stReady=true;
 
 var _cadKey='';
 function initCadImage(key,id){_cadKey=key;var c=document.getElementById(id);if(!c)return;var s=null;try{s=localStorage.getItem(_cadKey)}catch(e){}renderCad(c,s)}
@@ -1458,9 +1535,14 @@ function setupCad(id){var c=document.getElementById(id);if(!c)return;
   c.addEventListener('dragleave',function(){c.style.borderColor=''});
   c.addEventListener('drop',function(e){e.preventDefault();c.style.borderColor='';if(e.dataTransfer.files.length)loadCadFile(e.dataTransfer.files[0],c)});
 }
-function loadCadFile(f,c){if(!f||!f.type.startsWith('image/'))return;var r=new FileReader();r.onload=function(e){try{localStorage.setItem(_cadKey,e.target.result)}catch(ex){}renderCad(c,e.target.result)};r.readAsDataURL(f)}
+function loadCadFile(f,c){if(!f||!f.type.startsWith('image/'))return;var r=new FileReader();r.onload=function(e){
+  var saved=true;try{localStorage.setItem(_cadKey,e.target.result)}catch(ex){saved=false}
+  renderCad(c,e.target.result);
+  if(!saved)alert('Image shown but NOT saved \u2014 browser storage is full.\n\nThis image will be lost when the page reloads. Remove a large CAD image from another calculation, or use a smaller/compressed image.');
+};r.readAsDataURL(f)}
 
-setupCad("intfitCadZone");initCadImage("eng_wb_img_intfit","intfitCadZone");
+var _imgKey=(_stP.get('wb')&&_stP.get('item'))?('eng_wb_img_'+_stP.get('wb')+'_'+_stP.get('item')):'eng_wb_img_intfit';
+setupCad("intfitCadZone");initCadImage(_imgKey,"intfitCadZone");
 </script>
 <button class="pdf-btn" onclick="window.print()">⎙ Save as PDF</button>
 <div id="cadOv" class="cad-overlay" onclick="this.classList.remove('show')"></div>

@@ -426,6 +426,39 @@ function loadWorkbookMats(){
   }catch(e){return null}
 }
 
+// ══════════════════════════════════════════════════════════════════
+// WORKBOOK STATE PERSISTENCE
+// React state is persisted via useP() — a useState wrapper that seeds
+// from localStorage and writes back (debounced) on every change.
+// Scoped per workbook item when embedded, so each workbook entry keeps
+// its own inputs.
+// ══════════════════════════════════════════════════════════════════
+const _stP=new URLSearchParams(location.search);
+const _ST_KEY=(_stP.get('wb')&&_stP.get('item'))
+  ? ('eng_wb_state_'+_stP.get('wb')+'_'+_stP.get('item'))
+  : 'eng_wb_state_bolt';
+let _stCache=null,_stT=null;
+function stLoad(){
+  if(_stCache===null){
+    try{_stCache=JSON.parse(localStorage.getItem(_ST_KEY))||{}}catch(e){_stCache={}}
+    if(typeof _stCache!=='object'||_stCache===null)_stCache={};
+  }
+  return _stCache;
+}
+function stFlush(){try{localStorage.setItem(_ST_KEY,JSON.stringify(stLoad()))}catch(e){}}
+function stSet(k,v){const s=stLoad();s[k]=v;clearTimeout(_stT);_stT=setTimeout(stFlush,250)}
+window.addEventListener('pagehide',function(){clearTimeout(_stT);stFlush()});
+document.addEventListener('visibilitychange',function(){
+  if(document.visibilityState==='hidden'){clearTimeout(_stT);stFlush()}
+});
+function useP(key,init){
+  const[v,setV]=useState(()=>{const s=stLoad();return (key in s)?s[key]:init});
+  const set=useCallback((nv)=>{
+    setV(prev=>{const out=(typeof nv==='function')?nv(prev):nv;stSet(key,out);return out});
+  },[key]);
+  return[v,set];
+}
+
 // ── Shared Context ───────────────────────────────────────────────
 const AppCtx=createContext();
 // RF thresholds inherited from workbook (query string) — colour coding only
@@ -437,7 +470,9 @@ const fm=(v,d=1)=>(v==null||isNaN(v)||!isFinite(v))?"—":Number(v).toFixed(d);
 const fp=(v)=>(v==null||isNaN(v)||!isFinite(v))?"—":(v*100).toFixed(1)+"%";
 const scol=(r)=>{if(r==null||isNaN(r)||!isFinite(r))return"#888";return r>.95?"#dc3545":r>.75?"#d97a1e":"#2a9d5c";};
 const fcol=(v,t)=>{if(v==null||isNaN(v)||!isFinite(v))return"#888";return v<1?"#dc3545":v<t?"#d97a1e":"#2a9d5c";};
-const tg=(d,P,sys)=>{const s=TSYS[sys]||TSYS.M;const mn=d-s.mF*P,pd=d-s.pF*P,sd=(pd+mn)/2;return{mn,pd,sd,rr:s.rF*P,As:(Math.PI/4)*sd*sd};};
+// Tensile stress area per standards: metric ISO 898/ISO 3506 → As=(π/4)(d−0.9382P)²; unified ASME B1.1 → As=(π/4)(d−0.9743P)². (UNJ/MJ conservatively use the same coefficients.)
+const asF=(sys)=>(TSYS[sys]&&TSYS[sys].imp)?0.9743:0.9382;
+const tg=(d,P,sys)=>{const s=TSYS[sys]||TSYS.M;const mn=d-s.mF*P,pd=d-s.pF*P,sd=d-asF(sys)*P;return{mn,pd,sd,rr:s.rF*P,As:(Math.PI/4)*sd*sd};};
 const getCof=(idx,custom)=>{const l=LUBS[idx];return l?.cat==="custom"?custom:(l?.c||.2);};
 
 // ── BASIC CALC ───────────────────────────────────────────────────
@@ -471,8 +506,9 @@ function calcBasic(inp){
   const grip=inp.grip||d*2, Ash=(Math.PI/4)*d*d;
   const tIG=Math.min(grip,grip*.4),sIG=grip-tIG;
   let Kb=null;if(sIG>0&&tIG>0)Kb=1/(tIG/(As*210)+sIG/(Ash*210));
+  // Shigley two-frustum member stiffness: Km = 0.5774πEd / (2·ln[((1.155·(l/2)+dw−d)(dw+d)) / ((1.155·(l/2)+dw+d)(dw−d))])
   const dw=1.5*d;let Km=null;
-  if(grip>0&&dw>d){const nm=(0.5774*grip+.5*dw-.5*d)*(dw+d),dn=(0.5774*grip+.5*dw+.5*d)*(dw-d);if(dn>0&&nm/dn>0)Km=.5774*Math.PI*inp.mE*d/(2*Math.log(nm/dn));}
+  if(grip>0&&dw>d){const nm=(0.5774*grip+dw-d)*(dw+d),dn=(0.5774*grip+dw+d)*(dw-d);if(dn>0&&nm/dn>0)Km=.5774*Math.PI*inp.mE*d/(2*Math.log(nm/dn));}
   let Cs=null,n0=null,np=null,nL=null;
   if(Kb&&Km){Cs=Kb/(Kb+Km);if(inp.sep>0){n0=Fi/(inp.sep*(1-Cs));np=prL/(Cs*inp.sep+Fi);nL=(prL-Fi)/(Cs*inp.sep);}}
   return{T,Tb,Tt,Ts,cofU,cofT,d,P,As,prL,utL,pP,pU:Fi/utL,sigma,tau,vm,pctVMproof,sfVMbasic,sfShearBasic,shearReduction,grade,Kb,Km,Cs,n0,np,nL,...g};
@@ -481,11 +517,11 @@ function calcBasic(inp){
 // ── ADVANCED CALC ────────────────────────────────────────────────
 function calcAdv(inp){
   const r={},P=inp.pitch,d=inp.nomD,sys=TSYS[inp.sys]||TSYS.M;
-  r.mn=d-sys.mF*P;r.pd=d-sys.pF*P;r.rr=sys.rF*P;r.sd=(r.pd+r.mn)/2;
+  r.mn=d-sys.mF*P;r.pd=d-sys.pF*P;r.rr=sys.rF*P;r.sd=d-asF(inp.sys)*P;
   r.As=(Math.PI/4)*(r.sd**2-inp.hID**2);
   r.shA=(Math.PI/4)*(inp.shD**2-inp.hID**2);
   r.crA=Math.min(r.shA,r.As);r.clutR=(inp.brD+d)/2/2;
-  r.engTh=.5*d;
+  r.engTh=(inp.engF>0?inp.engF:0.5)*d;
   // Clamp length = earth + primary + sum(sandwiches)
   const swTotal=inp.sws.reduce((a,s)=>a+s.thick,0);
   r.clL=inp.eD+inp.pT+swTotal;
@@ -606,17 +642,17 @@ function MatSelWrap({label,value,onChange,target}){
 // ══════════════════════════════════════════════════════════════════
 function Basic(){
   const{mats,sfCrit,sfOpt}=useContext(AppCtx);
-  const[sys,setSys]=useState("M");
-  const[si,sSi]=useState(13);
-  const[grade,sGrade]=useState("8.8");
-  const[ci,sCi]=useState(2);
-  const[pre,sPre]=useState(20);
-  const[grip,sGrip]=useState(30);
-  const[mE,sME]=useState(210);
-  const[sep,sSep]=useState(0);
-  const[cd,sCd]=useState(10);const[cp,sCp]=useState(1.5);
-  const[luI,sLuI]=useState(1);const[ltI,sLtI]=useState(1);
-  const[lcU,sLcU]=useState(.15);const[lcT,sLcT]=useState(.15);
+  const[sys,setSys]=useP("b.sys","M");
+  const[si,sSi]=useP("b.si",13);
+  const[grade,sGrade]=useP("b.grade","8.8");
+  const[ci,sCi]=useP("b.ci",2);
+  const[pre,sPre]=useP("b.pre",20);
+  const[grip,sGrip]=useP("b.grip",30);
+  const[mE,sME]=useP("b.mE",210);
+  const[sep,sSep]=useP("b.sep",0);
+  const[cd,sCd]=useP("b.cd",10);const[cp,sCp]=useP("b.cp",1.5);
+  const[luI,sLuI]=useP("b.luI",1);const[ltI,sLtI]=useP("b.ltI",1);
+  const[lcU,sLcU]=useP("b.lcU",.15);const[lcT,sLcT]=useP("b.lcT",.15);
 
   const isCust=sys==="CUSTOM",isImp=!isCust&&TSYS[sys]?.imp;
   const sL=useMemo(()=>{if(isCust)return[];return isImp?impList(sys).map(i2mm):MET;},[sys,isCust,isImp]);
@@ -627,7 +663,7 @@ function Basic(){
 
   const res=useMemo(()=>calcBasic({th,grade,condIdx:ci,pre,grip,mE,sep,sys:isCust?"M":sys,luI,ltI,lcU,lcT}),[th,grade,ci,pre,grip,mE,sep,sys,isCust,luI,ltI,lcU,lcT]);
   const pc2=res?scol(res.pP):"#888";
-  useEffect(()=>{if(typeof exportBoltRF==="function")exportBoltRF(res)},[res]);
+  useEffect(()=>{if(res&&typeof exportBoltRF==="function")exportBoltRF([res.sfVMbasic,res.sfShearBasic,res.n0,res.np,res.nL])},[res]);
 
   return <div style={{display:"flex",minHeight:"calc(100vh - 54px)"}}>
     <div style={{width:460,minWidth:400,borderRight:"1px solid var(--border)",overflowY:"auto",padding:"16px 20px",maxHeight:"calc(100vh - 54px)",flexShrink:0}}>
@@ -706,30 +742,31 @@ function Basic(){
 // ══════════════════════════════════════════════════════════════════
 function Advanced(){
   const{mats,sfCrit,sfOpt}=useContext(AppCtx);
-  const[tab,sTab]=useState("summary");
-  const[sys,sSys]=useState("M");const[si,sSi]=useState(9);
-  const[cd,sCd]=useState(10);const[cp,sCp]=useState(1.5);
+  const[tab,sTab]=useP("a.tab","summary");
+  const[sys,sSys]=useP("a.sys","M");const[si,sSi]=useP("a.si",9);
+  const[cd,sCd]=useP("a.cd",10);const[cp,sCp]=useP("a.cp",1.5);
   const isCust=sys==="CUSTOM",isImp=!isCust&&TSYS[sys]?.imp;
   const sL=useMemo(()=>{if(isCust)return[];return isImp?impList(sys).map(i2mm):MET;},[sys,isCust,isImp]);
   const sel=sL[si]||sL[0];
   const nomD=isCust?cd:(sel?.s||0),pitch=isCust?cp:(sel?.p||0);
 
-  const[jt,sJt]=useState("Bolt");
-  const[shD,sShD]=useState(5.6);const[brD,sBrD]=useState(13);
-  const[expTh,sExpTh]=useState(20);const[hID,sHID]=useState(0);
-  const[fmi,sFmi]=useState(3);
-  const[luI,sLuI]=useState(1);const[ltI,sLtI]=useState(1);
-  const[lcU,sLcU]=useState(.15);const[lcT,sLcT]=useState(.15);
-  const[opP,sOpP]=useState(10.6);const[rlx,sRlx]=useState(0);
-  const[emi,sEmi]=useState(5);const[eD,sED]=useState(20);const[eM,sEM]=useState(30);const[eC,sEC]=useState(8);
-  const[pmi,sPmi]=useState(4);const[pT,sPT]=useState(50);const[pM,sPM]=useState(30);const[pC,sPC]=useState(8);
+  const[jt,sJt]=useP("a.jt","Bolt");
+  const[shD,sShD]=useP("a.shD",5.6);const[brD,sBrD]=useP("a.brD",13);
+  const[expTh,sExpTh]=useP("a.expTh",20);const[hID,sHID]=useP("a.hID",0);
+  const[engF,sEngF]=useP("a.engF",0.5);
+  const[fmi,sFmi]=useP("a.fmi",3);
+  const[luI,sLuI]=useP("a.luI",1);const[ltI,sLtI]=useP("a.ltI",1);
+  const[lcU,sLcU]=useP("a.lcU",.15);const[lcT,sLcT]=useP("a.lcT",.15);
+  const[opP,sOpP]=useP("a.opP",10.6);const[rlx,sRlx]=useP("a.rlx",0);
+  const[emi,sEmi]=useP("a.emi",5);const[eD,sED]=useP("a.eD",20);const[eM,sEM]=useP("a.eM",30);const[eC,sEC]=useP("a.eC",8);
+  const[pmi,sPmi]=useP("a.pmi",4);const[pT,sPT]=useP("a.pT",50);const[pM,sPM]=useP("a.pM",30);const[pC,sPC]=useP("a.pC",8);
   // Sandwich items array
-  const[sws,sSws]=useState([]);
+  const[sws,sSws]=useP("a.sws",[]);
   const addSw=()=>sSws(p=>[...p,{id:Date.now(),matIdx:5,thick:5,massOn:30,clear:8}]);
   const rmSw=(id)=>sSws(p=>p.filter(x=>x.id!==id));
   const updSw=(id,k,v)=>sSws(p=>p.map(x=>x.id===id?{...x,[k]:v}:x));
 
-  const[runT,sRunT]=useState(150);const[cyL,sCyL]=useState(2);const[sepL,sSepL]=useState(0);
+  const[runT,sRunT]=useP("a.runT",150);const[cyL,sCyL]=useP("a.cyL",2);const[sepL,sSepL]=useP("a.sepL",0);
 
   const cofU=getCof(luI,lcU),cofT=getCof(ltI,lcT);
   const fM=mats[fmi],eM2=mats[emi],pM2=mats[pmi];
@@ -737,12 +774,13 @@ function Advanced(){
   const r=useMemo(()=>{
     if(!fM||fM.E===0||!eM2||eM2.E===0||!pM2||pM2.E===0)return null;
     const swData=sws.map(sw=>({thick:sw.thick,massOn:sw.massOn,clear:sw.clear,mat:mats[sw.matIdx]}));
-    return calcAdv({sys:isCust?"M":sys,nomD,pitch,shD,brD,expTh,hID,fM,cofU,cofT,opP,rlx,
+    return calcAdv({sys:isCust?"M":sys,nomD,pitch,shD,brD,expTh,engF,hID,fM,cofU,cofT,opP,rlx,
       eM:eM2,eD,eMOn:eM,eCl:eC,pM:pM2,pT,pMOn:pM,pCl:pC,sws:swData,runT,cyL,sepL,jt});
-  },[sys,isCust,nomD,pitch,shD,brD,expTh,hID,fmi,luI,ltI,lcU,lcT,opP,rlx,
+  },[sys,isCust,nomD,pitch,shD,brD,expTh,engF,hID,fmi,luI,ltI,lcU,lcT,opP,rlx,
     emi,eD,eM,eC,pmi,pT,pM,pC,sws,runT,cyL,sepL,cofU,cofT,fM,eM2,pM2,mats,jt]);
 
   const aSys=TSYS[sys];
+  useEffect(()=>{if(r&&typeof exportBoltRF==="function")exportBoltRF([r.sfVM,r.sfShTighten,r.sfTA,r.sfTR,r.sfTT,r.sfTC,r.sfSA,r.sfSR,r.sfBP,r.sfBE,r.sfSep])},[r]);
 
   return <div style={{display:"flex",minHeight:"calc(100vh - 54px)"}}>
     <div style={{width:460,minWidth:400,borderRight:"1px solid var(--border)",overflowY:"auto",padding:"16px 20px",maxHeight:"calc(100vh - 54px)",flexShrink:0}}>
@@ -766,6 +804,7 @@ function Advanced(){
         <IR label="Shank Diameter" value={shD} onChange={sShD} unit="mm" step={.1}/>
         <IR label={`${jt==="Bolt"?"Bolt":"Nut"} Bearing Ø`} value={brD} onChange={sBrD} unit="mm" step={.5}/>
         <IR label="Exposed Thread in Joint" value={expTh} onChange={sExpTh} unit="mm" step={1}/>
+        <IR label="Engaged Thread Length" value={engF} onChange={sEngF} unit="× d" step={.1} min={.1}/>
         <IR label="Hollow Internal Ø (0=solid)" value={hID} onChange={sHID} unit="mm" step={.5} min={0}/>
         <MatSelWrap label="Fastener Material" value={fmi} onChange={sFmi} target="f"/>
       </div>
@@ -954,7 +993,7 @@ function Advanced(){
 // APP ROOT
 // ══════════════════════════════════════════════════════════════════
 function App(){
-  const[mode,sMode]=useState("basic");
+  const[mode,sMode]=useP("mode","basic");
   const[mats,sMats]=useState(loadWorkbookMats()||INIT_MATS);
   const[sfCrit]=useState(SF_CRIT_DEFAULT);
   const[sfOpt]=useState(SF_OPT_DEFAULT);
@@ -966,8 +1005,7 @@ function App(){
       <div style={{padding:"12px 24px",borderBottom:"1px solid var(--border)",display:"flex",alignItems:"center",justifyContent:"space-between",background:"var(--panel)",flexShrink:0}}>
         <div>
           <div style={{fontSize:15,fontWeight:700,color:"var(--bright)",letterSpacing:".5px",fontFamily:"var(--sans)"}}>⚙ Bolted Joint Calculator</div>
-          <div style={{fontSize:10,color:"var(--dim)",marginTop:1,letterSpacing:".3px"}}>Tightening torque · stiffness analysis · safety factors</div></div><div id="boltCadZone" class="cad-zone" style={{maxWidth:160,padding:8}}></div><div>
-        </div>
+          <div style={{fontSize:10,color:"var(--dim)",marginTop:1,letterSpacing:".3px"}}>Tightening torque · stiffness analysis · safety factors</div></div><div id="boltCadZone" className="cad-zone" style={{maxWidth:160,padding:8}}></div>
         <div style={{display:"flex",alignItems:"center",gap:16}}>
           <div style={{display:"flex",gap:2,background:"var(--surface)",borderRadius:6,padding:2}}>
             <button style={{padding:"6px 18px",border:"none",borderRadius:5,fontSize:11,fontWeight:600,fontFamily:"var(--sans)",cursor:"pointer",background:mode==="basic"?"var(--accent2)":"transparent",color:mode==="basic"?"var(--bright)":"var(--dim)",transition:"all .15s"}} onClick={()=>sMode("basic")}>Basic</button>
@@ -995,14 +1033,19 @@ function setupCad(id){var c=document.getElementById(id);if(!c)return;
   c.addEventListener('dragleave',function(){c.style.borderColor=''});
   c.addEventListener('drop',function(e){e.preventDefault();c.style.borderColor='';if(e.dataTransfer.files.length)loadCadFile(e.dataTransfer.files[0],c)});
 }
-function loadCadFile(f,c){if(!f||!f.type.startsWith('image/'))return;var r=new FileReader();r.onload=function(e){try{localStorage.setItem(_cadKey,e.target.result)}catch(ex){}renderCad(c,e.target.result)};r.readAsDataURL(f)}
+function loadCadFile(f,c){if(!f||!f.type.startsWith('image/'))return;var r=new FileReader();r.onload=function(e){
+  var saved=true;try{localStorage.setItem(_cadKey,e.target.result)}catch(ex){saved=false}
+  renderCad(c,e.target.result);
+  if(!saved)alert('Image shown but NOT saved \u2014 browser storage is full.\n\nThis image will be lost when the page reloads. Remove a large CAD image from another calculation, or use a smaller/compressed image.');
+};r.readAsDataURL(f)}
 
 var _wbP=new URLSearchParams(location.search);var _wbEmbed=_wbP.get('embed')==='1';var _wbKey=(_wbP.get('wb')&&_wbP.get('item'))?('eng_wb_rf_'+_wbP.get('wb')+'_'+_wbP.get('item')):'eng_wb_rf_bolt';
-function exportBoltRF(res){if(!res)return;try{var sfs=[res.sfVMbasic,res.sfShearBasic].filter(function(x){return x&&isFinite(x)&&x>0});if(sfs.length)localStorage.setItem(_wbKey,JSON.stringify({sf:Math.min.apply(null,sfs),ts:Date.now()}))}catch(e){}}
+function exportBoltRF(sfs){try{sfs=(sfs||[]).filter(function(x){return x!=null&&isFinite(x)&&x>0});if(sfs.length)localStorage.setItem(_wbKey,JSON.stringify({sf:Math.min.apply(null,sfs),ts:Date.now()}))}catch(e){}}
 if(_wbEmbed){try{var _s=document.createElement('style');_s.textContent='.wb-back,.pdf-btn{display:none!important}';document.head.appendChild(_s)}catch(e){}}
 
 ReactDOM.render(<App/>,document.getElementById("root"));
-setTimeout(function(){setupCad("boltCadZone");initCadImage("eng_wb_img_bolt","boltCadZone")},600);
+var _imgKey=(_stP.get('wb')&&_stP.get('item'))?('eng_wb_img_'+_stP.get('wb')+'_'+_stP.get('item')):'eng_wb_img_bolt';
+setTimeout(function(){setupCad("boltCadZone");initCadImage(_imgKey,"boltCadZone")},600);
 </script>
 <button class="pdf-btn" onclick="window.print()">⎙ Save as PDF</button>
 <div id="cadOv" class="cad-overlay" onclick="this.classList.remove('show')"></div>

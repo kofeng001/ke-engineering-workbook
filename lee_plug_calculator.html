@@ -564,9 +564,69 @@ function setupCad(id){var c=document.getElementById(id);if(!c)return;
   c.addEventListener('dragleave',function(){c.style.borderColor=''});
   c.addEventListener('drop',function(e){e.preventDefault();c.style.borderColor='';if(e.dataTransfer.files.length)loadCadFile(e.dataTransfer.files[0],c)});
 }
-function loadCadFile(f,c){if(!f||!f.type.startsWith('image/'))return;var r=new FileReader();r.onload=function(e){try{localStorage.setItem(_cadKey,e.target.result)}catch(ex){}renderCad(c,e.target.result)};r.readAsDataURL(f)}
+function loadCadFile(f,c){if(!f||!f.type.startsWith('image/'))return;var r=new FileReader();r.onload=function(e){
+  var saved=true;try{localStorage.setItem(_cadKey,e.target.result)}catch(ex){saved=false}
+  renderCad(c,e.target.result);
+  if(!saved)alert('Image shown but NOT saved \u2014 browser storage is full.\n\nThis image will be lost when the page reloads. Remove a large CAD image from another calculation, or use a smaller/compressed image.');
+};r.readAsDataURL(f)}
 
-setupCad("leeCadZone");initCadImage("eng_wb_img_lee","leeCadZone");
+/* ══════════════════════════════════════════════════════════════
+   WORKBOOK STATE PERSISTENCE
+   Saves every id'd form control to localStorage. When this page is
+   embedded in a workbook it is scoped per item
+   (eng_wb_state_<wbId>_<itemId>), so each workbook entry keeps its
+   own inputs; standalone it falls back to a single shared key.
+   Keep this block in sync across all calculators.
+   ══════════════════════════════════════════════════════════════ */
+var _stP=new URLSearchParams(location.search);
+var _stKey=(_stP.get('wb')&&_stP.get('item'))
+  ?('eng_wb_state_'+_stP.get('wb')+'_'+_stP.get('item'))
+  :'eng_wb_state_lee';
+var _stReady=false,_stT=null;
+function _stEls(){
+  return [].slice.call(document.querySelectorAll('input[id],select[id],textarea[id]'))
+    .filter(function(el){return el.type!=='file'&&el.type!=='button'&&el.type!=='submit'});
+}
+function wbSaveState(){
+  if(!_stReady)return;
+  try{
+    var s={};
+    _stEls().forEach(function(el){
+      s[el.id]=(el.type==='checkbox'||el.type==='radio')?el.checked:el.value;
+    });
+    var p={v:1,f:s,ts:Date.now()};
+    if(typeof wbExtraState==='function'){try{p.x=wbExtraState()}catch(e){}}
+    localStorage.setItem(_stKey,JSON.stringify(p));
+  }catch(e){}
+}
+function wbRestoreState(){
+  try{
+    var raw=localStorage.getItem(_stKey);if(!raw)return null;
+    var d=JSON.parse(raw);if(!d||!d.f)return null;
+    _stEls().forEach(function(el){
+      if(!(el.id in d.f))return;
+      if(el.type==='checkbox'||el.type==='radio'){el.checked=!!d.f[el.id];return}
+      el.value=d.f[el.id];
+      // option list changed since save — fall back to the first option
+      if(el.tagName==='SELECT'&&el.selectedIndex<0&&el.options.length)el.selectedIndex=0;
+    });
+    return d;
+  }catch(e){return null}
+}
+function _stQ(){clearTimeout(_stT);_stT=setTimeout(wbSaveState,250)}
+document.addEventListener('input',_stQ,true);
+document.addEventListener('change',function(){clearTimeout(_stT);wbSaveState()},true);
+window.addEventListener('pagehide',function(){clearTimeout(_stT);wbSaveState()});
+document.addEventListener('visibilitychange',function(){
+  if(document.visibilityState==='hidden'){clearTimeout(_stT);wbSaveState()}
+});
+
+wbRestoreState();
+go();
+_stReady=true;
+
+var _imgKey=(_stP.get('wb')&&_stP.get('item'))?('eng_wb_img_'+_stP.get('wb')+'_'+_stP.get('item')):'eng_wb_img_lee';
+setupCad("leeCadZone");initCadImage(_imgKey,"leeCadZone");
 </script>
 <button class="pdf-btn" onclick="window.print()">⎙ Save as PDF</button>
 <div id="cadOv" class="cad-overlay" onclick="this.classList.remove('show')"></div>
