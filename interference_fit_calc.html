@@ -389,6 +389,12 @@ tbody tr:hover { background: #2a2a2f !important; }
 .preset:hover { border-color:#6B8AFF; color:#e8e8ef; }
 .chill-line { font-size:11px; color:#7fd4a8; margin-top:3px; }
 .chill-warn { font-size:11px; color:#e0a030; margin-top:3px; }
+/* Capacity min/max sub-lines */
+.cap-tag { display:inline-block; font-size:8.5px; letter-spacing:.07em; text-transform:uppercase;
+  color:#7a7a88; border:1px solid #3c3c44; border-radius:3px; padding:1px 4px; margin-right:6px; }
+.cap-max { display:block; margin-top:3px; font-size:10.5px; color:#8a8a98; }
+.cap-max b { color:#c8c8d2; font-weight:600; }
+.cap-warn { display:block; margin-top:3px; font-size:10.5px; color:#e0a030; }
 input[type=number] { -moz-appearance: textfield !important; }
 input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none !important; }
 
@@ -611,10 +617,10 @@ svg text {
       <div class="iwu"><input type="number" id="tAmb" value="20" step="1"><span class="ub">°C</span></div>
     </div>
     <div class="ig">
-      <label>Hot Operating Temp</label>
+      <label>Operating Temp</label>
       <div class="iwu"><input type="number" id="tHot" value="120" step="1"><span class="ub">°C</span></div>
     </div>
-    <div class="hint">Hot temp shows in-service interference shift.</div>
+    <div class="hint">Operating temp shows the in-service interference shift — may be above or below ambient.</div>
 
     <div class="divider-t"></div>
     <label class="chk-row">
@@ -693,7 +699,7 @@ svg text {
       <div class="preheat-rec" id="preheatRec"></div>
       <div id="chillOut"></div>
     </div>
-    <div class="pt" style="margin-top:0;margin-bottom:10px;">Hot Operating Condition</div>
+    <div class="pt" style="margin-top:0;margin-bottom:10px;">Operating Condition</div>
     <div class="rg" id="hotPanel"></div>
     <div class="fnote" style="margin-top:8px;">
       <b>Thermal:</b> δ_hot = δ_amb + d·(α<sub>S</sub>−α<sub>H</sub>)·ΔT &nbsp;|&nbsp;
@@ -1013,9 +1019,21 @@ function buildWarnings(dMin,dMax,d,Do,Di,mH,mS,tAmb,tHot,delta_hot_max,delta_hot
     warns.push({l:'warn',m:`Thin hub wall (D_o/d = ${wR.toFixed(2)} < 1.5) — Lamé equations may underestimate peak stresses. FEA verification recommended.`});
 
   if(delta_hot_max<=0)
-    warns.push({l:'err',m:`All interference lost at hot operating temperature — joint will slip in service. Consider tighter fit or change material pairing.`});
+    warns.push({l:'err',m:`All interference lost at the operating temperature — joint will slip in service. Consider tighter fit or change material pairing.`});
   else if(delta_hot_min<=0)
     warns.push({l:'warn',m:`Interference lost at min material condition at operating temperature — joint may slip under worst-case tolerance + temperature combination.`});
+
+  // Operating temperature can tighten the fit beyond the ambient case
+  if(delta_hot_max>1e-6&&delta_hot_max>dMax){
+    const p_h=contactPressure(delta_hot_max,d,Do,Di,mH,mS);
+    const st_h=stresses(p_h,d,Do,Di);
+    if(st_h.hub_vm>mH.Sy)
+      warns.push({l:'err',m:`Hub yields at the operating temperature — VM rises to ${fM(st_h.hub_vm)} MPa against σ_y ${mH.Sy} MPa. Differential expansion tightens this fit in service, so the operating case governs, not ambient.`});
+    else if(st_h.sh_vm>mS.Sy)
+      warns.push({l:'err',m:`Shaft yields at the operating temperature — VM rises to ${fM(st_h.sh_vm)} MPa against σ_y ${mS.Sy} MPa. Differential expansion tightens this fit in service, so the operating case governs, not ambient.`});
+    else if(st_h.hub_vm>0.9*mH.Sy||st_h.sh_vm>0.9*mS.Sy)
+      warns.push({l:'warn',m:`Fit tightens at the operating temperature and stress approaches yield (hub ${fM(st_h.hub_vm)} / shaft ${fM(st_h.sh_vm)} MPa). Check the operating case as well as ambient.`});
+  }
 
   if(T_preheat>250)
     warns.push({l:'warn',m:`High hub preheat required for assembly (${T_preheat.toFixed(0)} °C) — verify material properties and temper stability at this temperature. Chilling the shaft reduces the hub temperature required.`});
@@ -1236,14 +1254,26 @@ function calculate(){
     const st_hot=stresses(p_hot,d,Do,Di);
     const T_hot=torque(p_hot,d,L,mu), F_hot=axialForce(p_hot,d,L,mu);
     const p_max=contactPressure(dMax,d,Do,Di,mH,mS);
-    hotH+=card('Hot Contact Pressure',fM(p_hot),'MPa',
+    hotH+=card('Contact Pressure @ Temp',fM(p_hot),'MPa',
       `Ambient MMC: ${fM(p_max)} MPa &nbsp;<span class="${p_hot>p_max?'vp':'vn'}">(${p_hot>p_max?'+':''}${fM(p_hot-p_max)})</span>`,false,'temp');
-    hotH+=card('Hot Hub σ_θ Inner',fM(st_hot.hub_i),'MPa','Hot condition'+sbarCard(st_hot.hub_i,mH.Sy),false,'temp');
-    hotH+=card('Hot Shaft Von Mises',fM(st_hot.sh_vm),'MPa',sbarCard(st_hot.sh_vm,mS.Sy),false,'temp');
-    hotH+=card('Hot Torque Capacity',fv(T_hot,1),'N·m',`Min condition: ${p_hot_min>0?fv(torque(p_hot_min,d,L,mu),1)+' N·m':'No contact'}`,false,'temp');
-    hotH+=card('Hot Axial Capacity',fv(F_hot,2),'kN','At hot MMC',false,'temp');
+    hotH+=card('Hub σ_θ Inner @ Temp',fM(st_hot.hub_i),'MPa','At operating temp'+sbarCard(st_hot.hub_i,mH.Sy),false,'temp');
+    hotH+=card('Shaft Von Mises @ Temp',fM(st_hot.sh_vm),'MPa',sbarCard(st_hot.sh_vm,mS.Sy),false,'temp');
+
+    // ── Joint capacity across the tolerance stack, at operating temperature ──
+    // Minimum (LMC) governs whether the joint slips, so it leads.
+    const T_hot_lo=p_hot_min>0?torque(p_hot_min,d,L,mu):0;
+    const F_hot_lo=p_hot_min>0?axialForce(p_hot_min,d,L,mu):0;
+    const noLMC=!(p_hot_min>0);
+    hotH+=card('Torque Capacity @ Temp', noLMC?'0':fv(T_hot_lo,1), 'N·m',
+      `<span class="cap-tag">min · LMC</span>`+
+      (noLMC?`<span class="cap-warn">No contact at LMC — joint may slip</span>`
+            :`<span class="cap-max">max · MMC <b>${fv(T_hot,1)}</b> N·m</span>`),false,'temp');
+    hotH+=card('Axial Capacity @ Temp', noLMC?'0':fv(F_hot_lo,2), 'kN',
+      `<span class="cap-tag">min · LMC</span>`+
+      (noLMC?`<span class="cap-warn">No contact at LMC — joint may slip</span>`
+            :`<span class="cap-max">max · MMC <b>${fv(F_hot,2)}</b> kN</span>`),false,'temp');
   } else {
-    hotH+=card('Hot Condition','—','','<span style="color:var(--red)">⚠ All interference lost — joint will slip at operating temperature.</span>',true,'temp');
+    hotH+=card('Operating Condition','—','','<span style="color:var(--red)">⚠ All interference lost — joint will slip at operating temperature.</span>',true,'temp');
   }
   document.getElementById('hotPanel').innerHTML=hotH;
 
@@ -1488,13 +1518,13 @@ function exportToImage(){
     hasMn?ff(e.F_cold_min,2)+' kN':nc, ff(e.F_cold_max,2)+' kN',
     hasMn?C.tx:C.tx3);
   y+=6;
-  colHdrs('▼  HOT — MIN INTERFERENCE (LMC)','▲  HOT — MAX INTERFERENCE (MMC)');
+  colHdrs('▼  AT OPERATING TEMP — MIN (LMC)','▲  AT OPERATING TEMP — MAX (MMC)');
   const htMC=e.T_hot_min>0?C.bl:C.rd, htXC=e.T_hot_max>0?C.bl:C.rd;
-  row('Hot torque capacity',
+  row('Torque capacity at operating temp',
     e.T_hot_min>0?ff(e.T_hot_min,1)+' N·m':nc,
     e.T_hot_max>0?ff(e.T_hot_max,1)+' N·m':nc,
     htMC, htXC);
-  row('Hot axial force capacity',
+  row('Axial force capacity at operating temp',
     e.F_hot_min>0?ff(e.F_hot_min,2)+' kN':'—',
     e.F_hot_max>0?ff(e.F_hot_max,2)+' kN':'—',
     htMC, htXC);
@@ -1503,7 +1533,7 @@ function exportToImage(){
   // ═══ 5. THERMAL ═══
   secHdr('Thermal & Assembly');
   trow('As-built / ambient temperature',ff(e.tAmb,0)+' °C', C.tx);
-  trow('Hot operating temperature',ff(e.tHot,0)+' °C', C.bl);
+  trow('Operating temperature',ff(e.tHot,0)+' °C', C.bl);
   if(e.chillOn){
     trow('Shaft chilled for assembly to',ff(e.tShaftAsm,0)+' °C', C.bl);
   }
