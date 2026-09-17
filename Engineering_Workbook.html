@@ -224,7 +224,7 @@ function R(){
     h+='<span style="font-size:13px;font-weight:600;color:'+fc.t.color+'">'+esc(fc.c.title||fc.t.name)+'</span>';
     h+='<span style="font-size:10px;color:var(--muted);margin-left:4px">'+fc.t.name+'</span>';
     h+='</div>';
-    h+='<iframe class="calc-frame" src="'+fc.t.file+'?embed=1&wb='+encodeURIComponent(activeWBId)+'&item='+encodeURIComponent(fc.c.id)+'&rfCrit='+(W.rfCrit||1.2)+'&rfOpt='+(W.rfOpt||1.5)+'" id="calcFrame"></iframe>';
+    h+='<iframe class="calc-frame" src="'+fc.t.file+'?embed=1&wb='+encodeURIComponent(activeWBId)+'&item='+encodeURIComponent(fc.c.id)+'&rfCrit='+(W.rfCrit||1.2)+'&rfOpt='+(W.rfOpt||1.5)+'&title='+encodeURIComponent(fc.c.title||fc.t.name)+'&project='+encodeURIComponent(W.project||'')+'" id="calcFrame"></iframe>';
   }else{
     h+='<div class="content">';
     if(W.tab==='home')h+=homeHTML();

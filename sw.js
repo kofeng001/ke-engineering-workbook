@@ -1,4 +1,4 @@
-const CACHE = 'eng-workbook-v8';
+const CACHE = 'eng-workbook-v9';
 const FILES = [
   './',
   './Engineering_Workbook.html',

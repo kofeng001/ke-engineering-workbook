@@ -373,6 +373,22 @@ tbody tr:hover { background: #2a2a2f !important; }
 /* Project title / notes fields */
 #projTitle, #projNotes { width:100%; padding:7px 9px; font-size:11.5px; box-sizing:border-box; }
 #projNotes { resize:vertical; line-height:1.5; min-height:56px; }
+.inherited-title { display:flex; align-items:center; gap:8px; padding:7px 9px; font-size:11.5px;
+  background:#1a1a1e; border:1px dashed #3c3c44; border-radius:6px; color:#c8c8d0;
+  font-family:'JetBrains Mono',ui-monospace,monospace; }
+.inherited-tag { margin-left:auto; font-size:9px; letter-spacing:.06em; text-transform:uppercase;
+  color:#6a6a76; white-space:nowrap; }
+/* Chilled-shaft controls */
+.divider-t { height:1px; background:#2e2e36; margin:12px 0 10px; }
+.chk-row { display:flex; align-items:center; gap:8px; cursor:pointer; font-size:11.5px; color:#d8d8e0; }
+.chk-row input { width:14px; height:14px; accent-color:#6B8AFF; cursor:pointer; flex-shrink:0; }
+.preset-row { display:flex; gap:6px; margin-top:7px; flex-wrap:wrap; }
+.preset { background:#22222a; border:1px solid #3c3c44; border-radius:5px; color:#a8a8b4;
+  font-family:'JetBrains Mono',ui-monospace,monospace; font-size:10px; padding:4px 8px;
+  cursor:pointer; transition:all .15s; }
+.preset:hover { border-color:#6B8AFF; color:#e8e8ef; }
+.chill-line { font-size:11px; color:#7fd4a8; margin-top:3px; }
+.chill-warn { font-size:11px; color:#e0a030; margin-top:3px; }
 input[type=number] { -moz-appearance: textfield !important; }
 input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none !important; }
 
@@ -461,9 +477,15 @@ svg text {
   <!-- PROJECT -->
   <div class="panel">
     <div class="pt">Project</div>
-    <div class="ig">
+    <div class="ig" id="projTitleRow">
       <label>Calculation Title</label>
       <input type="text" id="projTitle" placeholder="e.g. Upright bearing housing press fit">
+    </div>
+    <!-- When embedded the title is inherited from the workbook item -->
+    <div class="ig" id="projTitleInherited" style="display:none">
+      <label>Calculation Title</label>
+      <div class="inherited-title"><span id="projTitleEcho">—</span>
+        <span class="inherited-tag">from workbook</span></div>
     </div>
     <div class="ig">
       <label>Notes / Assumptions</label>
@@ -592,7 +614,30 @@ svg text {
       <label>Hot Operating Temp</label>
       <div class="iwu"><input type="number" id="tHot" value="120" step="1"><span class="ub">°C</span></div>
     </div>
-    <div class="hint">Hub heated for assembly. Hot temp shows in-service interference shift.</div>
+    <div class="hint">Hot temp shows in-service interference shift.</div>
+
+    <div class="divider-t"></div>
+    <label class="chk-row">
+      <input type="checkbox" id="chillOn"><span>Chill the shaft for assembly</span>
+    </label>
+    <div class="hint" style="margin-top:2px">Shrinking the shaft reduces — or removes — the hub preheat needed.</div>
+
+    <div id="chillFields" style="display:none;margin-top:9px">
+      <div class="ig">
+        <label>Chilled Shaft Temp</label>
+        <div class="iwu"><input type="number" id="tShaft" value="-78" step="1"><span class="ub">°C</span></div>
+      </div>
+      <div class="preset-row">
+        <button type="button" class="preset" onclick="setChill(-25)">Freezer −25</button>
+        <button type="button" class="preset" onclick="setChill(-78)">Dry ice −78</button>
+        <button type="button" class="preset" onclick="setChill(-196)">LN₂ −196</button>
+      </div>
+      <div class="ig" style="margin-top:9px">
+        <label>Max Acceptable Hub Temp</label>
+        <div class="iwu"><input type="number" id="tHubMax" value="120" step="5"><span class="ub">°C</span></div>
+      </div>
+      <div class="hint">Used to back-solve the shaft temperature needed if the hub is capped.</div>
+    </div>
   </div>
 
 </div><!-- end left col -->
@@ -642,17 +687,18 @@ svg text {
   <div class="panel" id="tempPanel" style="display:none">
     <div class="pt">Thermal Analysis</div>
     <div class="preheat-box">
-      <div class="rl" style="margin-bottom:6px;">Min Hub Temperature for Slip Assembly</div>
+      <div class="rl" style="margin-bottom:6px;" id="preheatLbl">Min Hub Temperature for Slip Assembly</div>
       <div><span class="preheat-val" id="preheatVal">—</span><span class="preheat-unit">°C</span></div>
       <div class="preheat-sub" id="preheatSub"></div>
       <div class="preheat-rec" id="preheatRec"></div>
+      <div id="chillOut"></div>
     </div>
     <div class="pt" style="margin-top:0;margin-bottom:10px;">Hot Operating Condition</div>
     <div class="rg" id="hotPanel"></div>
     <div class="fnote" style="margin-top:8px;">
       <b>Thermal:</b> δ_hot = δ_amb + d·(α<sub>S</sub>−α<sub>H</sub>)·ΔT &nbsp;|&nbsp;
-      T<sub>preheat</sub> = T<sub>amb</sub> + δ<sub>max</sub>/(d·α<sub>H</sub>) + margin &nbsp;|&nbsp;
-      Shaft held at ambient during assembly. All diametral.
+      Assembly: d·α<sub>H</sub>·ΔT<sub>H</sub> − d·α<sub>S</sub>·ΔT<sub>S</sub> ≥ δ<sub>max</sub> + clearance &nbsp;|&nbsp;
+      <span id="asmNote">Shaft held at ambient during assembly.</span> All diametral.
     </div>
   </div>
 
@@ -792,8 +838,30 @@ function axialForce(p,d,L,mu){return mu*p*Math.PI*d*L/1e3;}    // → kN
 function thermalDelta(delta_amb,d,mH,mS,dT){
   return delta_amb+d*(mS.cte-mH.cte)*1e-6*dT;
 }
-function minHubTemp(tAmb,dMax,d,mH){
-  return tAmb+(dMax+5e-3)/(d*mH.cte*1e-6);
+// ── Assembly thermal sizing ─────────────────────────────────────
+// For slip assembly the hub bore, expanded, must clear the shaft OD,
+// contracted, by the assembly clearance:
+//     d·α_H·(T_H − T_amb) − d·α_S·(T_S − T_amb)  ≥  δ_max + clearance
+// Solving for the hub gives minHubTemp(); solving for the shaft gives
+// reqShaftTemp(). With T_S = T_amb this reduces to the hub-only case.
+// Minimum hub temperature, given the shaft is held at tShaft
+// (pass tShaft = tAmb for the classic hub-only case).
+function minHubTemp(tAmb,dMax,d,mH,mS,clr,tShaft){
+  const c=(clr==null?5e-3:clr);
+  if(!(mH.cte>0))return null;
+  const shaftTerm=(mS&&tShaft!=null)?d*mS.cte*1e-6*(tShaft-tAmb):0;
+  return tAmb+(dMax+c+shaftTerm)/(d*mH.cte*1e-6);
+}
+// Shaft temperature required if the hub is capped at tHubMax
+function reqShaftTemp(tAmb,dMax,d,mH,mS,clr,tHubMax){
+  const c=(clr==null?5e-3:clr);
+  if(!(mS.cte>0))return null;
+  return tAmb+(d*mH.cte*1e-6*(tHubMax-tAmb)-dMax-c)/(d*mS.cte*1e-6);
+}
+// Diametral assembly gap at the chosen assembly temperatures (mm).
+// Positive = the shaft passes into the bore.
+function assemblyGap(tAmb,dMax,d,mH,mS,tHub,tShaft){
+  return d*mH.cte*1e-6*(tHub-tAmb) - d*mS.cte*1e-6*(tShaft-tAmb) - dMax;
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -920,7 +988,7 @@ function buildCompTable(dMin,dMax,d,Do,Di,mH,mS,L,mu){
 // ══════════════════════════════════════════════════════════════
 // WARNING COLLECTOR
 // ══════════════════════════════════════════════════════════════
-function buildWarnings(dMin,dMax,d,Do,Di,mH,mS,tAmb,tHot,delta_hot_max,delta_hot_min,T_preheat){
+function buildWarnings(dMin,dMax,d,Do,Di,mH,mS,tAmb,tHot,delta_hot_max,delta_hot_min,T_preheat,tShaftAsm){
   const warns=[];
   const p_max=contactPressure(dMax,d,Do,Di,mH,mS);
   const p_min=dMin>0?contactPressure(dMin,d,Do,Di,mH,mS):0;
@@ -950,9 +1018,18 @@ function buildWarnings(dMin,dMax,d,Do,Di,mH,mS,tAmb,tHot,delta_hot_max,delta_hot
     warns.push({l:'warn',m:`Interference lost at min material condition at operating temperature — joint may slip under worst-case tolerance + temperature combination.`});
 
   if(T_preheat>250)
-    warns.push({l:'warn',m:`High hub preheat required for assembly (${T_preheat.toFixed(0)} °C) — verify material properties and temper stability at this temperature.`});
+    warns.push({l:'warn',m:`High hub preheat required for assembly (${T_preheat.toFixed(0)} °C) — verify material properties and temper stability at this temperature. Chilling the shaft reduces the hub temperature required.`});
   else if(T_preheat>180)
     warns.push({l:'info',m:`Hub preheat ${T_preheat.toFixed(0)} °C — within range for oven heating. Ensure uniform temperature soak before assembly.`});
+
+  // ── Chilled-shaft caveats ──
+  if(tShaftAsm!=null&&tShaftAsm<tAmb){
+    if(tShaftAsm<-80)
+      warns.push({l:'warn',m:`Chill below −80 °C: the calculation uses the room-temperature α (${mS.cte} µ/m·K), but CTE falls substantially at cryogenic temperature. Actual shrinkage will be LESS than predicted — typically 15–25% less for steels down to −196 °C. Use a mean CTE over the range before committing to a tight assembly clearance.`});
+    if(tShaftAsm<-100)
+      warns.push({l:'warn',m:`Cryogenic chilling: check low-temperature ductility of the shaft material. Ferritic and martensitic steels may be below their transition temperature and brittle when handled. Hardened steels with retained austenite can transform and change dimension permanently.`});
+    warns.push({l:'info',m:`Chilled assembly is time-critical — the shaft starts warming as soon as it leaves the coolant, and frost forming on it adds effective diameter. Assemble immediately, dry the bore, and allow for lost clearance during the insertion stroke.`});
+  }
 
   return warns;
 }
@@ -1077,22 +1154,70 @@ function calculate(){
   const dT_hot=tHot-tAmb;
   const delta_hot_max=thermalDelta(dMax,d,mH,mS,dT_hot);
   const delta_hot_min=thermalDelta(Math.max(dMin,0),d,mH,mS,dT_hot);
-  const T_preheat=minHubTemp(tAmb,dMax,d,mH);
+  // Assembly: shaft either at ambient, or chilled
+  const chillOn = !!(document.getElementById('chillOn')||{}).checked;
+  const tShaftAsm = chillOn ? (parseFloat(document.getElementById('tShaft').value)||0) : tAmb;
+  const T_preheat = minHubTemp(tAmb,dMax,d,mH,mS,5e-3,tShaftAsm);
 
   // Warnings
-  const _warns=buildWarnings(dMin,dMax,d,Do,Di,mH,mS,tAmb,tHot,delta_hot_max,delta_hot_min,T_preheat);
+  const _warns=buildWarnings(dMin,dMax,d,Do,Di,mH,mS,tAmb,tHot,delta_hot_max,delta_hot_min,T_preheat,chillOn?tShaftAsm:null);
   renderWarnings(_warns);
 
   // Thermal panel
   document.getElementById('tempPanel').style.display='block';
   const dT_pre=T_preheat-tAmb;
   const pv=document.getElementById('preheatVal');
-  pv.textContent=T_preheat.toFixed(1);
-  pv.style.color=T_preheat>250?'var(--red)':T_preheat>180?'var(--orange)':'var(--blue)';
-  document.getElementById('preheatSub').innerHTML=
-    `ΔT = +${dT_pre.toFixed(1)} °C above ambient &nbsp;|&nbsp; bore grows ${fv(dMax*1e3+5,1)} μm (5 μm clearance)`;
-  const T_rec=tAmb+(dMax+20e-3)/(d*mH.cte*1e-6);
-  document.getElementById('preheatRec').innerHTML=`Recommended (20 μm clearance): <b>${T_rec.toFixed(1)} °C</b>`;
+  const T_rec=minHubTemp(tAmb,dMax,d,mH,mS,20e-3,tShaftAsm);
+  // Chilling alone may already clear the shaft — then no heating is needed
+  const gapChillOnly = chillOn ? assemblyGap(tAmb,dMax,d,mH,mS,tAmb,tShaftAsm) : -1;
+  const chillSuffices = chillOn && gapChillOnly >= 5e-3;
+
+  document.getElementById('preheatLbl').textContent =
+    chillOn ? 'Min Hub Temperature (with shaft chilled)' : 'Min Hub Temperature for Slip Assembly';
+
+  if(chillSuffices){
+    pv.textContent='None';
+    pv.style.color='var(--green)';
+    document.getElementById('preheatSub').innerHTML=
+      `Chilling alone opens <b>${fv(gapChillOnly*1e3,1)} μm</b> of clearance — hub can stay at ambient.`;
+    document.getElementById('preheatRec').innerHTML = (T_rec>tAmb)
+      ? `For a 20 μm target clearance the hub would need <b>${T_rec.toFixed(1)} °C</b>.`
+      : `Already exceeds the 20 μm target clearance with no hub heating.`;
+  } else {
+    pv.textContent=T_preheat.toFixed(1);
+    pv.style.color=T_preheat>250?'var(--red)':T_preheat>180?'var(--orange)':'var(--blue)';
+    document.getElementById('preheatSub').innerHTML=
+      `ΔT = +${dT_pre.toFixed(1)} °C above ambient &nbsp;|&nbsp; total opening ${fv(dMax*1e3+5,1)} μm (5 μm clearance)`;
+    document.getElementById('preheatRec').innerHTML=`Recommended (20 μm clearance): <b>${T_rec.toFixed(1)} °C</b>`;
+  }
+
+  // ── Chilled-shaft detail ──
+  const co=document.getElementById('chillOut');
+  if(!chillOn){
+    co.innerHTML='';
+  } else {
+    const T_hubOnly=minHubTemp(tAmb,dMax,d,mH,mS,5e-3,tAmb);
+    const shaftShrink=d*mS.cte*1e-6*(tAmb-tShaftAsm)*1e3;   // μm, positive
+    const tHubMax=parseFloat(document.getElementById('tHubMax').value);
+    let h='<div style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(94,174,255,.18)">';
+    h+=`<div style="font-size:11px;color:var(--text2)">Shaft at <b>${tShaftAsm.toFixed(0)} °C</b> shrinks <b>${fv(shaftShrink,1)} μm</b> on diameter (α=${mS.cte} µ/m·K).</div>`;
+    if(isFinite(T_hubOnly))
+      h+=`<div class="chill-line">Hub preheat reduced from ${T_hubOnly.toFixed(1)} °C to `+
+         (chillSuffices?'none required':`${T_preheat.toFixed(1)} °C`)+
+         ` — a saving of ${(T_hubOnly-Math.max(T_preheat,tAmb)).toFixed(0)} °C.</div>`;
+    if(isFinite(tHubMax)){
+      const tS_req=reqShaftTemp(tAmb,dMax,d,mH,mS,5e-3,tHubMax);
+      if(tS_req!=null&&isFinite(tS_req)){
+        if(tS_req>=tAmb)
+          h+=`<div class="chill-line">To cap the hub at ${tHubMax.toFixed(0)} °C no chilling is needed (shaft may sit at ambient).</div>`;
+        else
+          h+=`<div class="${tS_req<-196?'chill-warn':'chill-line'}">To cap the hub at ${tHubMax.toFixed(0)} °C the shaft must reach <b>${tS_req.toFixed(1)} °C</b>`+
+             (tS_req<-196?' — below liquid nitrogen; not achievable by normal means.':'.')+`</div>`;
+      }
+    }
+    h+='</div>';
+    co.innerHTML=h;
+  }
 
   const hub_exp=d*mH.cte*1e-6*dT_hot*1e3;
   const sft_exp=d*mS.cte*1e-6*dT_hot*1e3;
@@ -1134,7 +1259,7 @@ function calculate(){
     const ph_min=dh_min>1e-6?contactPressure(dh_min,d,Do,Di,mH,mS):0;
     Object.assign(_exp,{
       ready:true,
-      title:(document.getElementById('projTitle')||{}).value?.trim()||'INTERFERENCE FIT ANALYSIS',
+      title:(document.getElementById('projTitle')||{}).value?.trim()||_wbP.get('title')||'INTERFERENCE FIT ANALYSIS',
       notes:(document.getElementById('projNotes')||{}).value?.trim()||'',
       d,Do,Di,L,mu,wR:Do/d,holeName,shaftName,mH,mS,
       dMin:Math.max(dMin,0),dMax,p_min:pm,p_max:px,
@@ -1147,6 +1272,7 @@ function calculate(){
       T_hot_min:torque(ph_min,d,L,mu),T_hot_max:torque(ph_max,d,L,mu),
       F_hot_min:axialForce(ph_min,d,L,mu),F_hot_max:axialForce(ph_max,d,L,mu),
       tAmb,tHot,T_preheat,T_rec,net_um,warnings:_warns,
+      chillOn,tShaftAsm,chillSuffices,
     });
     // Export minimum SF to workbook badge (hub + shaft VM at both material conditions)
     try{
@@ -1378,8 +1504,12 @@ function exportToImage(){
   secHdr('Thermal & Assembly');
   trow('As-built / ambient temperature',ff(e.tAmb,0)+' °C', C.tx);
   trow('Hot operating temperature',ff(e.tHot,0)+' °C', C.bl);
-  const phC=e.T_preheat>250?C.rd:e.T_preheat>180?C.yw:C.bl;
-  trow('Minimum hub preheat for slip assembly',ff(e.T_preheat,1)+' °C', phC);
+  if(e.chillOn){
+    trow('Shaft chilled for assembly to',ff(e.tShaftAsm,0)+' °C', C.bl);
+  }
+  const phC=e.chillSuffices?C.gn:e.T_preheat>250?C.rd:e.T_preheat>180?C.yw:C.bl;
+  trow(e.chillOn?'Minimum hub preheat (shaft chilled)':'Minimum hub preheat for slip assembly',
+    e.chillSuffices?'None required':ff(e.T_preheat,1)+' °C', phC);
   trow('Recommended hub preheat (20 μm clearance)',ff(e.T_rec,1)+' °C', C.bl);
   const ns=e.net_um>=0?'+':'', nC=e.net_um>0.5?C.rd:e.net_um<-0.5?C.yw:C.gn;
   trow('Net interference change at operating temp',ns+ff(e.net_um,2)+' μm', nC);
@@ -1462,8 +1592,33 @@ function onShaftFitChange(){
 
 ['dNom','dHub','dShaft','tAmb','tHot','cLen','mu','holeEI','holeES','shaftEI','shaftES','projTitle','projNotes'].forEach(id=>
   document.getElementById(id).addEventListener('input',calculate));
+['tShaft','tHubMax'].forEach(id=>
+  document.getElementById(id).addEventListener('input',calculate));
 ['holeFit','shaftFit','hubMat','shaftMat'].forEach(id=>
   document.getElementById(id).addEventListener('change',calculate));
+document.getElementById('chillOn').addEventListener('change',function(){syncChillUI();calculate()});
+function syncChillUI(){
+  var on=document.getElementById('chillOn').checked;
+  document.getElementById('chillFields').style.display=on?'block':'none';
+  var n=document.getElementById('asmNote');
+  if(n)n.textContent=on?'Shaft chilled for assembly.':'Shaft held at ambient during assembly.';
+}
+function setChill(t){
+  document.getElementById('tShaft').value=t;
+  document.getElementById('chillOn').checked=true;
+  syncChillUI();calculate();
+  if(typeof wbSaveState==='function')wbSaveState();
+}
+// Inherit the calculation title from the workbook item when embedded
+function syncTitleSource(){
+  var t=_wbP.get('title');
+  if(_wbEmbed&&t){
+    document.getElementById('projTitleRow').style.display='none';
+    document.getElementById('projTitleInherited').style.display='';
+    document.getElementById('projTitleEcho').textContent=t;
+    document.getElementById('projTitle').value=t;   // authoritative for the export
+  }
+}
 
 /* ══════════════════════════════════════════════════════════════
    WORKBOOK STATE PERSISTENCE
@@ -1518,6 +1673,8 @@ document.addEventListener('visibilitychange',function(){
 
 wbRestoreState();          // after material selects are populated
 onHoleFitChange();onShaftFitChange();   // re-sync custom-deviation field visibility
+syncChillUI();
+syncTitleSource();         // workbook title overrides any restored value
 calculate();
 _stReady=true;
 
