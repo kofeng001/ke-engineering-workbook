@@ -8,10 +8,18 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon.png" type="image/png">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--bg:#18181b;--panel:#1e1e22;--surface:#222226;--surface2:#2a2a2f;--border:#313138;--border2:#3c3c44;--border3:#4a4a54;--text:#d1d1d6;--bright:#eeeef1;--dim:#8c8c96;--muted:#5a5a64;--accent:#6B8AFF;--accent-dim:rgba(107,138,255,.10);--accent-border:rgba(107,138,255,.28);--good:#4aba78;--warn:#d4993a;--danger:#d45050;--mono:'JetBrains Mono',ui-monospace,'SF Mono',monospace;--sans:'Inter',-apple-system,'SF Pro Display',system-ui,sans-serif}
+/* No CSS upper-casing: it rewrites symbols and units (ρ → Ρ, α → Α, µm → MM). Same rule as the calculators. */
+*,*::before,*::after{text-transform:none !important}
+.rf-mode{display:block;font-size:10px;color:var(--dim);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:var(--sans)}
+.ih,.ir{grid-template-columns:30px 68px 1fr 170px 70px 36px !important}
+/* Phone: each contents row becomes two lines — title on top, reserve factor and actions beneath */
+@media(max-width:700px){.ih{display:none !important}
+.ir{grid-template-columns:20px auto 1fr auto auto !important;grid-template-areas:"n type title title title" "n rf rf open del";row-gap:8px;padding:10px 12px !important}
+.ir>:nth-child(1){grid-area:n}.ir>:nth-child(2){grid-area:type;justify-self:start}.ir>:nth-child(3){grid-area:title}.ir>:nth-child(4){grid-area:rf}.ir>:nth-child(5){grid-area:open}.ir>:nth-child(6){grid-area:del}}
+:root{--bg:#18181b;--panel:#1e1e22;--surface:#222226;--surface2:#2a2a2f;--border:#313138;--border2:#3c3c44;--border3:#4a4a54;--text:#d1d1d6;--bright:#eeeef1;--dim:#a0a0aa;--muted:#85858f;--accent:#6B8AFF;--accent-dim:rgba(107,138,255,.10);--accent-border:rgba(107,138,255,.28);--good:#4aba78;--warn:#d4993a;--danger:#d45050;--mono:'JetBrains Mono',ui-monospace,'SF Mono',monospace;--sans:'Inter',-apple-system,'SF Pro Display',system-ui,sans-serif}
 body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:13px;line-height:1.6;min-height:100vh;-webkit-font-smoothing:antialiased}
 ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
 input[type=number]{-moz-appearance:textfield}input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appearance:none}
@@ -122,7 +130,9 @@ var MATS=[
 ];
 var G_mats;var G_mf='All';var G_form=null;var G_editing=null;
 function loadGlobalMats(){try{var s=localStorage.getItem('eng_wb_mats');if(s)return JSON.parse(s)}catch(e){}return JSON.parse(JSON.stringify(MATS))}
-function saveGlobalMats(){localStorage.setItem('eng_wb_mats',JSON.stringify(G_mats))}
+var _quotaWarned=false;
+function storageFull(what){if(_quotaWarned)return;_quotaWarned=true;alert('Browser storage is full \u2014 '+what+' could NOT be saved.\n\nExport this workbook now to keep your work, then remove large images (CAD references, notes or review images) to free space.');setTimeout(function(){_quotaWarned=false},15000)}
+function saveGlobalMats(){try{localStorage.setItem('eng_wb_mats',JSON.stringify(G_mats))}catch(e){storageFull('the materials list')}}
 G_mats=loadGlobalMats();
 // Add rho to existing materials that lack it
 G_mats.forEach(function(m){if(!m.rho){var def=MATS.find(function(d){return d.id===m.id});m.rho=def?def.rho:(m.cat==='Aluminium'?2700:m.cat==='Titanium'?4430:m.cat==='Stainless'?8000:7850)}});
@@ -139,7 +149,7 @@ function saveIndex(idx){localStorage.setItem('eng_wb_idx',JSON.stringify(idx))}
 function getActiveId(){return localStorage.getItem('eng_wb_active')||null}
 function setActiveId(id){if(id)localStorage.setItem('eng_wb_active',id);else localStorage.removeItem('eng_wb_active')}
 function loadWBData(id){try{return JSON.parse(localStorage.getItem('eng_wb_'+id))}catch(e){return null}}
-function saveWBData(id,data){try{localStorage.setItem('eng_wb_'+id,JSON.stringify(data))}catch(e){}}
+function saveWBData(id,data){try{localStorage.setItem('eng_wb_'+id,JSON.stringify(data))}catch(e){storageFull('the latest change to this workbook')}}
 function deleteWBData(id){localStorage.removeItem('eng_wb_'+id)}
 // Migrate
 (function(){var old=localStorage.getItem('eng_wb');if(old&&!localStorage.getItem('eng_wb_idx')){try{var d=JSON.parse(old);var id='wb_'+Date.now();saveWBData(id,d);saveIndex([{id:id,name:d.project||'My Workbook',author:d.author||'',modified:new Date().toISOString(),items:d.calcs?d.calcs.length:0}]);setActiveId(id);localStorage.removeItem('eng_wb')}catch(e){}}})();
@@ -186,9 +196,10 @@ function restoreSide(wbId,side){
   });
 }
 function purgeItem(wbId,itemId){itemKeys(wbId,itemId).forEach(function(k){try{localStorage.removeItem(k)}catch(e){}})}
-function getRF(itemId){try{var d=JSON.parse(localStorage.getItem(rfKey(itemId)));var v=d.rf||d.sf;return(v&&isFinite(v)&&v>0)?v:null}catch(e){return null}}
+function getRFInfo(itemId){try{var d=JSON.parse(localStorage.getItem(rfKey(itemId)));var v=(d.rf!=null)?d.rf:d.sf;return(typeof v==='number'&&isFinite(v)&&v>=0)?{v:v,mode:d.mode||''}:null}catch(e){return null}}
+function getRF(itemId){var i=getRFInfo(itemId);return i?i.v:null}
 function rfCol(v){var crit=(W&&W.rfCrit)||1.2,opt=(W&&W.rfOpt)||1.5;return v<crit?'var(--danger)':v<opt?'var(--warn)':'var(--good)'}
-function rfBadge(v){if(v==null)return'\u2014';var c=rfCol(v);return'<span style="padding:2px 9px;border-radius:5px;font-size:11px;font-weight:600;font-family:var(--mono);background:'+c+'12;color:'+c+';border:1px solid '+c+'25">'+v.toFixed(2)+'</span>'}
+function rfBadge(v){if(v==null)return'\u2014';var c=rfCol(v);return'<span style="padding:2px 9px;border-radius:5px;font-size:11px;font-weight:600;font-family:var(--mono);background:color-mix(in srgb,'+c+' 12%,transparent);color:'+c+';border:1px solid color-mix(in srgb,'+c+' 32%,transparent)">'+(v>=100?v.toFixed(0):v>=10?v.toFixed(1):v.toFixed(2))+'</span>'}
 function showLb(src){document.getElementById('lb').innerHTML='<img src="'+src+'">';document.getElementById('lb').classList.add('show')}
 
 // ═══════════════════════════════════════════════════════════════
@@ -203,7 +214,7 @@ function R(){
   h+='<div style="margin-left:auto;display:flex;gap:6px">';
   h+='<button class="btn btn-s" onclick="exportWB()">\ud83d\udcbe Export</button>';
   h+='<button class="btn btn-s" onclick="R()">\u21bb</button>';
-  h+='<button class="btn btn-s" onclick="window.print()">\u2399 PDF</button></div></div>';
+  h+='<button class="btn btn-s" onclick="printWB()">Print / PDF</button></div></div>';
   h+='<div class="tabs"><button class="tab '+(W.tab==='home'?'on':'')+'" onclick="W.tab=\'home\';R()">Home</button>';
   if(W.calcs.length)h+='<div style="width:1px;background:var(--border);margin:5px 8px"></div>';
   W.calcs.forEach(function(c,i){var t=TC[c.type];var act=W.tab===c.id;
@@ -223,8 +234,9 @@ function R(){
     h+='<button class="btn btn-s" onclick="W.tab=\'home\';R()" style="flex-shrink:0">\u2190 Back to Contents</button>';
     h+='<span style="font-size:13px;font-weight:600;color:'+fc.t.color+'">'+esc(fc.c.title||fc.t.name)+'</span>';
     h+='<span style="font-size:10px;color:var(--muted);margin-left:4px">'+fc.t.name+'</span>';
+    h+='<button class="btn btn-s" onclick="printWB()" style="margin-left:auto;flex-shrink:0">Print / PDF</button>';
     h+='</div>';
-    h+='<iframe class="calc-frame" src="'+fc.t.file+'?embed=1&wb='+encodeURIComponent(activeWBId)+'&item='+encodeURIComponent(fc.c.id)+'&rfCrit='+(W.rfCrit||1.2)+'&rfOpt='+(W.rfOpt||1.5)+'&title='+encodeURIComponent(fc.c.title||fc.t.name)+'&project='+encodeURIComponent(W.project||'')+'" id="calcFrame"></iframe>';
+    h+='<iframe class="calc-frame" src="'+fc.t.file+'?embed=1&wb='+encodeURIComponent(activeWBId)+'&item='+encodeURIComponent(fc.c.id)+'&rfCrit='+(W.rfCrit||1.2)+'&rfOpt='+(W.rfOpt||1.5)+'&title='+encodeURIComponent(fc.c.title||fc.t.name)+'&project='+encodeURIComponent(W.project||'')+'&author='+encodeURIComponent(W.author||'')+'" id="calcFrame"></iframe>';
   }else{
     h+='<div class="content">';
     if(W.tab==='home')h+=homeHTML();
@@ -234,6 +246,10 @@ function R(){
   a.innerHTML=h;
   if(W.tab==='home')init3D();
 }
+// Print: on a calculator tab, print the calculator's own sheet (the shell would print an empty frame)
+function printWB(){var f=document.getElementById('calcFrame');
+  if(f&&f.contentWindow){try{if(f.contentWindow.WB&&f.contentWindow.WB.print)f.contentWindow.WB.print();else{f.contentWindow.focus();f.contentWindow.print()}return}catch(e){}}
+  window.print()}
 function openCalcTab(id,idx){W.tab=id;var c=W.calcs.find(function(x){return x.id===id});if(c){c.modified=new Date().toISOString();sv();R()}else{R()}}
 function renameItem(i){var c=W.calcs[i];if(!c)return;var nn=prompt('Rename:',c.title);if(nn===null)return;c.title=nn;c.modified=new Date().toISOString();sv();R()}
 
@@ -326,14 +342,11 @@ function homeHTML(){
   });
   h+='</div></div>';
 
-  // ── 3D viewer ──
-  h+='<div class="card" style="margin-bottom:16px"><div class="card-t">3D Model</div><div id="viewer3d"><div id="v3dDrop" class="drop-zone" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:2;border:none;border-radius:10px"><div><div style="font-size:13px;color:var(--dim)">Drop STL file here</div><div style="font-size:10px;color:var(--muted);margin-top:4px">or click \u00b7 Rotate: drag \u00b7 Pan: right-drag \u00b7 Zoom: scroll</div></div></div></div></div>';
-
   // ── Contents table ──
   if(!W.calcs.length){
     h+='<div class="card" style="text-align:center;padding:40px"><div style="color:var(--dim)">No items yet \u2014 add calculations or notes above</div></div>';
   }else{
-    h+='<div class="ih"><span>#</span><span>Type</span><span>Title / Date</span><span>RF / SF</span><span></span><span></span></div>';
+    h+='<div class="ih"><span>#</span><span>Type</span><span>Title / date</span><span>Reserve factor \u00b7 governing mode</span><span></span><span></span></div>';
     W.calcs.forEach(function(c,i){var t=TC[c.type];var rf=getRF(c.id);
       var dateStr=c.created?fmtDate(c.created):'';
       h+='<div class="ir" style="border-left:3px solid rgba('+t.rgb+',.5);align-items:center">';
@@ -342,15 +355,19 @@ function homeHTML(){
       h+='<div style="min-width:0"><input value="'+esc(c.title)+'" placeholder="Untitled" onchange="W.calcs['+i+'].title=this.value;sv()" onclick="event.stopPropagation()" style="width:100%;background:transparent;border:1px solid transparent;border-radius:5px;color:var(--bright);font-size:13px;font-weight:500;font-family:var(--sans);padding:3px 6px;outline:none;text-overflow:ellipsis" onfocus="this.style.borderColor=\'var(--border2)\';this.style.background=\'var(--bg)\'" onblur="this.style.borderColor=\'transparent\';this.style.background=\'transparent\'">';
       if(dateStr)h+='<div style="font-size:10px;color:var(--muted);margin-top:1px;padding-left:6px">'+dateStr+'</div>';
       h+='</div>';
-      h+='<span style="font-size:10px">'+(t.hasRF?rfBadge(rf):'<span style="color:var(--muted)">\u2014</span>')+'</span>';
+      var rfi=getRFInfo(c.id);
+      h+='<span style="font-size:10px;min-width:0">'+(t.hasRF?(rfBadge(rf)+(rfi&&rfi.mode?'<span class="rf-mode" title="'+esc(rfi.mode)+'">'+esc(rfi.mode)+'</span>':'')):'<span style="color:var(--muted)">\u2014</span>')+'</span>';
       h+='<button class="btn btn-s" onclick="openCalcTab(\''+c.id+'\','+i+')">Open \u2192</button>';
       h+='<button class="btn btn-danger btn-s" onclick="remC('+i+')">\u00d7</button></div>';
     });
   }
 
+  // ── 3D viewer ──
+  h+='<div class="card" style="margin:20px 0 0"><div class="card-t">3D model</div><div id="viewer3d"><div id="v3dDrop" class="drop-zone" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:2;border:none;border-radius:10px"><div><div style="font-size:13px;color:var(--dim)">Drop STL file here</div><div style="font-size:10px;color:var(--muted);margin-top:4px">or click \u00b7 Rotate: drag \u00b7 Pan: right-drag \u00b7 Zoom: scroll</div></div></div></div></div>';
+
   h+='<div style="display:flex;gap:10px;margin-top:24px;justify-content:space-between;align-items:center;flex-wrap:wrap">';
   h+='<div class="legend"><span class="dot" style="background:var(--good)"></span>\u2265 '+(W.rfOpt||1.5)+' <span class="dot" style="background:var(--warn)"></span>'+(W.rfCrit||1.2)+'\u2013'+(W.rfOpt||1.5)+' <span class="dot" style="background:var(--danger)"></span>&lt; '+(W.rfCrit||1.2)+'</div>';
-  h+='<div style="display:flex;gap:6px"><button class="btn btn-accent" onclick="exportWB()">\ud83d\udcbe Export</button><button class="btn" onclick="window.print()">\u2399 PDF</button></div></div>';
+  h+='<div style="display:flex;gap:6px"><button class="btn btn-accent" onclick="exportWB()">\ud83d\udcbe Export</button><button class="btn" onclick="printWB()">Print / PDF</button></div></div>';
   return h;
 }
 
@@ -444,7 +461,7 @@ function notesPageHTML(ci){var c=W.calcs[ci];if(!c.data)c.data={entries:[]};var 
     h+='<div class="card"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;gap:8px"><div style="display:flex;align-items:center;gap:8px;flex:1;flex-wrap:wrap"><select style="padding:3px 24px 3px 8px;font-size:10px;font-weight:600;background:var(--bg);border:1px solid var(--border2);border-radius:4px;color:var(--dim)" onchange="W.calcs['+ci+'].data.entries['+ei+'].tag=parseInt(this.value);R()">';
     TAGS.forEach(function(t,ti){h+='<option value="'+ti+'"'+(e.tag===ti?' selected':'')+'>'+t+'</option>'});
     h+='</select><input class="ti" style="font-size:13px;font-weight:600;padding:4px 8px;flex:1;min-width:200px;background:transparent;border-color:transparent" value="'+esc(e.title)+'" onchange="W.calcs['+ci+'].data.entries['+ei+'].title=this.value;sv()" placeholder="Entry title"></div><button class="btn btn-danger btn-s" onclick="W.calcs['+ci+'].data.entries.splice('+ei+',1);R()">\u00d7</button></div>';
-    h+='<textarea class="ta" rows="3" onchange="W.calcs['+ci+'].data.entries['+ei+'].text=this.value;sv()" placeholder="Enter notes...">'+(e.text||'')+'</textarea>';
+    h+='<textarea class="ta" rows="3" onchange="W.calcs['+ci+'].data.entries['+ei+'].text=this.value;sv()" placeholder="Enter notes...">'+esc(e.text||'')+'</textarea>';
     h+='<div style="margin-top:8px;display:flex;flex-wrap:wrap;align-items:flex-start">';
     if(e.images)e.images.forEach(function(img,ii){h+='<div style="position:relative;display:inline-block;margin:0 4px 4px 0"><img class="img-thumb" src="'+img+'" onclick="showLb(this.src)"><button style="position:absolute;top:0;right:0;background:rgba(180,50,50,.7);color:#fff;border:none;border-radius:0 6px 0 4px;font-size:9px;padding:2px 5px;cursor:pointer" onclick="W.calcs['+ci+'].data.entries['+ei+'].images.splice('+ii+',1);R()">\u2715</button></div>'});
     h+='<div class="drop-zone" style="display:inline-flex;align-items:center;justify-content:center;width:80px;height:60px;padding:8px;font-size:9px;color:var(--muted)" onclick="addImg('+ci+','+ei+')">+ Image</div></div></div>';
@@ -458,8 +475,8 @@ function addImg(ci,ei){var inp=document.createElement('input');inp.type='file';i
 function reviewPageHTML(ci){var c=W.calcs[ci];if(!c.data)c.data={date:'',agenda:'',attendees:'',minutes:'',actions:[],images:[]};var d=c.data;
   var h='<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px"><button class="btn btn-s" onclick="W.tab=\'home\';R()">\u2190 Contents</button><input class="ti" style="font-size:16px;font-weight:600;padding:6px 10px;flex:1;background:transparent;border-color:transparent" value="'+esc(c.title)+'" onchange="W.calcs['+ci+'].title=this.value;sv()" placeholder="Review title"></div>';
   h+='<div class="card"><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px"><div><div class="card-t">Date</div><input type="date" class="ti" style="font-size:13px" value="'+esc(d.date)+'" onchange="W.calcs['+ci+'].data.date=this.value;sv()"></div><div><div class="card-t">Attendees</div><input class="ti" value="'+esc(d.attendees)+'" placeholder="Names" onchange="W.calcs['+ci+'].data.attendees=this.value;sv()"></div></div></div>';
-  h+='<div class="card"><div class="card-t">Agenda</div><textarea class="ta" rows="3" onchange="W.calcs['+ci+'].data.agenda=this.value;sv()" placeholder="Agenda...">'+(d.agenda||'')+'</textarea></div>';
-  h+='<div class="card"><div class="card-t">Minutes</div><textarea class="ta" rows="8" onchange="W.calcs['+ci+'].data.minutes=this.value;sv()" placeholder="Minutes...">'+(d.minutes||'')+'</textarea></div>';
+  h+='<div class="card"><div class="card-t">Agenda</div><textarea class="ta" rows="3" onchange="W.calcs['+ci+'].data.agenda=this.value;sv()" placeholder="Agenda...">'+esc(d.agenda||'')+'</textarea></div>';
+  h+='<div class="card"><div class="card-t">Minutes</div><textarea class="ta" rows="8" onchange="W.calcs['+ci+'].data.minutes=this.value;sv()" placeholder="Minutes...">'+esc(d.minutes||'')+'</textarea></div>';
   h+='<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div class="card-t" style="margin:0">Action Items</div><button class="btn btn-accent btn-s" onclick="addAct('+ci+')">+ Action</button></div>';
   if(!d.actions||!d.actions.length)h+='<div style="color:var(--muted);font-size:12px;text-align:center;padding:12px">No actions</div>';
   else{h+='<table><thead><tr><th style="text-align:left">#</th><th style="text-align:left">Action</th><th style="text-align:left">Owner</th><th style="text-align:left">Due</th><th style="text-align:left">Status</th><th></th></tr></thead><tbody>';
@@ -482,7 +499,7 @@ function remC(i){if(!confirm('Remove "'+(W.calcs[i].title||'this item')+'"?'))re
 // ═══════════════════════════════════════════════════════════════
 var scene3,cam3,ren3,mesh3;
 function init3D(){var c=document.getElementById('viewer3d'),d=document.getElementById('v3dDrop');if(!c||!d)return;d.addEventListener('click',function(){var inp=document.createElement('input');inp.type='file';inp.accept='.stl';inp.onchange=function(e){if(e.target.files[0])loadSTL(e.target.files[0])};inp.click()});d.addEventListener('dragover',function(e){e.preventDefault();d.classList.add('drag')});d.addEventListener('dragleave',function(){d.classList.remove('drag')});d.addEventListener('drop',function(e){e.preventDefault();d.classList.remove('drag');if(e.dataTransfer.files.length)loadSTL(e.dataTransfer.files[0])})}
-function loadSTL(file){if(!file.name.toLowerCase().endsWith('.stl')){alert('Please use STL');return}var reader=new FileReader();reader.onload=function(e){var c=document.getElementById('viewer3d'),d=document.getElementById('v3dDrop');if(d)d.style.display='none';while(c.querySelector('canvas'))c.querySelector('canvas').remove();var w=c.clientWidth,h=c.clientHeight;scene3=new THREE.Scene();scene3.background=new THREE.Color(0x18181b);cam3=new THREE.PerspectiveCamera(45,w/h,0.1,10000);ren3=new THREE.WebGLRenderer({antialias:true});ren3.setSize(w,h);ren3.setPixelRatio(window.devicePixelRatio);c.appendChild(ren3.domElement);scene3.add(new THREE.AmbientLight(0xcccccc,0.5));var dl=new THREE.DirectionalLight(0xffffff,0.8);dl.position.set(1,1,1);scene3.add(dl);var dl2=new THREE.DirectionalLight(0x8888ff,0.3);dl2.position.set(-1,-0.5,0.5);scene3.add(dl2);var geom=parseSTL(e.target.result);geom.computeVertexNormals();var mat=new THREE.MeshPhongMaterial({color:0x8c8c96,specular:0x333333,shininess:60});if(mesh3)scene3.remove(mesh3);mesh3=new THREE.Mesh(geom,mat);geom.computeBoundingBox();var box=geom.boundingBox,ctr=new THREE.Vector3(),sz=new THREE.Vector3();box.getCenter(ctr);box.getSize(sz);var mx=Math.max(sz.x,sz.y,sz.z);mesh3.position.sub(ctr);scene3.add(mesh3);var drag=false,rBtn=false,pX=0,pY=0,rX=0,rY=0,dist=mx*2,panX=0,panY=0;ren3.domElement.addEventListener('mousedown',function(ev){drag=true;rBtn=ev.button===2;pX=ev.clientX;pY=ev.clientY});ren3.domElement.addEventListener('contextmenu',function(ev){ev.preventDefault()});window.addEventListener('mouseup',function(){drag=false});window.addEventListener('mousemove',function(ev){if(!drag)return;var dx=ev.clientX-pX,dy=ev.clientY-pY;pX=ev.clientX;pY=ev.clientY;if(rBtn){panX+=dx*mx*.002;panY-=dy*mx*.002}else{rY+=dx*.01;rX+=dy*.01;rX=Math.max(-Math.PI/2,Math.min(Math.PI/2,rX))}});ren3.domElement.addEventListener('wheel',function(ev){ev.preventDefault();dist*=1+ev.deltaY*.001;dist=Math.max(mx*.3,Math.min(mx*10,dist))},{passive:false});var tch={};ren3.domElement.addEventListener('touchstart',function(ev){ev.preventDefault();for(var i=0;i<ev.changedTouches.length;i++)tch[ev.changedTouches[i].identifier]={x:ev.changedTouches[i].clientX,y:ev.changedTouches[i].clientY}},{passive:false});ren3.domElement.addEventListener('touchmove',function(ev){ev.preventDefault();if(ev.touches.length===1){var t=ev.touches[0],p=tch[t.identifier];if(p){rY+=(t.clientX-p.x)*.01;rX+=(t.clientY-p.y)*.01;rX=Math.max(-Math.PI/2,Math.min(Math.PI/2,rX));tch[t.identifier]={x:t.clientX,y:t.clientY}}}if(ev.touches.length===2){var d1=Math.hypot(ev.touches[0].clientX-ev.touches[1].clientX,ev.touches[0].clientY-ev.touches[1].clientY);var ks=Object.keys(tch);if(ks.length>=2){var d0=Math.hypot(tch[ks[0]].x-tch[ks[1]].x,tch[ks[0]].y-tch[ks[1]].y);if(d0>0)dist*=d0/d1;dist=Math.max(mx*.3,Math.min(mx*10,dist))}for(var i=0;i<ev.touches.length;i++)tch[ev.touches[i].identifier]={x:ev.touches[i].clientX,y:ev.touches[i].clientY}}},{passive:false});ren3.domElement.addEventListener('touchend',function(ev){for(var i=0;i<ev.changedTouches.length;i++)delete tch[ev.changedTouches[i].identifier]});(function anim(){requestAnimationFrame(anim);cam3.position.x=panX+dist*Math.sin(rY)*Math.cos(rX);cam3.position.y=panY+dist*Math.sin(rX);cam3.position.z=dist*Math.cos(rY)*Math.cos(rX);cam3.lookAt(panX,panY,0);ren3.render(scene3,cam3)})();window.addEventListener('resize',function(){var w2=c.clientWidth,h2=c.clientHeight;cam3.aspect=w2/h2;cam3.updateProjectionMatrix();ren3.setSize(w2,h2)})};reader.readAsArrayBuffer(file)}
+function loadSTL(file){if(!file.name.toLowerCase().endsWith('.stl')){alert('Please use STL');return}if(typeof THREE==='undefined'){alert('The 3D viewer library has not loaded \u2014 it needs a connection the first time it is used.');return}var reader=new FileReader();reader.onload=function(e){var c=document.getElementById('viewer3d'),d=document.getElementById('v3dDrop');if(d)d.style.display='none';while(c.querySelector('canvas'))c.querySelector('canvas').remove();var w=c.clientWidth,h=c.clientHeight;scene3=new THREE.Scene();scene3.background=new THREE.Color(0x18181b);cam3=new THREE.PerspectiveCamera(45,w/h,0.1,10000);ren3=new THREE.WebGLRenderer({antialias:true});ren3.setSize(w,h);ren3.setPixelRatio(window.devicePixelRatio);c.appendChild(ren3.domElement);scene3.add(new THREE.AmbientLight(0xcccccc,0.5));var dl=new THREE.DirectionalLight(0xffffff,0.8);dl.position.set(1,1,1);scene3.add(dl);var dl2=new THREE.DirectionalLight(0x8888ff,0.3);dl2.position.set(-1,-0.5,0.5);scene3.add(dl2);var geom=parseSTL(e.target.result);geom.computeVertexNormals();var mat=new THREE.MeshPhongMaterial({color:0x8c8c96,specular:0x333333,shininess:60});if(mesh3)scene3.remove(mesh3);mesh3=new THREE.Mesh(geom,mat);geom.computeBoundingBox();var box=geom.boundingBox,ctr=new THREE.Vector3(),sz=new THREE.Vector3();box.getCenter(ctr);box.getSize(sz);var mx=Math.max(sz.x,sz.y,sz.z);mesh3.position.sub(ctr);scene3.add(mesh3);var drag=false,rBtn=false,pX=0,pY=0,rX=0,rY=0,dist=mx*2,panX=0,panY=0;ren3.domElement.addEventListener('mousedown',function(ev){drag=true;rBtn=ev.button===2;pX=ev.clientX;pY=ev.clientY});ren3.domElement.addEventListener('contextmenu',function(ev){ev.preventDefault()});window.addEventListener('mouseup',function(){drag=false});window.addEventListener('mousemove',function(ev){if(!drag)return;var dx=ev.clientX-pX,dy=ev.clientY-pY;pX=ev.clientX;pY=ev.clientY;if(rBtn){panX+=dx*mx*.002;panY-=dy*mx*.002}else{rY+=dx*.01;rX+=dy*.01;rX=Math.max(-Math.PI/2,Math.min(Math.PI/2,rX))}});ren3.domElement.addEventListener('wheel',function(ev){ev.preventDefault();dist*=1+ev.deltaY*.001;dist=Math.max(mx*.3,Math.min(mx*10,dist))},{passive:false});var tch={};ren3.domElement.addEventListener('touchstart',function(ev){ev.preventDefault();for(var i=0;i<ev.changedTouches.length;i++)tch[ev.changedTouches[i].identifier]={x:ev.changedTouches[i].clientX,y:ev.changedTouches[i].clientY}},{passive:false});ren3.domElement.addEventListener('touchmove',function(ev){ev.preventDefault();if(ev.touches.length===1){var t=ev.touches[0],p=tch[t.identifier];if(p){rY+=(t.clientX-p.x)*.01;rX+=(t.clientY-p.y)*.01;rX=Math.max(-Math.PI/2,Math.min(Math.PI/2,rX));tch[t.identifier]={x:t.clientX,y:t.clientY}}}if(ev.touches.length===2){var d1=Math.hypot(ev.touches[0].clientX-ev.touches[1].clientX,ev.touches[0].clientY-ev.touches[1].clientY);var ks=Object.keys(tch);if(ks.length>=2){var d0=Math.hypot(tch[ks[0]].x-tch[ks[1]].x,tch[ks[0]].y-tch[ks[1]].y);if(d0>0)dist*=d0/d1;dist=Math.max(mx*.3,Math.min(mx*10,dist))}for(var i=0;i<ev.touches.length;i++)tch[ev.touches[i].identifier]={x:ev.touches[i].clientX,y:ev.touches[i].clientY}}},{passive:false});ren3.domElement.addEventListener('touchend',function(ev){for(var i=0;i<ev.changedTouches.length;i++)delete tch[ev.changedTouches[i].identifier]});(function anim(){requestAnimationFrame(anim);cam3.position.x=panX+dist*Math.sin(rY)*Math.cos(rX);cam3.position.y=panY+dist*Math.sin(rX);cam3.position.z=dist*Math.cos(rY)*Math.cos(rX);cam3.lookAt(panX,panY,0);ren3.render(scene3,cam3)})();window.addEventListener('resize',function(){var w2=c.clientWidth,h2=c.clientHeight;cam3.aspect=w2/h2;cam3.updateProjectionMatrix();ren3.setSize(w2,h2)})};reader.readAsArrayBuffer(file)}
 function parseSTL(buf){var dv=new DataView(buf),geom=new THREE.BufferGeometry();if(buf.byteLength>84){var nt=dv.getUint32(80,true);if(84+nt*50===buf.byteLength){var v=new Float32Array(nt*9),n=new Float32Array(nt*9);for(var i=0;i<nt;i++){var o=84+i*50;var nx=dv.getFloat32(o,true),ny=dv.getFloat32(o+4,true),nz=dv.getFloat32(o+8,true);for(var j=0;j<3;j++){var vo=o+12+j*12;v[i*9+j*3]=dv.getFloat32(vo,true);v[i*9+j*3+1]=dv.getFloat32(vo+4,true);v[i*9+j*3+2]=dv.getFloat32(vo+8,true);n[i*9+j*3]=nx;n[i*9+j*3+1]=ny;n[i*9+j*3+2]=nz}}geom.setAttribute('position',new THREE.BufferAttribute(v,3));geom.setAttribute('normal',new THREE.BufferAttribute(n,3))}}return geom}
 if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(function(){})}
 R();

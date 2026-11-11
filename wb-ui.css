@@ -1,0 +1,322 @@
+/* ══════════════════════════════════════════════════════════════════
+   ENGINEERING WORKBOOK · SHARED DESIGN SYSTEM
+   One stylesheet for every calculator: tokens, typography, form
+   controls, tables, status colours, messages and the print layout.
+
+   Each calculator keeps its own layout CSS; this file is linked after
+   it and normalises the look. Colours are tokens so the print layout
+   can switch the whole page to a light theme.
+   ══════════════════════════════════════════════════════════════════ */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+  /* ── Tokens ── */
+  --wb-bg: #18181b; --wb-panel: #1e1e22; --wb-surface: #222226; --wb-surface2: #2a2a2f;
+  --wb-border: #313138; --wb-border2: #3c3c44; --wb-border3: #4a4a54;
+  --wb-text: #d1d1d6; --wb-bright: #eeeef1; --wb-dim: #a0a0aa; --wb-muted: #85858f;
+  --wb-accent: #6B8AFF; --wb-accent2: #8aa4ff;
+  --wb-accent-bg: rgba(107,138,255,.10); --wb-accent-line: rgba(107,138,255,.28);
+  --wb-good: #4aba78; --wb-warn: #d4993a; --wb-bad: #e05c5c;
+  --wb-good-bg: rgba(74,186,120,.10); --wb-warn-bg: rgba(212,153,58,.10); --wb-bad-bg: rgba(224,92,92,.10);
+  --wb-good-line: rgba(74,186,120,.30); --wb-warn-line: rgba(212,153,58,.32); --wb-bad-line: rgba(224,92,92,.34);
+  --wb-hub: #6B8AFF; --wb-shaft: #d4993a;
+  --wb-sans: 'Inter', -apple-system, 'Segoe UI', system-ui, sans-serif;
+  --wb-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --wb-radius: 10px; --wb-radius-s: 6px;
+
+  /* ── Aliases for each calculator's own variable names ── */
+  --bg: var(--wb-bg) !important; --bg2: var(--wb-bg) !important; --bg3: var(--wb-panel) !important; --bg4: var(--wb-surface) !important;
+  --panel: var(--wb-panel) !important; --surface: var(--wb-surface) !important; --surface2: var(--wb-surface2) !important;
+  --s2: var(--wb-surface2) !important; --s3: var(--wb-surface2) !important;
+  --border: var(--wb-border) !important; --border2: var(--wb-border2) !important; --border-focus: var(--wb-accent) !important;
+  --text: var(--wb-text) !important; --text2: var(--wb-text) !important; --text3: var(--wb-muted) !important;
+  --bright: var(--wb-bright) !important; --dim: var(--wb-dim) !important; --muted: var(--wb-muted) !important;
+  --accent: var(--wb-accent) !important; --accent2: var(--wb-accent2) !important; --accent-dim: var(--wb-accent-bg) !important;
+  --a2: var(--wb-accent2) !important; --ag: var(--wb-accent-bg) !important; --a2g: var(--wb-accent-bg) !important;
+  --good: var(--wb-good) !important; --warn: var(--wb-warn) !important; --danger: var(--wb-bad) !important;
+  --info: var(--wb-accent) !important; --blue: var(--wb-accent) !important; --green: var(--wb-good) !important;
+  --orange: var(--wb-warn) !important; --yellow: var(--wb-warn) !important; --red: var(--wb-bad) !important;
+  --cyan: var(--wb-accent) !important; --purple: var(--wb-dim) !important; --wg: var(--wb-warn-bg) !important;
+  --bg-deep: var(--wb-bg) !important; --bg-card: var(--wb-surface) !important; --bg-input: var(--wb-panel) !important;
+  --text-primary: var(--wb-bright) !important; --text-secondary: var(--wb-text) !important;
+  --text-dim: var(--wb-dim) !important; --text-faint: var(--wb-muted) !important; --text-muted: var(--wb-muted) !important;
+  --accent-amber: var(--wb-warn) !important; --accent-green: var(--wb-good) !important;
+  --accent-orange: var(--wb-warn) !important; --accent-red: var(--wb-bad) !important;
+  --sans: var(--wb-sans) !important; --mono: var(--wb-mono) !important;
+}
+
+/* ══ Symbol-safe text ═════════════════════════════════════════════
+   No CSS upper-casing anywhere. Upper-casing rewrites engineering
+   symbols and units: µm → MM, μ → M, σ → Σ, kN → KN, d → D.
+   Labels are shown exactly as written. */
+*, *::before, *::after { text-transform: none !important; }
+
+/* ── Base ── */
+body {
+  font-family: var(--wb-sans) !important;
+  background: var(--wb-bg) !important;
+  color: var(--wb-text) !important;
+  -webkit-font-smoothing: antialiased !important;
+  background-image: none !important;
+}
+body::before { background-image: none !important; content: none !important; }
+h1, h2, h3, h4, h5, h6 { font-family: var(--wb-sans) !important; }
+code, pre, .mono, [class*="result-val"], [class*="big-val"], [class*="res-val"],
+.v, .dt, .psz, td { font-family: var(--wb-mono) !important; }
+
+/* ── Cards / panels ── */
+.card, .panel, .sec, [class*="big-card"] {
+  background: var(--wb-surface) !important;
+  border: 1px solid var(--wb-border) !important;
+  border-radius: var(--wb-radius) !important;
+}
+/* Section headings: sentence case, small, quiet */
+.card-title, .card-label, .panel-title, [class*="card-title"], .pt, .chdr, .section-title {
+  font-family: var(--wb-sans) !important;
+  font-size: 11px !important; font-weight: 600 !important;
+  color: var(--wb-dim) !important;
+  letter-spacing: 0.04em !important;
+}
+.section-title { color: var(--wb-accent2) !important; }
+
+/* ── Inputs ── */
+input[type="number"], input[type="text"], input[type="date"], select, textarea {
+  background: var(--wb-panel) !important;
+  border: 1px solid var(--wb-border2) !important;
+  border-radius: var(--wb-radius-s) !important;
+  color: var(--wb-bright) !important;
+  font-family: var(--wb-mono) !important;
+  transition: border-color .15s, box-shadow .15s !important;
+}
+/* numbers and codes in mono; prose (titles, notes) in the text face */
+input[type="text"], textarea { font-family: var(--wb-sans) !important; }
+input:focus, select:focus, textarea:focus {
+  border-color: var(--wb-accent) !important;
+  outline: none !important;
+}
+input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible, [tabindex]:focus-visible {
+  box-shadow: 0 0 0 2px var(--wb-accent-line) !important;
+}
+input.wb-invalid, select.wb-invalid {
+  border-color: var(--wb-bad) !important;
+  box-shadow: 0 0 0 2px var(--wb-bad-bg) !important;
+}
+input::placeholder, textarea::placeholder { color: var(--wb-muted) !important; opacity: 1; }
+select {
+  -webkit-appearance: none !important; appearance: none !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2385858f'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 9px center !important;
+  padding-right: 26px !important;
+}
+input[type=number] { -moz-appearance: textfield !important; }
+input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none !important; }
+/* Unit suffixes must be readable — they carry meaning */
+.ub, .row-unit, .suffix, .result-unit, .res-unit, .big-unit, .form-unit, .funit, .fu, .cu, .ru, .unit {
+  color: var(--wb-dim) !important;
+  font-family: var(--wb-mono) !important;
+}
+
+/* ── Buttons ── */
+button, .btn, [class*="btn"] {
+  font-family: var(--wb-sans) !important;
+  border-radius: var(--wb-radius-s) !important;
+  transition: background .12s, border-color .12s, color .12s !important;
+}
+.btn-amber, .btn-blue, .btn-green, .btn-red, .btn-dim, [class*="export"], [class*="save"] {
+  background: var(--wb-surface2) !important;
+  border: 1px solid var(--wb-border2) !important;
+  color: var(--wb-dim) !important;
+}
+.btn-amber:hover, .btn-blue:hover, .btn-green:hover, .btn-dim:hover, .btn-red:hover,
+[class*="export"]:hover, [class*="save"]:hover {
+  background: var(--wb-border) !important;
+  border-color: var(--wb-border3) !important;
+  color: var(--wb-bright) !important;
+}
+.btn.primary, [class*="btn primary"], .btn-accent {
+  background: var(--wb-accent-bg) !important;
+  border: 1px solid var(--wb-accent-line) !important;
+  color: var(--wb-accent) !important;
+}
+
+/* ── Page headers ── */
+.header, .hdr, [class*="topbar"] {
+  background: var(--wb-panel) !important;
+  border-bottom: 1px solid var(--wb-border) !important;
+}
+.header h1, .hdr h1, header h1 {
+  font-family: var(--wb-sans) !important;
+  color: var(--wb-bright) !important;
+  letter-spacing: .01em !important;
+  text-shadow: none !important;
+}
+.header .desc, .header .sub, .hdr .sub, .header .subtitle { color: var(--wb-muted) !important; letter-spacing: .03em !important; }
+.header .method { background: none !important; border: none !important; padding: 0 !important; color: var(--wb-muted) !important; }
+
+/* ── Results / values ── */
+.result-val, .res-val, .big-val, .v { color: var(--wb-bright) !important; }
+.result-label, .res-label, .big-label, .form-label, .row-label, .lbl, .l, .fl {
+  color: var(--wb-dim) !important;
+  font-family: var(--wb-sans) !important;
+}
+
+/* ── Tables ── */
+table { border-collapse: collapse !important; }
+thead th {
+  font-family: var(--wb-sans) !important;
+  font-size: 10px !important; font-weight: 600 !important;
+  color: var(--wb-dim) !important;
+  letter-spacing: .03em !important;
+  border-bottom: 1px solid var(--wb-border2) !important;
+  background: transparent !important;
+}
+tbody td { border-bottom: 1px solid var(--wb-border) !important; font-size: 11px !important; }
+tbody tr:hover { background: var(--wb-surface2) !important; }
+
+/* ── Notes / hints ── */
+.note, .note-box, .info-box, .hint, .method, .fnote {
+  background: var(--wb-panel) !important;
+  border: 1px solid var(--wb-border) !important;
+  border-radius: 8px !important;
+  color: var(--wb-dim) !important;
+}
+.input-row .hint { background: none !important; border: none !important; color: var(--wb-muted) !important; }
+.danger-box { background: var(--wb-bad-bg) !important; border: 1px solid var(--wb-bad-line) !important; color: var(--wb-bad) !important; }
+.warn-box { background: var(--wb-warn-bg) !important; border: 1px solid var(--wb-warn-line) !important; color: var(--wb-warn) !important; }
+.divider, hr { border-color: var(--wb-border) !important; background: var(--wb-border) !important; }
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px !important; height: 6px !important; }
+::-webkit-scrollbar-track { background: var(--wb-bg) !important; }
+::-webkit-scrollbar-thumb { background: var(--wb-border2) !important; border-radius: 3px !important; }
+
+/* ── Chips / pills ── */
+.chip, .tag, .pill-bar, [class*="quick-btn"], [class*="fit-type-badge"] {
+  font-family: var(--wb-sans) !important;
+  border-radius: var(--wb-radius-s) !important;
+}
+
+canvas { border-radius: 8px !important; }
+svg text { font-family: var(--wb-mono) !important; }
+.grid-main, .grid-2, .grid-3, .g2, .grid3, .main-grid, .dgrid { gap: 12px !important; }
+.knob { border-radius: 12px !important; }
+.modal-overlay, .modal { backdrop-filter: blur(6px) !important; }
+.modal { background: var(--wb-surface) !important; border: 1px solid var(--wb-border) !important; border-radius: 12px !important; }
+
+/* ══ Shared components ════════════════════════════════════════════ */
+
+/* Verdict strip — the answer, first */
+.wb-verdict { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 12px; }
+.wb-tile {
+  background: var(--wb-surface); border: 1px solid var(--wb-border); border-radius: var(--wb-radius);
+  padding: 11px 14px 12px; min-width: 0; border-left-width: 3px;
+}
+.wb-tile .k { font-size: 11px; font-weight: 600; color: var(--wb-dim); letter-spacing: .02em; }
+.wb-tile .n { font-family: var(--wb-mono); font-size: 24px; font-weight: 600; color: var(--wb-bright); line-height: 1.15; margin-top: 4px; font-variant-numeric: tabular-nums; }
+.wb-tile .n small { font-size: 12px; font-weight: 500; color: var(--wb-dim); margin-left: 3px; }
+.wb-tile .s { font-size: 11px; color: var(--wb-muted); margin-top: 3px; line-height: 1.4; }
+.wb-tile.good { border-left-color: var(--wb-good); } .wb-tile.good .n { color: var(--wb-good); }
+.wb-tile.warn { border-left-color: var(--wb-warn); } .wb-tile.warn .n { color: var(--wb-warn); }
+.wb-tile.bad  { border-left-color: var(--wb-bad);  } .wb-tile.bad .n  { color: var(--wb-bad); }
+.wb-tile.na   { border-left-color: var(--wb-border2); } .wb-tile.na .n { color: var(--wb-muted); }
+
+/* Status text */
+.wb-good { color: var(--wb-good) !important; } .wb-warn { color: var(--wb-warn) !important; }
+.wb-bad { color: var(--wb-bad) !important; } .wb-na { color: var(--wb-muted) !important; }
+
+/* Messages — errors, warnings, notes */
+.wb-msgs { display: grid; gap: 6px; margin-bottom: 12px; }
+.wb-msg {
+  display: grid; grid-template-columns: 62px 1fr; gap: 10px; align-items: baseline;
+  padding: 8px 12px; border-radius: 8px; font-size: 12px; line-height: 1.5;
+  border: 1px solid var(--wb-border); background: var(--wb-panel); color: var(--wb-text);
+}
+.wb-msg .lv { font-size: 10px; font-weight: 700; letter-spacing: .04em; }
+.wb-msg.err  { border-color: var(--wb-bad-line);  background: var(--wb-bad-bg); }  .wb-msg.err .lv  { color: var(--wb-bad); }
+.wb-msg.warn { border-color: var(--wb-warn-line); background: var(--wb-warn-bg); } .wb-msg.warn .lv { color: var(--wb-warn); }
+.wb-msg.info .lv { color: var(--wb-accent2); }
+
+/* Print header — hidden on screen */
+.wb-print-head { display: none; }
+
+/* ── Workbook navigation / CAD image / PDF button (all calculators) ── */
+.wb-back {
+  position: fixed; top: 12px; left: 12px; z-index: 9998;
+  padding: 7px 14px; border-radius: 8px; font-size: 12px; font-weight: 600;
+  font-family: var(--wb-sans); background: var(--wb-panel); border: 1px solid var(--wb-border);
+  color: var(--wb-dim); cursor: pointer; text-decoration: none;
+  display: flex; align-items: center; gap: 6px; transition: all .15s;
+}
+.wb-back:hover { color: var(--wb-bright); border-color: var(--wb-accent-line); background: var(--wb-surface); }
+
+.cad-zone { border: 1.5px dashed var(--wb-border2); border-radius: 10px; padding: 16px; text-align: center; cursor: pointer; transition: all .2s; position: relative; background: rgba(0,0,0,.12); }
+.cad-zone:hover { border-color: var(--wb-muted); background: rgba(0,0,0,.2); }
+.cad-zone.has-img { border: 1px solid var(--wb-border); padding: 4px; background: transparent; }
+.cad-thumb { max-width: 100%; max-height: 140px; border-radius: 6px; cursor: pointer; display: block; margin: 0 auto; }
+.cad-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.92); z-index: 99999; display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: 0; pointer-events: none; transition: opacity .25s; }
+.cad-overlay.show { opacity: 1; pointer-events: auto; }
+.cad-overlay img { max-width: 92vw; max-height: 92vh; border-radius: 10px; box-shadow: 0 8px 60px rgba(0,0,0,.5); }
+.cad-rm { position: absolute; top: 6px; right: 8px; background: rgba(180,50,50,.75); color: #fff; border: none; border-radius: 6px; font-size: 10px; padding: 3px 9px; cursor: pointer; z-index: 2; }
+.cad-rm:hover { background: rgba(210,60,60,.95); }
+
+.pdf-btn {
+  position: fixed; bottom: 14px; right: 14px; z-index: 9998; padding: 8px 16px; border-radius: 8px;
+  font-size: 11px; font-weight: 600; border: 1px solid var(--wb-border2); background: var(--wb-panel);
+  color: var(--wb-dim); cursor: pointer; font-family: var(--wb-sans);
+  display: flex; align-items: center; gap: 6px; transition: all .15s;
+}
+.pdf-btn:hover { color: var(--wb-bright); border-color: var(--wb-accent-line); }
+/* Inside the workbook the frame bar carries Back and Print */
+.wb-embed .wb-back, .wb-embed .pdf-btn { display: none !important; }
+
+/* ── Small screens ── */
+@media (max-width: 700px) {
+  html, body { max-width: 100%; overflow-x: hidden; }
+  /* never float over the inputs */
+  .pdf-btn { position: static; margin: 16px auto 20px; justify-content: center; width: max-content; }
+}
+
+/* ══ Print layout ═════════════════════════════════════════════════
+   Light theme, A4, one header carrying project / title / date.
+   Tokens are switched, so every calculator follows. */
+@media print {
+  :root {
+    --wb-bg: #ffffff; --wb-panel: #ffffff; --wb-surface: #ffffff; --wb-surface2: #f3f3f6;
+    --wb-border: #cfcfd6; --wb-border2: #b9b9c2; --wb-border3: #9a9aa5;
+    --wb-text: #1d1d22; --wb-bright: #000000; --wb-dim: #45454d; --wb-muted: #5e5e68;
+    --wb-accent: #2c4bc9; --wb-accent2: #2c4bc9;
+    --wb-accent-bg: rgba(44,75,201,.07); --wb-accent-line: rgba(44,75,201,.35);
+    --wb-good: #17743f; --wb-warn: #946000; --wb-bad: #b3261e;
+    --wb-good-bg: rgba(23,116,63,.08); --wb-warn-bg: rgba(148,96,0,.08); --wb-bad-bg: rgba(179,38,30,.07);
+    --wb-good-line: rgba(23,116,63,.4); --wb-warn-line: rgba(148,96,0,.4); --wb-bad-line: rgba(179,38,30,.4);
+    --wb-hub: #2c4bc9; --wb-shaft: #946000;
+  }
+  @page { size: A4; margin: 12mm 11mm 13mm; }
+  html, body { background: #fff !important; }
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; box-shadow: none !important; text-shadow: none !important; animation: none !important; }
+
+  .wb-print-head {
+    display: flex; justify-content: space-between; align-items: flex-end; gap: 16px;
+    border-bottom: 1.5pt solid #000; padding-bottom: 6pt; margin-bottom: 10pt;
+    font-family: var(--wb-sans); color: #000;
+  }
+  .wb-ph-title { font-size: 15pt; font-weight: 700; line-height: 1.2; }
+  .wb-ph-sub { font-size: 9pt; color: #45454d; margin-top: 2pt; }
+  .wb-ph-meta { font-size: 8.5pt; color: #45454d; text-align: right; line-height: 1.45; white-space: nowrap; }
+
+  /* screen-only chrome */
+  .wb-back, .pdf-btn, .cad-overlay, .no-print, .wb-no-print,
+  .cad-zone:not(.has-img), .cad-rm,
+  .toolbar, .unit-toggle, .threshold-btns, .toggle-wrap, .preset-row, .quick-row { display: none !important; }
+  /* an empty CAD-reference card prints as nothing */
+  .card:has(> .cad-zone:not(.has-img)), .sec:has(> .cad-zone:not(.has-img)), .fld:has(> .cad-zone:not(.has-img)) { display: none !important; }
+  /* each calculator's own screen header is replaced by the print header */
+  .wb-legacy-head { display: none !important; }
+
+  .card, .panel, .sec, .wb-tile, .wb-msg, [class*="big-card"], table, svg, canvas, .rc { break-inside: avoid; }
+  .card, .panel, .sec, [class*="big-card"] { background: #fff !important; }
+  input, select, textarea { background: #fff !important; }
+  select { background-image: none !important; padding-right: 8px !important; }
+  a { color: inherit; text-decoration: none; }
+}

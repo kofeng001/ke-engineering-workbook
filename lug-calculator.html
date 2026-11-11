@@ -139,284 +139,65 @@ textarea:focus { border-color: var(--border-focus); }
 .toggle-switch .knob { position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; background: var(--text-muted); border-radius: 50%; transition: all .2s; }
 .toggle-switch.on .knob { left: 18px; background: var(--accent-green); }
 
+/* readability + shared palette */
+.mat-props { font-size: 11.5px; } .mat-props .val { color: var(--wb-bright); }
+.calc-detail { font-size: 11.5px; color: var(--wb-dim); } .calc-detail .section-head { color: var(--wb-accent2); }
+.input-row .hint { font-size: 11px; } .geom-note { font-size: 10.5px; } .rf-bar-pallow { font-size: 11px; }
+.fail-footer .desc { font-size: 11px; color: var(--wb-dim); }
+.fail-card { background: var(--wb-panel); } .fail-card.safe { border: 1px solid var(--wb-border); } .fail-card.critical { border: 1px solid var(--wb-bad-line); }
+.unit-toggle button.active { background: var(--wb-accent-bg); color: var(--wb-accent2); }
+.toggle-switch.on { background: var(--wb-accent-line); } .toggle-switch.on .knob { background: var(--wb-accent); } .toggle-label.active { color: var(--wb-accent2); }
+.header h1 { font-size: 17px; letter-spacing: 0; } .header .subtitle { font-size: 12px; } .header .method { font-size: 11.5px; }
+.wb-embed .header { display: none; }
+#rightCol.invalid .card:not(#summaryBanner) { display: none; }
+#geomWarn .wb-msg { grid-template-columns: 1fr; }
 @media print {
+  .container { padding: 0 !important; max-width: none !important; }
+  .grid-main { grid-template-columns: 74mm 1fr !important; gap: 5mm !important; }
+  .input-row input[type=number], .input-row input[type=text] { max-width: 76px !important; }
+  .input-row .hint { white-space: nowrap; }
+  .rf-value { color: #111 !important; font-weight: 700; }
+  .card { padding: 9pt; } .card + .card { margin-top: 6pt; }
+  #lugCanvas { max-height: 62mm; object-fit: contain; }
   body { background: #fff !important; color: #000 !important; }
   .toolbar, .unit-toggle, .btn, .threshold-btns, .no-print, .toggle-wrap { display: none !important; }
   .card { border-color: #ccc !important; background: #fafafa !important; page-break-inside: avoid; }
   .header { background: #f0f0f0 !important; border-color: #ccc !important; }
   .header h1, .header .subtitle { color: #222 !important; text-shadow: none !important; }
 }
-
-/* ══════════════════════════════════════════════════════════════════
-   ENGINEERING WORKBOOK · UNIFIED DESIGN SYSTEM
-   Greyscale + single accent (#6B8AFF) · Inter + JetBrains Mono
-   ══════════════════════════════════════════════════════════════════ */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
-
-:root {
-  /* ── Master palette ── */
-  --bg:#18181b !important; --bg2:#18181b !important; --bg3:#1e1e22 !important; --bg4:#222226 !important;
-  --panel:#1e1e22 !important; --surface:#222226 !important; --surface2:#2a2a2f !important;
-  --s2:#2a2a2f !important;
-  --border:#313138 !important; --border2:#3c3c44 !important; --border-focus:#6B8AFF !important;
-  --text:#d1d1d6 !important; --text2:#d1d1d6 !important; --text3:#6e6e78 !important;
-  --bright:#eeeef1 !important; --dim:#8c8c96 !important; --muted:#5a5a64 !important;
-  --accent:#6B8AFF !important; --accent2:#8aa4ff !important;
-  --a2:#8aa4ff !important; --ag:rgba(107,138,255,.10) !important; --a2g:rgba(138,164,255,.10) !important;
-  --good:#4aba78 !important; --warn:#d4993a !important; --danger:#d45050 !important;
-  --r:#d45050 !important; --rs:rgba(212,80,80,.12) !important;
-  --info:#6B8AFF !important; --blue:#6B8AFF !important; --green:#4aba78 !important;
-  --orange:#d4993a !important; --yellow:#d4993a !important; --red:#d45050 !important;
-  --cyan:#6B8AFF !important; --purple:#8c8c96 !important; --wg:rgba(212,153,58,.10) !important;
-
-  /* Lug-specific vars */
-  --bg-deep:#18181b !important; --bg-card:#222226 !important; --bg-input:#1e1e22 !important;
-  --text-primary:#eeeef1 !important; --text-secondary:#d1d1d6 !important;
-  --text-dim:#8c8c96 !important; --text-faint:#5a5a64 !important; --text-muted:#6e6e78 !important;
-  --accent-amber:#d4993a !important; --accent-green:#4aba78 !important;
-
-  /* Fonts */
-  --sans:'Inter',-apple-system,'SF Pro Display',system-ui,sans-serif !important;
-  --mono:'JetBrains Mono',ui-monospace,'SF Mono',monospace !important;
-}
-
-/* ── Global resets ── */
-body {
-  font-family: 'Inter',-apple-system,'SF Pro Display',system-ui,sans-serif !important;
-  background: #18181b !important;
-  color: #d1d1d6 !important;
-  -webkit-font-smoothing: antialiased !important;
-  background-image: none !important;
-}
-body::before { background-image: none !important; content: none !important; }
-
-/* ── Typography ── */
-h1,h2,h3,h4,h5,h6 { font-family: 'Inter',-apple-system,system-ui,sans-serif !important; }
-code, pre, .mono, [class*="result-val"], [class*="big-val"], [class*="res-val"],
-.v, .badge, .dt, .psz, td { font-family: 'JetBrains Mono',ui-monospace,monospace !important; }
-
-/* ── Cards / Panels ── */
-.card, .panel, .sec, [class*="big-card"] {
-  background: #222226 !important;
-  border: 1px solid #313138 !important;
-  border-radius: 10px !important;
-}
-.card-title, .card-label, .panel-title, [class*="card-title"], .pt, .chdr,
-[class*="pt"] > span {
-  font-family: 'Inter',-apple-system,system-ui,sans-serif !important;
-  font-size: 10px !important; font-weight: 600 !important;
-  color: #6e6e78 !important; text-transform: uppercase !important;
-  letter-spacing: 0.07em !important;
-}
-
-/* ── Inputs ── */
-input[type="number"], input[type="text"], select, textarea {
-  background: #1e1e22 !important;
-  border: 1px solid #3c3c44 !important;
-  border-radius: 6px !important;
-  color: #eeeef1 !important;
-  font-family: 'JetBrains Mono',ui-monospace,monospace !important;
-  transition: border-color .15s !important;
-}
-input:focus, select:focus, textarea:focus {
-  border-color: #6B8AFF !important;
-  outline: none !important;
-}
-select {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236e6e78'/%3E%3C/svg%3E") !important;
-  background-repeat: no-repeat !important;
-  background-position: right 8px center !important;
-}
-
-/* ── Buttons ── */
-button, .btn, [class*="btn"] {
-  font-family: 'Inter',-apple-system,system-ui,sans-serif !important;
-  border-radius: 6px !important;
-  transition: all .12s !important;
-}
-.btn-amber, .btn-blue, .btn-green, .btn-red, .btn-dim,
-[class*="export"], [class*="save"] {
-  background: #2a2a2f !important;
-  border: 1px solid #3c3c44 !important;
-  color: #8c8c96 !important;
-}
-.btn-amber:hover, .btn-blue:hover, .btn-green:hover, .btn-dim:hover,
-[class*="export"]:hover, [class*="save"]:hover {
-  background: #313138 !important;
-  border-color: #4a4a54 !important;
-  color: #d1d1d6 !important;
-}
-/* Active/primary buttons get the accent */
-.btn.primary, [class*="btn primary"], .btn-accent {
-  background: rgba(107,138,255,.10) !important;
-  border: 1px solid rgba(107,138,255,.28) !important;
-  color: #6B8AFF !important;
-}
-
-/* ── Headers ── */
-.header, .hdr, [class*="topbar"] {
-  background: #1e1e22 !important;
-  border-bottom: 1px solid #313138 !important;
-}
-.header h1, .hdr h1 {
-  font-family: 'Inter',-apple-system,system-ui,sans-serif !important;
-  color: #eeeef1 !important;
-}
-.header .desc, .header .sub, .hdr .sub {
-  color: #6e6e78 !important;
-}
-
-/* ── Results / values ── */
-.result-val, .res-val, .big-val, .v, .badge {
-  color: #eeeef1 !important;
-}
-.result-label, .res-label, .big-label, .form-label, .row-label, .lbl, .l, .fl {
-  color: #8c8c96 !important;
-  font-family: 'Inter',-apple-system,system-ui,sans-serif !important;
-}
-.result-unit, .res-unit, .big-unit, .form-unit, .funit, .fu {
-  color: #5a5a64 !important;
-  font-family: 'JetBrains Mono',ui-monospace,monospace !important;
-}
-
-/* ── Tables ── */
-table { border-collapse: collapse !important; }
-thead th {
-  font-family: 'Inter',-apple-system,system-ui,sans-serif !important;
-  font-size: 9px !important; font-weight: 600 !important;
-  color: #6e6e78 !important; text-transform: uppercase !important;
-  letter-spacing: .06em !important;
-  border-bottom: 1px solid #3c3c44 !important;
-  background: transparent !important;
-}
-tbody td {
-  border-bottom: 1px solid #27272c !important;
-  font-size: 11px !important;
-}
-tbody tr:hover { background: #2a2a2f !important; }
-
-/* ── Notes / hints / info boxes ── */
-.note, .note-box, .info-box, .hint, .method, .fnote {
-  background: #1e1e22 !important;
-  border: 1px solid #313138 !important;
-  border-radius: 8px !important;
-  color: #8c8c96 !important;
-}
-.danger-box {
-  background: rgba(212,80,80,.06) !important;
-  border: 1px solid rgba(212,80,80,.2) !important;
-}
-
-/* ── Dividers ── */
-.divider, hr {
-  border-color: #313138 !important;
-  background: #313138 !important;
-}
-
-/* ── Scrollbar ── */
-::-webkit-scrollbar { width: 5px !important; }
-::-webkit-scrollbar-track { background: #18181b !important; }
-::-webkit-scrollbar-thumb { background: #3c3c44 !important; border-radius: 3px !important; }
-
-/* ── Pill/chip elements ── */
-.chip, .tag, .pill-bar, [class*="quick-btn"], [class*="fit-type-badge"] {
-  font-family: 'Inter',-apple-system,system-ui,sans-serif !important;
-  border-radius: 6px !important;
-}
-
-/* ── Number formatting ── */
-input[type=number] { -moz-appearance: textfield !important; }
-input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none !important; }
-
-/* ── Canvas containers ── */
-canvas {
-  border-radius: 8px !important;
-}
-
-/* ── SVG diagrams ── */
-svg text {
-  font-family: 'JetBrains Mono',ui-monospace,monospace !important;
-}
-
-/* ── Grid containers ── */
-.grid-main, .grid-2, .grid-3, .g2, .grid3, .main-grid, .dgrid {
-  gap: 12px !important;
-}
-
-/* ── Toggle / knob switches ── */
-.knob { border-radius: 12px !important; }
-
-/* ── Modal overlays ── */
-.modal-overlay, .modal {
-  backdrop-filter: blur(6px) !important;
-}
-.modal {
-  background: #222226 !important;
-  border: 1px solid #313138 !important;
-  border-radius: 12px !important;
-}
-
-/* ── Workbook nav ── */
-.wb-back {
-  position: fixed; top: 12px; left: 12px; z-index: 9998;
-  padding: 7px 14px; border-radius: 8px; font-size: 12px; font-weight: 600;
-  font-family: 'Inter',-apple-system,system-ui,sans-serif;
-  background: #1e1e22; border: 1px solid #313138;
-  color: #8c8c96; cursor: pointer; text-decoration: none;
-  display: flex; align-items: center; gap: 6px;
-  transition: all .15s; backdrop-filter: blur(8px);
-}
-.wb-back:hover { color: #eeeef1; border-color: rgba(107,138,255,.3); background: #222226; }
-
-/* ── CAD image ── */
-.cad-zone { border: 1.5px dashed #3c3c44; border-radius: 10px; padding: 16px; text-align: center; cursor: pointer; transition: all .2s; position: relative; background: rgba(0,0,0,.12) }
-.cad-zone:hover { border-color: #5a5a64; background: rgba(0,0,0,.2) }
-.cad-zone.has-img { border: 1px solid #313138; padding: 4px; background: transparent }
-.cad-thumb { max-width: 100%; max-height: 140px; border-radius: 6px; cursor: pointer; display: block; margin: 0 auto }
-.cad-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.92); z-index: 99999; display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: 0; pointer-events: none; transition: opacity .25s }
-.cad-overlay.show { opacity: 1; pointer-events: auto }
-.cad-overlay img { max-width: 92vw; max-height: 92vh; border-radius: 10px; box-shadow: 0 8px 60px rgba(0,0,0,.5) }
-.cad-rm { position: absolute; top: 6px; right: 8px; background: rgba(180,50,50,.7); color: #fff; border: none; border-radius: 6px; font-size: 10px; padding: 3px 9px; cursor: pointer; z-index: 2 }
-.cad-rm:hover { background: rgba(210,60,60,.9) }
-
-/* ── PDF save ── */
-.pdf-btn { position: fixed; bottom: 14px; right: 14px; z-index: 9998; padding: 8px 16px; border-radius: 8px; font-size: 11px; font-weight: 600; border: 1px solid #313138; background: #1e1e22; color: #8c8c96; cursor: pointer; font-family: 'Inter',-apple-system,system-ui,sans-serif; display: flex; align-items: center; gap: 6px; transition: all .15s; backdrop-filter: blur(8px) }
-.pdf-btn:hover { color: #eeeef1; border-color: rgba(107,138,255,.3) }
-
-@media print { .wb-back, .pdf-btn, .cad-overlay { display: none !important; } }
 </style>
+<link rel="stylesheet" href="wb-ui.css">
 </head>
 <body>
 
-<div class="header">
-  <h1>◈ LUG ANALYSIS</h1>
-  <span class="subtitle">AXIAL LOAD · STATIC STRENGTH</span>
-  <div class="method">Bearing · Net Tension · Shear-Out · Hoop Tension — per Bruhn/Niu methodology</div>
+<div class="header wb-legacy-head">
+  <h1>Lug Analysis</h1>
+  <span class="subtitle">Axial load · static strength</span>
+  <div class="method">Bearing · net tension · shear-out · hoop tension — simplified Bruhn / Niu method, ultimate allowables</div>
 </div>
 
 <div class="container">
   <div class="toolbar">
     <div class="unit-toggle" id="unitToggle">
-      <button class="active" data-metric="false" onclick="setUnit(false)">IMPERIAL<small>lbs · in · ksi</small></button>
-      <button data-metric="true" onclick="setUnit(true)">METRIC<small>N · mm · MPa</small></button>
+      <button data-metric="false" onclick="setUnit(false)">Imperial<small>lbs · in · ksi</small></button>
+      <button class="active" data-metric="true" onclick="setUnit(true)">Metric<small>N · mm · MPa</small></button>
     </div>
     <div class="spacer"></div>
-    <button class="btn btn-blue" onclick="saveHTML()">💾 SAVE</button>
-    <button class="btn btn-amber" onclick="saveAsPDF()">⬇ SAVE AS PDF</button>
-    <button class="btn btn-red" onclick="resetAll()">↺ RESET</button>
+    <button class="btn btn-amber" onclick="WB.print()">Print / PDF</button>
+    <button class="btn btn-red" onclick="resetAll()">Reset</button>
   </div>
 
   <div class="grid-main">
     <!-- LEFT COLUMN -->
     <div id="leftCol">
       <div class="card">
-        <div class="card-label">MATERIAL</div>
+        <div class="card-label">Material</div>
         <select id="matSelect" onchange="recalc()"></select>
         <div class="mat-props" id="matProps"></div>
       </div>
 
       <div class="card">
-        <div class="card-label">GEOMETRY & LOAD</div>
+        <div class="card-label">Geometry and load</div>
         <div class="input-row"><label>P</label><input type="number" id="inP" min="0" step="100" oninput="recalc()"><span class="suffix" id="sfP">lbs</span><span class="hint">Applied load</span></div>
         <div class="input-row"><label>W</label><input type="number" id="inW" min="0" step="0.01" oninput="onWChange()"><span class="suffix" id="sfW">in</span><span class="hint">Lug width</span></div>
         <div class="input-row"><label>D</label><input type="number" id="inD" min="0" step="0.01" oninput="recalc()"><span class="suffix" id="sfD">in</span><span class="hint">Hole diameter</span></div>
@@ -429,15 +210,15 @@ svg text {
         <div class="input-row"><label>e</label><input type="number" id="inE" min="0" step="0.01" oninput="recalc()" disabled><span class="suffix" id="sfE">in</span><span class="hint">Edge distance</span></div>
 
         <div class="input-row"><label>t</label><input type="number" id="inT" min="0" step="0.01" oninput="recalc()"><span class="suffix" id="sfT">in</span><span class="hint">Thickness</span></div>
-        <div id="geomWarn" style="display:none;margin-top:8px;padding:6px 10px;background:rgba(255,60,40,.1);border:1px solid rgba(255,60,40,.3);border-radius:4px;font-size:.71rem;color:#ff6040;font-family:var(--mono);">⚠ Invalid geometry — check D &lt; W, D/2 &lt; e, all values &gt; 0</div>
+        <div id="geomWarn" class="wb-msgs" style="display:none;margin-top:10px;margin-bottom:0"></div>
       </div>
 
       <div class="card">
-        <div class="card-label">CAD REFERENCE</div>
+        <div class="card-label">CAD reference</div>
         <div id="lugCadZone" class="cad-zone"></div>
       </div>
       <div class="card">
-        <div class="card-label">LUG GEOMETRY — ISOMETRIC VIEW</div>
+        <div class="card-label">Lug geometry</div>
         <canvas id="lugCanvas" width="640" height="500" style="width:100%;border-radius:4px;"></canvas>
         <div class="geom-note">Isometric projection · Dimensions auto-scale · Load direction shown as red vector</div>
       </div>
@@ -447,20 +228,20 @@ svg text {
     <div id="rightCol">
       <div class="card summary-banner" id="summaryBanner"></div>
       <div class="card">
-        <div class="card-label">RESERVE FACTORS</div>
+        <div class="card-label">Reserve factors</div>
         <div id="rfBars"></div>
         <div id="rfLegend" style="display:flex;gap:16px;margin-top:6px;font-size:.64rem;color:var(--text-dim);font-family:var(--mono);"></div>
       </div>
       <div class="card">
-        <div class="card-label">FAILURE MODE DIAGRAMS</div>
+        <div class="card-label">Failure modes</div>
         <div class="fail-grid" id="failGrid"></div>
       </div>
       <div class="card">
-        <div class="card-label">CALCULATION DETAIL</div>
+        <div class="card-label">Calculation detail</div>
         <div class="calc-detail" id="calcDetail"></div>
       </div>
-      <div style="font-size:.64rem;color:var(--text-faint);font-family:var(--mono);line-height:1.6;padding:0 4px;margin-top:8px;">
-        <span style="color:var(--text-dim);">NOTE:</span> Axial loading only. Simplified K<sub>t</sub>, K<sub>h</sub> factors per Bruhn Ch. D1.9 / Niu Ch. 9. Shear-out uses standard two-plane tear-out area with no additional efficiency knock-down. Does not include pin bending, transverse loading, fatigue, bushing effects, or oblique load corrections. All allowables are ultimate.
+      <div style="font-size:11px;color:var(--wb-muted);line-height:1.6;padding:0 4px;margin-top:10px;">
+        <span style="color:var(--text-dim);">Note:</span> Axial loading only. Simplified K<sub>t</sub>, K<sub>h</sub> factors after Bruhn Ch. D1.9 / Niu Ch. 9. <b>K<sub>t</sub> evaluates to 1.0 for every valid geometry (D &lt; W), so no net-section efficiency knock-down is applied</b> — net tension is the plain net-area value. Shear-out uses the two-plane tear-out area with no efficiency knock-down. Does not include pin bending, transverse loading, fatigue, bushing effects, or oblique load corrections. All allowables are ultimate.
       </div>
     </div>
   </div>
@@ -471,6 +252,7 @@ svg text {
 <!-- Embedded saved state (populated by Save HTML) -->
 <script id="savedState" type="application/json"></script>
 
+<script src="wb-common.js"></script>
 <script>
 /* ═══════════════════════════════════════════════
    DATA — materials sourced from workbook (single source of truth)
@@ -503,9 +285,8 @@ const STOCK_MATERIALS = loadWorkbookMatsKsi() || _LUG_FALLBACK;
 const LB_TO_N = 4.44822, IN_TO_MM = 25.4, KSI_TO_MPA = 6.89476;
 
 // RF thresholds inherited from workbook (query string) — colour coding only
-const _lugP = new URLSearchParams(location.search);
-const _RF_CRIT = (function(){var v=parseFloat(_lugP.get('rfCrit'));return isFinite(v)&&v>0?v:1.0})();
-const _RF_OPT  = (function(){var v=parseFloat(_lugP.get('rfOpt'));return isFinite(v)&&v>0?v:1.5})();
+WB.initPage({ slug: 'lug', name: 'Lug analysis' });
+const _RF_CRIT = WB.rfCrit, _RF_OPT = WB.rfOpt;
 
 let state = {
   matIdx: 0, P: 5000, W: 1.5, D: 0.5, e: 0.75, t: 0.375,
@@ -531,7 +312,7 @@ function fmt(v) { if(!isFinite(v)) return '—'; if(v>=1e5) return v.toFixed(0);
 function fmtRf(v) { return (isFinite(v)&&v>0)?v.toFixed(2):'—'; }
 function fmtF(v) { return fmt(state.isMetric?v*LB_TO_N:v); }
 function fmtA(v) { const a=state.isMetric?v*IN_TO_MM*IN_TO_MM:v; return a.toFixed(state.isMetric?1:4); }
-function rfCol(rf) { if(!isFinite(rf)||rf<=0) return '#888'; if(rf<_RF_CRIT) return '#ff3030'; if(rf<_RF_OPT) return '#e0a030'; return '#40c040'; }
+function rfCol(rf) { if(!isFinite(rf)||rf<=0) return '#85858f'; if(rf<_RF_CRIT) return '#e05c5c'; if(rf<_RF_OPT) return '#d4993a'; return '#4aba78'; }
 
 /* ═══════════════════════════════════════════════
    UNIT TOGGLE
@@ -617,7 +398,30 @@ function readInputs() {
   else state.e = state.W / 2;
   state.t = fromLen(parseFloat(document.getElementById('inT').value)||0);
   state.safeRf = _RF_OPT;
-  state.matIdx = parseInt(document.getElementById('matSelect').value)||0;
+  const mv = parseInt(document.getElementById('matSelect').value);
+  if (mv >= 0) {
+    state.matIdx = mv;
+    if (state.matMissing) { state.matMissing = null; const ph = document.querySelector('#matSelect option[value="-1"]'); if (ph) ph.remove(); }
+  }
+}
+
+// Everything that stops a result being meaningful, in plain words
+function inputProblems(m) {
+  const {P,W,D,e,t} = state, out = [];
+  if (state.matMissing) out.push('Material "' + state.matMissing + '" is no longer in the workbook materials — choose a material.');
+  else {
+    const gaps = [];
+    if (!(m.Ftu > 0)) gaps.push('Ftu'); if (!(m.Fsu > 0)) gaps.push('Fsu'); if (!(m.Fbru > 0)) gaps.push('Fbru');
+    if (gaps.length) out.push('Material "' + m.name + '" has no ' + gaps.join(', ') + ' in the workbook materials — add it there to continue.');
+  }
+  if (!(P > 0)) out.push('Applied load P must be greater than zero.');
+  if (!(W > 0)) out.push('Lug width W must be greater than zero.');
+  if (!(D > 0)) out.push('Hole diameter D must be greater than zero.');
+  if (!(t > 0)) out.push('Thickness t must be greater than zero.');
+  if (!(e > 0)) out.push('Edge distance e must be greater than zero.');
+  if (W > 0 && D > 0 && D >= W) out.push('Hole diameter D must be smaller than the lug width W.');
+  if (e > 0 && D > 0 && e <= D/2) out.push('Edge distance e must be more than half the hole diameter.');
+  return out;
 }
 
 /* ═══════════════════════════════════════════════
@@ -648,12 +452,12 @@ function calculate() {
 
   const rfs=[Rf_br,Rf_t,Rf_su,Rf_hp];
   const minRf=Math.min(...rfs);
-  const names=['Bearing','Net Tension','Shear-Out','Hoop Tension'];
+  const names=['Bearing','Net tension','Shear-out','Hoop tension'];
   return {
     bearing:{P:P_br,Rf:Rf_br}, tension:{P:P_t,Rf:Rf_t,Kt,A_net},
     shearout:{P:P_su,Rf:Rf_su,e_eff,A_sh}, hoop:{P:P_hp,Rf:Rf_hp,Kh,A_hp,R_o},
     minRf, crit:names[rfs.indexOf(minRf)],
-    valid: D<W && D/2<e && W>0 && D>0 && e>0 && t>0 && P>0
+    valid: true   // set by inputProblems() in recalc()
   };
 }
 
@@ -676,19 +480,30 @@ function recalc() {
     <span class="lbl">F<sub>bru</sub></span><span class="val">${state.isMetric?(m.Fbru*KSI_TO_MPA).toFixed(0):m.Fbru} ${stressU()}</span>
     <span class="lbl">E</span><span class="val">${state.isMetric?(m.E*KSI_TO_MPA/1000).toFixed(1):(m.E/1000).toFixed(1)} ${modU()}</span>`;
 
-  document.getElementById('geomWarn').style.display = r.valid?'none':'block';
+  // Input problems: say what is wrong, show no numbers, clear the workbook badge
+  const probs = inputProblems(m);
+  r.valid = probs.length === 0;
+  const gw = document.getElementById('geomWarn');
+  gw.style.display = r.valid ? 'none' : 'grid';
+  gw.innerHTML = probs.map(x => '<div class="wb-msg err"><span>' + WB.esc(x) + '</span></div>').join('');
+  document.getElementById('rightCol').classList.toggle('invalid', !r.valid);
+  WB.setTitle(WB.title || 'Lug analysis');
 
   // Summary banner
-  const sb=document.getElementById('summaryBanner'), mc=rfCol(r.minRf);
-  sb.style.background = r.minRf<1?'rgba(255,40,30,.12)':r.minRf<srf?'rgba(220,160,40,.1)':'rgba(60,160,60,.08)';
-  sb.style.border = `1px solid ${r.minRf<1?'rgba(255,40,30,.4)':r.minRf<srf?'rgba(220,160,40,.3)':'rgba(60,160,60,.2)'}`;
-  sb.innerHTML = `<div><div style="font-size:.64rem;letter-spacing:2px;color:var(--text-muted);font-family:var(--mono);font-weight:600;">CRITICAL MODE</div>
-    <div style="font-size:1.14rem;font-weight:700;color:${mc};font-family:var(--mono);margin-top:2px;">${r.minRf<1?'⚠ ':''}${r.crit}</div></div>
-    <div style="text-align:right;"><div style="font-size:.64rem;letter-spacing:2px;color:var(--text-muted);font-family:var(--mono);font-weight:600;">MINIMUM Rf</div>
-    <div style="font-size:2rem;font-weight:700;color:${mc};font-family:var(--mono);line-height:1.1;${r.minRf<1?'text-shadow:0 0 12px rgba(255,40,30,.4);':''}">${fmtRf(r.minRf)}</div></div>`;
+  const sb=document.getElementById('summaryBanner'), cls=r.valid?WB.rfClass(r.minRf):'na';
+  const mc={good:'var(--wb-good)',warn:'var(--wb-warn)',bad:'var(--wb-bad)',na:'var(--wb-muted)'}[cls];
+  sb.style.background = {good:'var(--wb-good-bg)',warn:'var(--wb-warn-bg)',bad:'var(--wb-bad-bg)',na:'var(--wb-panel)'}[cls];
+  sb.style.border = '1px solid ' + {good:'var(--wb-good-line)',warn:'var(--wb-warn-line)',bad:'var(--wb-bad-line)',na:'var(--wb-border)'}[cls];
+  sb.innerHTML = r.valid
+    ? `<div><div style="font-size:11px;color:var(--wb-dim);font-weight:600;">Critical mode</div>
+       <div style="font-size:16px;font-weight:700;color:${mc};margin-top:2px;">${r.crit}</div></div>
+       <div style="text-align:right;"><div style="font-size:11px;color:var(--wb-dim);font-weight:600;">Minimum RF</div>
+       <div style="font-size:28px;font-weight:700;color:${mc};font-family:var(--mono);line-height:1.1;">${fmtRf(r.minRf)}</div></div>`
+    : `<div><div style="font-size:11px;color:var(--wb-dim);font-weight:600;">No result</div>
+       <div style="font-size:14px;font-weight:600;color:var(--wb-text);margin-top:2px;">Fix the inputs flagged on the left</div></div>`;
 
   // Rf bars
-  const bars=[{l:'Bearing',Pa:r.bearing.P,Rf:r.bearing.Rf},{l:'Net Tension',Pa:r.tension.P,Rf:r.tension.Rf},{l:'Shear-Out',Pa:r.shearout.P,Rf:r.shearout.Rf},{l:'Hoop Tension',Pa:r.hoop.P,Rf:r.hoop.Rf}];
+  const bars=[{l:'Bearing',Pa:r.bearing.P,Rf:r.bearing.Rf},{l:'Net tension',Pa:r.tension.P,Rf:r.tension.Rf},{l:'Shear-out',Pa:r.shearout.P,Rf:r.shearout.Rf},{l:'Hoop tension',Pa:r.hoop.P,Rf:r.hoop.Rf}];
   document.getElementById('rfBars').innerHTML = bars.map(b=>{
     const pct=Math.min(100,Math.max(0,(b.Rf/(srf*2))*100)), c=rfCol(b.Rf), cr=isFinite(b.Rf)&&b.Rf<srf;
     return `<div class="rf-bar-wrap"><div class="rf-bar-header"><span class="rf-bar-label">${cr?'<span style="color:#ff4040;font-size:.92rem;line-height:1;">⚠</span>':''}${b.l}</span><span class="rf-bar-pallow">P<sub>allow</sub> = ${fmtF(b.Pa)} ${forceU()}</span></div>
@@ -698,13 +513,14 @@ function recalc() {
     <span class="rf-value" style="color:${c};">Rf = ${fmtRf(b.Rf)}</span></div></div>`;
   }).join('');
   document.getElementById('rfLegend').innerHTML = `<span><span style="display:inline-block;width:8px;height:8px;background:#ff303040;border:1px dashed #ff3030;border-radius:1px;margin-right:3px;vertical-align:middle;"></span>Rf=1.0</span>
-    <span><span style="display:inline-block;width:8px;height:8px;background:#40c04040;border:1px dashed #40c040;border-radius:1px;margin-right:3px;vertical-align:middle;"></span>Rf=${srf.toFixed(1)} (safe)</span>`;
+    <span><span style="display:inline-block;width:8px;height:8px;background:#40c04040;border:1px dashed #40c040;border-radius:1px;margin-right:3px;vertical-align:middle;"></span>Rf=${srf.toFixed(1)} (optimal)</span>`;
 
   renderFailDiagrams(r);
   renderCalcDetail(r, m);
   renderThresholdBtns();
   draw3DLug();
-  exportLugRF();
+  // Workbook badge: governing RF and its mode; removed when the inputs are invalid
+  if (r.valid) WB.setRF('lug', r.minRf, r.crit); else WB.clearRF('lug');
   _stQ();
 }
 
@@ -713,29 +529,29 @@ function recalc() {
    ═══════════════════════════════════════════════ */
 function renderFailDiagrams(r) {
   const modes=[
-    {key:'bearing',label:'BEARING',desc:'Crushing at pin contact zone',Rf:r.bearing.Rf},
-    {key:'tension',label:'NET TENSION',desc:'Fracture across net section',Rf:r.tension.Rf},
-    {key:'shearout',label:'SHEAR-OUT',desc:'Tear-out ahead of pin',Rf:r.shearout.Rf},
-    {key:'hoop',label:'HOOP TENSION',desc:'Radial tension around hole',Rf:r.hoop.Rf}
+    {key:'bearing',label:'Bearing',desc:'Crushing at pin contact zone',Rf:r.bearing.Rf},
+    {key:'tension',label:'Net tension',desc:'Fracture across net section',Rf:r.tension.Rf},
+    {key:'shearout',label:'Shear-out',desc:'Tear-out ahead of pin',Rf:r.shearout.Rf},
+    {key:'hoop',label:'Hoop tension',desc:'Radial tension around hole',Rf:r.hoop.Rf}
   ];
   document.getElementById('failGrid').innerHTML = modes.map(md=>{
-    const crit=isFinite(md.Rf)&&md.Rf<state.safeRf, cc=crit?'#ff4040':'#50c050';
+    const crit=isFinite(md.Rf)&&md.Rf<state.safeRf, cc=rfCol(md.Rf);
     return `<div class="fail-card ${crit?'critical':'safe'}">${crit?'<div class="pulse-top"></div>':''}
       <svg viewBox="0 0 220 155" style="width:100%;display:block;">
-        <defs><pattern id="h-${md.key}" patternUnits="userSpaceOnUse" width="5" height="5" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="5" stroke="#5a6a5a" stroke-width=".4" opacity=".3"/></pattern></defs>
+        <defs><pattern id="h-${md.key}" patternUnits="userSpaceOnUse" width="5" height="5" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="5" stroke="#85858f" stroke-width=".4" opacity=".3"/></pattern></defs>
         ${lugSVGPath(md.key)} ${failOverlay(md.key,cc,crit)} ${loadArrowUp()}
         <text x="110" y="145" text-anchor="middle" fill="${cc}" font-size="10" font-weight="bold" font-family="'JetBrains Mono',monospace" letter-spacing="1">${md.label}</text>
       </svg>
       <div class="fail-footer"><span class="desc">${md.desc}</span>
-        <span class="rf" style="color:${crit?'#ff4040':'#50c050'};">${crit?'<span style="font-size:1rem;">⚠</span>':''}Rf = ${fmtRf(md.Rf)}</span></div></div>`;
+        <span class="rf" style="color:${cc};">${crit?'<span style="font-size:1rem;">⚠</span>':''}Rf = ${fmtRf(md.Rf)}</span></div></div>`;
   }).join('');
 }
 
 function lugSVGPath(key) {
   const cx=110,cy=80,sw=100,se=60,r=28,ll=cx-sw/2,lr=cx+sw/2,lb=cy+35;
-  return `<path d="M${ll},${lb} L${ll},${cy} A${sw/2},${se} 0 0,1 ${lr},${cy} L${lr},${lb} Z" fill="#2a3a2a" stroke="#6a8a6a" stroke-width="1.2"/>
+  return `<path d="M${ll},${lb} L${ll},${cy} A${sw/2},${se} 0 0,1 ${lr},${cy} L${lr},${lb} Z" style="fill:var(--wb-surface2);stroke:var(--wb-muted)" stroke-width="1.2"/>
   <path d="M${ll},${lb} L${ll},${cy} A${sw/2},${se} 0 0,1 ${lr},${cy} L${lr},${lb} Z" fill="url(#h-${key})" opacity=".5"/>
-  <circle cx="${cx}" cy="${cy}" r="${r}" fill="#151a15" stroke="#6a8a6a" stroke-width=".8"/>`;
+  <circle cx="${cx}" cy="${cy}" r="${r}" style="fill:var(--wb-bg);stroke:var(--wb-muted)" stroke-width=".8"/>`;
 }
 
 function loadArrowUp() {
@@ -823,15 +639,15 @@ function renderCalcDetail(r, m) {
   document.getElementById('calcDetail').innerHTML = `
     <div class="section-head">▸ Bearing</div><div class="indent">
       P<sub>br</sub> = F<sub>bru</sub> × D × t = ${fbru_d} × ${Dd} × ${td} = <b>${fmtF(r.bearing.P)} ${fu}</b></div>
-    <div class="section-head">▸ Net Tension</div><div class="indent">
+    <div class="section-head">▸ Net tension</div><div class="indent">
       K<sub>t</sub> = min(1.0, (3 − D/W)/2) = <b>${r.tension.Kt.toFixed(3)}</b><br>
       A<sub>net</sub> = (W − D) × t = (${Wd} − ${Dd}) × ${td} = <b>${fmtA(r.tension.A_net)} ${au}</b><br>
       P<sub>t</sub> = K<sub>t</sub> × F<sub>tu</sub> × A<sub>net</sub> = <b>${fmtF(r.tension.P)} ${fu}</b></div>
-    <div class="section-head">▸ Shear-Out <span style="font-weight:400;color:var(--text-muted);font-size:.6rem;">(two-plane tear-out)</span></div><div class="indent">
+    <div class="section-head">▸ Shear-out <span style="font-weight:400;color:var(--text-muted);font-size:.6rem;">(two-plane tear-out)</span></div><div class="indent">
       e<sub>eff</sub> = e − D/2 = ${ed} − ${(toLen(state.D)/2).toFixed(ldp())} = <b>${toLen(r.shearout.e_eff).toFixed(ldp())} ${lu}</b><br>
       A<sub>shear</sub> = 2 × e<sub>eff</sub> × t = 2 × ${toLen(r.shearout.e_eff).toFixed(ldp())} × ${td} = <b>${fmtA(r.shearout.A_sh)} ${au}</b><br>
       P<sub>su</sub> = F<sub>su</sub> × A<sub>shear</sub> = ${fsu_d} × ${fmtA(r.shearout.A_sh)} = <b>${fmtF(r.shearout.P)} ${fu}</b></div>
-    <div class="section-head">▸ Hoop Tension</div><div class="indent">
+    <div class="section-head">▸ Hoop tension</div><div class="indent">
       R<sub>outer</sub> = min(W/2, e) = <b>${toLen(r.hoop.R_o).toFixed(ldp())} ${lu}</b><br>
       A<sub>hoop</sub> = (R<sub>outer</sub> − D/2) × t = <b>${fmtA(r.hoop.A_hp)} ${au}</b><br>
       K<sub>h</sub> = min(1.0, 0.56 + 0.56×(R<sub>outer</sub>/a − 1)) = <b>${r.hoop.Kh.toFixed(3)}</b><br>
@@ -850,7 +666,7 @@ function draw3DLug() {
   const {W,D,e,t}=state;
   if (W<=0||D<=0||e<=0||t<=0) return;
 
-  const maxDim=Math.max(W,e+W*0.3,t*3), sc=160/maxDim;
+  const maxDim=Math.max(W,e+W*0.3,t*3), sc=225/maxDim;
   const sW=W*sc, sD=D*sc, sE=e*sc, sT=Math.max(t*sc,12);
   const isoAngle=Math.PI/6, cosA=Math.cos(isoAngle), sinA=Math.sin(isoAngle);
   const ox=cw/2, oy=ch*0.55;
@@ -869,34 +685,34 @@ function draw3DLug() {
 
   function drawSideFaces(){
     const br0=iso(hw,0,0),br1=iso(hw,0,sT),tr0=iso(hw,arcCY,0),tr1=iso(hw,arcCY,sT);
-    ctx.beginPath();ctx.moveTo(br0[0],br0[1]);ctx.lineTo(br1[0],br1[1]);ctx.lineTo(tr1[0],tr1[1]);ctx.lineTo(tr0[0],tr0[1]);ctx.closePath();ctx.fillStyle='#2a3a2a';ctx.fill();ctx.strokeStyle='#5a7a5a';ctx.lineWidth=0.8;ctx.stroke();
+    ctx.beginPath();ctx.moveTo(br0[0],br0[1]);ctx.lineTo(br1[0],br1[1]);ctx.lineTo(tr1[0],tr1[1]);ctx.lineTo(tr0[0],tr0[1]);ctx.closePath();ctx.fillStyle='#2f2f36';ctx.fill();ctx.strokeStyle='#6a6a78';ctx.lineWidth=0.8;ctx.stroke();
 
     ctx.beginPath();
     for(let i=0;i<=24;i++){const a=Math.PI+(Math.PI*i/24);const p=iso(hw*Math.cos(a),arcCY+sE*(-Math.sin(a)),0);if(i===0)ctx.moveTo(p[0],p[1]);else ctx.lineTo(p[0],p[1]);}
     for(let i=24;i>=0;i--){const a=Math.PI+(Math.PI*i/24);const p=iso(hw*Math.cos(a),arcCY+sE*(-Math.sin(a)),sT);ctx.lineTo(p[0],p[1]);}
-    ctx.closePath();ctx.fillStyle='#354535';ctx.fill();ctx.strokeStyle='#5a7a5a';ctx.lineWidth=0.8;ctx.stroke();
+    ctx.closePath();ctx.fillStyle='#3a3a42';ctx.fill();ctx.strokeStyle='#6a6a78';ctx.lineWidth=0.8;ctx.stroke();
 
     const bl0=iso(-hw,0,0),bl1=iso(-hw,0,sT);
-    ctx.beginPath();ctx.moveTo(bl0[0],bl0[1]);ctx.lineTo(...br0);ctx.lineTo(br1[0],br1[1]);ctx.lineTo(bl1[0],bl1[1]);ctx.closePath();ctx.fillStyle='#1a2a1a';ctx.fill();ctx.strokeStyle='#4a6a4a';ctx.lineWidth=0.8;ctx.stroke();
+    ctx.beginPath();ctx.moveTo(bl0[0],bl0[1]);ctx.lineTo(...br0);ctx.lineTo(br1[0],br1[1]);ctx.lineTo(bl1[0],bl1[1]);ctx.closePath();ctx.fillStyle='#222227';ctx.fill();ctx.strokeStyle='#5a5a66';ctx.lineWidth=0.8;ctx.stroke();
 
     const tl0=iso(-hw,arcCY,0),tl1=iso(-hw,arcCY,sT);
-    ctx.beginPath();ctx.moveTo(bl1[0],bl1[1]);ctx.lineTo(bl0[0],bl0[1]);ctx.lineTo(tl0[0],tl0[1]);ctx.lineTo(tl1[0],tl1[1]);ctx.closePath();ctx.fillStyle='#253525';ctx.fill();ctx.strokeStyle='#5a7a5a';ctx.lineWidth=0.8;ctx.stroke();
+    ctx.beginPath();ctx.moveTo(bl1[0],bl1[1]);ctx.lineTo(bl0[0],bl0[1]);ctx.lineTo(tl0[0],tl0[1]);ctx.lineTo(tl1[0],tl1[1]);ctx.closePath();ctx.fillStyle='#2b2b31';ctx.fill();ctx.strokeStyle='#6a6a78';ctx.lineWidth=0.8;ctx.stroke();
   }
 
   function drawHole(zOff,isBack){
     const c=iso(0,arcCY,zOff), rx=holeR*cosA, ry=holeR*0.85;
     ctx.beginPath();ctx.ellipse(c[0],c[1],rx,ry,-isoAngle*0.3,0,Math.PI*2);
-    ctx.fillStyle=isBack?'#0a0f0a':'#0d120d';ctx.fill();ctx.strokeStyle=isBack?'#3a4a3a':'#6a8a6a';ctx.lineWidth=1;ctx.stroke();
-    if(!isBack){const bc=iso(0,arcCY,sT);ctx.beginPath();ctx.ellipse(bc[0],bc[1],rx*0.6,ry*0.6,-isoAngle*0.3,0,Math.PI*2);ctx.strokeStyle='#3a4a3a';ctx.lineWidth=0.5;ctx.setLineDash([2,2]);ctx.stroke();ctx.setLineDash([]);}
+    ctx.fillStyle=isBack?'#141417':'#18181b';ctx.fill();ctx.strokeStyle=isBack?'#4a4a54':'#7d7d8c';ctx.lineWidth=1;ctx.stroke();
+    if(!isBack){const bc=iso(0,arcCY,sT);ctx.beginPath();ctx.ellipse(bc[0],bc[1],rx*0.6,ry*0.6,-isoAngle*0.3,0,Math.PI*2);ctx.strokeStyle='#4a4a54';ctx.lineWidth=0.5;ctx.setLineDash([2,2]);ctx.stroke();ctx.setLineDash([]);}
   }
 
   function drawHatch(zOff){
-    ctx.save();ctx.globalAlpha=0.12;ctx.strokeStyle='#8fa88f';ctx.lineWidth=0.5;
+    ctx.save();ctx.globalAlpha=0.12;ctx.strokeStyle='#9a9aa8';ctx.lineWidth=0.5;
     for(let i=-20;i<30;i++){const p1=iso(-hw,i*8,zOff),p2=iso(hw,i*8+hw*1.5,zOff);ctx.beginPath();ctx.moveTo(p1[0],p1[1]);ctx.lineTo(p2[0],p2[1]);ctx.stroke();}
     ctx.restore();
   }
 
-  drawLugFace(sT,'#1e2e1e','#4a6a4a');drawHole(sT,true);drawSideFaces();drawLugFace(0,'#2e3e2e','#6a8a6a');drawHatch(0);drawHole(0,false);
+  drawLugFace(sT,'#26262b','#5a5a66');drawHole(sT,true);drawSideFaces();drawLugFace(0,'#34343b','#7d7d8c');drawHatch(0);drawHole(0,false);
 
   ctx.font='600 11px "JetBrains Mono",monospace';
   const wl=iso(-hw,-12,0),wr=iso(hw,-12,0);
@@ -941,7 +757,7 @@ function deleteCustomMat(){}
 /* ═══════════════════════════════════════════════
    SAVE AS PDF (print dialog)
    ═══════════════════════════════════════════════ */
-function saveAsPDF() { window.print(); }
+function saveAsPDF() { WB.print(); }
 
 /* ═══════════════════════════════════════════════
    SAVE HTML (download self-contained file with data)
@@ -1006,7 +822,7 @@ function wbSaveState(){
   try{
     localStorage.setItem(_stKey,JSON.stringify({v:1,ts:Date.now(),state:{
       P:state.P,W:state.W,D:state.D,e:state.e,t:state.t,
-      matIdx:state.matIdx,isMetric:state.isMetric,eCentred:state.eCentred
+      matIdx:state.matIdx,matName:state.matMissing||getMat().name,isMetric:state.isMetric,eCentred:state.eCentred
     }}));
   }catch(e){}
 }
@@ -1063,24 +879,32 @@ function loadCadFile(f,c){if(!f||!f.type.startsWith('image/'))return;var r=new F
   renderCad(c,e.target.result);
   if(!saved)alert('Image shown but NOT saved \u2014 browser storage is full.\n\nThis image will be lost when the page reloads. Remove a large CAD image from another calculation, or use a smaller/compressed image.');
 };r.readAsDataURL(f)}
-var _wbP=new URLSearchParams(location.search);var _wbEmbed=_wbP.get('embed')==='1';var _wbKey=(_wbP.get('wb')&&_wbP.get('item'))?('eng_wb_rf_'+_wbP.get('wb')+'_'+_wbP.get('item')):'eng_wb_rf_lug';
-function exportLugRF(){try{var r=calculate();if(r&&r.minRf&&isFinite(r.minRf))localStorage.setItem(_wbKey,JSON.stringify({rf:r.minRf,mode:r.crit,ts:Date.now()}))}catch(e){}}
-if(_wbEmbed){try{var _s=document.createElement('style');_s.textContent='.wb-back,.pdf-btn{display:none!important}';document.head.appendChild(_s)}catch(e){}}
 const hadSaved = loadSavedState();
-populateMatSelect();
-if (hadSaved) {
-  document.getElementById('matSelect').value = state.matIdx;
-  // set the toggle UI without re-running populateInputs twice
-  document.querySelectorAll('#unitToggle button').forEach(b =>
-    b.classList.toggle('active', b.dataset.metric===String(state.isMetric)));
+// The saved material is matched by name: if the workbook list has been re-ordered the
+// right one is found; if it has been deleted it is flagged rather than silently swapped.
+state.matMissing = null;
+if (hadSaved && state.matName) {
+  const mats = allMaterials();
+  if (!(mats[state.matIdx] && mats[state.matIdx].name === state.matName)) {
+    const i = mats.findIndex(m => m.name === state.matName);
+    if (i >= 0) state.matIdx = i; else state.matMissing = state.matName;
+  }
 }
+populateMatSelect();
+if (state.matMissing) {
+  const sel = document.getElementById('matSelect'), o = document.createElement('option');
+  o.value = '-1'; o.textContent = '⚠ ' + state.matMissing + ' — not in workbook';
+  sel.insertBefore(o, sel.firstChild); sel.value = '-1';
+}
+// unit toggle always reflects the actual unit system (it showed Imperial on a fresh metric page)
+document.querySelectorAll('#unitToggle button').forEach(b =>
+  b.classList.toggle('active', b.dataset.metric===String(state.isMetric)));
 populateInputs();
 recalc();
 _stReady = true;
 var _imgKey=(_stP.get('wb')&&_stP.get('item'))?('eng_wb_img_'+_stP.get('wb')+'_'+_stP.get('item')):'eng_wb_img_lug';
 setupCad("lugCadZone");initCadImage(_imgKey,"lugCadZone");
 </script>
-<button class="pdf-btn" onclick="window.print()">⎙ Save as PDF</button>
 <div id="cadOv" class="cad-overlay" onclick="this.classList.remove('show')"></div>
 </body>
 </html>

@@ -10,7 +10,8 @@
   :root{--bg:#0f1117;--surface:#1a1d27;--s2:#232735;--s3:#2c3040;--border:#363b4e;--text:#e8eaf0;--dim:#8b90a5;--muted:#5c6078;--accent:#4a7cff;--ag:rgba(74,124,255,.15);--a2:#22c997;--a2g:rgba(34,201,151,.15);--warn:#f5a623;--wg:rgba(245,166,35,.12);--r:10px;--rs:6px}
   body{font-family:'DM Sans',-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.5}
   .app{max-width:1100px;margin:0 auto;padding:32px 24px 80px}
-  .hdr{text-align:center;margin-bottom:40px;padding-bottom:32px;border-bottom:1px solid var(--border)}
+  .hdr{text-align:center;margin-bottom:28px;padding:22px 16px 24px;border-bottom:1px solid var(--border);border-radius:10px}
+  @media print{.app{padding:0;max-width:none}.rgrid,.dgrid{grid-template-columns:1fr 1fr !important}.grid3{grid-template-columns:1fr 1fr 1fr !important}.dt td{padding:3pt 0 !important}.rgrid .card{break-inside:auto !important}.ss,.dbox{break-inside:avoid}.empty,.hint{display:none}.sec{padding:9pt 10pt;margin-bottom:7pt}.sec h2{margin-bottom:8pt}.rgrid{gap:10px;margin-bottom:8pt}.dbox svg{max-height:75mm}}
   .badge{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);background:var(--ag);border:1px solid rgba(74,124,255,.25);padding:5px 14px;border-radius:20px;margin-bottom:16px}
   .hdr h1{font-size:32px;font-weight:700;letter-spacing:-.5px;margin-bottom:8px}
   .hdr p{color:var(--dim);font-size:15px;max-width:640px;margin:0 auto}
@@ -59,249 +60,12 @@
   .empty p{color:var(--dim);font-size:15px}.empty .sm{font-size:12px;color:var(--muted);margin-top:8px}
   .note{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--warn);border-radius:var(--rs);padding:14px 18px;font-size:13px;color:var(--dim);line-height:1.6}.note strong{color:var(--text)}
   .fade{animation:fi .35s ease-out}@keyframes fi{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-
-/* ══════════════════════════════════════════════════════════════════
-   ENGINEERING WORKBOOK · UNIFIED DESIGN SYSTEM
-   Greyscale + single accent (#6B8AFF) · Inter + JetBrains Mono
-   ══════════════════════════════════════════════════════════════════ */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
-
-:root {
-  /* ── Master palette ── */
-  --bg:#18181b !important; --bg2:#18181b !important; --bg3:#1e1e22 !important; --bg4:#222226 !important;
-  --panel:#1e1e22 !important; --surface:#222226 !important; --surface2:#2a2a2f !important;
-  --s2:#2a2a2f !important;
-  --border:#313138 !important; --border2:#3c3c44 !important; --border-focus:#6B8AFF !important;
-  --text:#d1d1d6 !important; --text2:#d1d1d6 !important; --text3:#6e6e78 !important;
-  --bright:#eeeef1 !important; --dim:#8c8c96 !important; --muted:#5a5a64 !important;
-  --accent:#6B8AFF !important; --accent2:#8aa4ff !important;
-  --a2:#8aa4ff !important; --ag:rgba(107,138,255,.10) !important; --a2g:rgba(138,164,255,.10) !important;
-  --good:#4aba78 !important; --warn:#d4993a !important; --danger:#d45050 !important;
-  --r:#d45050 !important; --rs:rgba(212,80,80,.12) !important;
-  --info:#6B8AFF !important; --blue:#6B8AFF !important; --green:#4aba78 !important;
-  --orange:#d4993a !important; --yellow:#d4993a !important; --red:#d45050 !important;
-  --cyan:#6B8AFF !important; --purple:#8c8c96 !important; --wg:rgba(212,153,58,.10) !important;
-
-  /* Lug-specific vars */
-  --bg-deep:#18181b !important; --bg-card:#222226 !important; --bg-input:#1e1e22 !important;
-  --text-primary:#eeeef1 !important; --text-secondary:#d1d1d6 !important;
-  --text-dim:#8c8c96 !important; --text-faint:#5a5a64 !important; --text-muted:#6e6e78 !important;
-  --accent-amber:#d4993a !important; --accent-green:#4aba78 !important;
-
-  /* Fonts */
-  --sans:'Inter',-apple-system,'SF Pro Display',system-ui,sans-serif !important;
-  --mono:'JetBrains Mono',ui-monospace,'SF Mono',monospace !important;
-}
-
-/* ── Global resets ── */
-body {
-  font-family: 'Inter',-apple-system,'SF Pro Display',system-ui,sans-serif !important;
-  background: #18181b !important;
-  color: #d1d1d6 !important;
-  -webkit-font-smoothing: antialiased !important;
-  background-image: none !important;
-}
-body::before { background-image: none !important; content: none !important; }
-
-/* ── Typography ── */
-h1,h2,h3,h4,h5,h6 { font-family: 'Inter',-apple-system,system-ui,sans-serif !important; }
-code, pre, .mono, [class*="result-val"], [class*="big-val"], [class*="res-val"],
-.v, .badge, .dt, .psz, td { font-family: 'JetBrains Mono',ui-monospace,monospace !important; }
-
-/* ── Cards / Panels ── */
-.card, .panel, .sec, [class*="big-card"] {
-  background: #222226 !important;
-  border: 1px solid #313138 !important;
-  border-radius: 10px !important;
-}
-.card-title, .card-label, .panel-title, [class*="card-title"], .pt, .chdr,
-[class*="pt"] > span {
-  font-family: 'Inter',-apple-system,system-ui,sans-serif !important;
-  font-size: 10px !important; font-weight: 600 !important;
-  color: #6e6e78 !important; text-transform: uppercase !important;
-  letter-spacing: 0.07em !important;
-}
-
-/* ── Inputs ── */
-input[type="number"], input[type="text"], select, textarea {
-  background: #1e1e22 !important;
-  border: 1px solid #3c3c44 !important;
-  border-radius: 6px !important;
-  color: #eeeef1 !important;
-  font-family: 'JetBrains Mono',ui-monospace,monospace !important;
-  transition: border-color .15s !important;
-}
-input:focus, select:focus, textarea:focus {
-  border-color: #6B8AFF !important;
-  outline: none !important;
-}
-select {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236e6e78'/%3E%3C/svg%3E") !important;
-  background-repeat: no-repeat !important;
-  background-position: right 8px center !important;
-}
-
-/* ── Buttons ── */
-button, .btn, [class*="btn"] {
-  font-family: 'Inter',-apple-system,system-ui,sans-serif !important;
-  border-radius: 6px !important;
-  transition: all .12s !important;
-}
-.btn-amber, .btn-blue, .btn-green, .btn-red, .btn-dim,
-[class*="export"], [class*="save"] {
-  background: #2a2a2f !important;
-  border: 1px solid #3c3c44 !important;
-  color: #8c8c96 !important;
-}
-.btn-amber:hover, .btn-blue:hover, .btn-green:hover, .btn-dim:hover,
-[class*="export"]:hover, [class*="save"]:hover {
-  background: #313138 !important;
-  border-color: #4a4a54 !important;
-  color: #d1d1d6 !important;
-}
-/* Active/primary buttons get the accent */
-.btn.primary, [class*="btn primary"], .btn-accent {
-  background: rgba(107,138,255,.10) !important;
-  border: 1px solid rgba(107,138,255,.28) !important;
-  color: #6B8AFF !important;
-}
-
-/* ── Headers ── */
-.header, .hdr, [class*="topbar"] {
-  background: #1e1e22 !important;
-  border-bottom: 1px solid #313138 !important;
-}
-.header h1, .hdr h1 {
-  font-family: 'Inter',-apple-system,system-ui,sans-serif !important;
-  color: #eeeef1 !important;
-}
-.header .desc, .header .sub, .hdr .sub {
-  color: #6e6e78 !important;
-}
-
-/* ── Results / values ── */
-.result-val, .res-val, .big-val, .v, .badge {
-  color: #eeeef1 !important;
-}
-.result-label, .res-label, .big-label, .form-label, .row-label, .lbl, .l, .fl {
-  color: #8c8c96 !important;
-  font-family: 'Inter',-apple-system,system-ui,sans-serif !important;
-}
-.result-unit, .res-unit, .big-unit, .form-unit, .funit, .fu {
-  color: #5a5a64 !important;
-  font-family: 'JetBrains Mono',ui-monospace,monospace !important;
-}
-
-/* ── Tables ── */
-table { border-collapse: collapse !important; }
-thead th {
-  font-family: 'Inter',-apple-system,system-ui,sans-serif !important;
-  font-size: 9px !important; font-weight: 600 !important;
-  color: #6e6e78 !important; text-transform: uppercase !important;
-  letter-spacing: .06em !important;
-  border-bottom: 1px solid #3c3c44 !important;
-  background: transparent !important;
-}
-tbody td {
-  border-bottom: 1px solid #27272c !important;
-  font-size: 11px !important;
-}
-tbody tr:hover { background: #2a2a2f !important; }
-
-/* ── Notes / hints / info boxes ── */
-.note, .note-box, .info-box, .hint, .method, .fnote {
-  background: #1e1e22 !important;
-  border: 1px solid #313138 !important;
-  border-radius: 8px !important;
-  color: #8c8c96 !important;
-}
-.danger-box {
-  background: rgba(212,80,80,.06) !important;
-  border: 1px solid rgba(212,80,80,.2) !important;
-}
-
-/* ── Dividers ── */
-.divider, hr {
-  border-color: #313138 !important;
-  background: #313138 !important;
-}
-
-/* ── Scrollbar ── */
-::-webkit-scrollbar { width: 5px !important; }
-::-webkit-scrollbar-track { background: #18181b !important; }
-::-webkit-scrollbar-thumb { background: #3c3c44 !important; border-radius: 3px !important; }
-
-/* ── Pill/chip elements ── */
-.chip, .tag, .pill-bar, [class*="quick-btn"], [class*="fit-type-badge"] {
-  font-family: 'Inter',-apple-system,system-ui,sans-serif !important;
-  border-radius: 6px !important;
-}
-
-/* ── Number formatting ── */
-input[type=number] { -moz-appearance: textfield !important; }
-input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none !important; }
-
-/* ── Canvas containers ── */
-canvas {
-  border-radius: 8px !important;
-}
-
-/* ── SVG diagrams ── */
-svg text {
-  font-family: 'JetBrains Mono',ui-monospace,monospace !important;
-}
-
-/* ── Grid containers ── */
-.grid-main, .grid-2, .grid-3, .g2, .grid3, .main-grid, .dgrid {
-  gap: 12px !important;
-}
-
-/* ── Toggle / knob switches ── */
-.knob { border-radius: 12px !important; }
-
-/* ── Modal overlays ── */
-.modal-overlay, .modal {
-  backdrop-filter: blur(6px) !important;
-}
-.modal {
-  background: #222226 !important;
-  border: 1px solid #313138 !important;
-  border-radius: 12px !important;
-}
-
-/* ── Workbook nav ── */
-.wb-back {
-  position: fixed; top: 12px; left: 12px; z-index: 9998;
-  padding: 7px 14px; border-radius: 8px; font-size: 12px; font-weight: 600;
-  font-family: 'Inter',-apple-system,system-ui,sans-serif;
-  background: #1e1e22; border: 1px solid #313138;
-  color: #8c8c96; cursor: pointer; text-decoration: none;
-  display: flex; align-items: center; gap: 6px;
-  transition: all .15s; backdrop-filter: blur(8px);
-}
-.wb-back:hover { color: #eeeef1; border-color: rgba(107,138,255,.3); background: #222226; }
-
-/* ── CAD image ── */
-.cad-zone { border: 1.5px dashed #3c3c44; border-radius: 10px; padding: 16px; text-align: center; cursor: pointer; transition: all .2s; position: relative; background: rgba(0,0,0,.12) }
-.cad-zone:hover { border-color: #5a5a64; background: rgba(0,0,0,.2) }
-.cad-zone.has-img { border: 1px solid #313138; padding: 4px; background: transparent }
-.cad-thumb { max-width: 100%; max-height: 140px; border-radius: 6px; cursor: pointer; display: block; margin: 0 auto }
-.cad-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.92); z-index: 99999; display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: 0; pointer-events: none; transition: opacity .25s }
-.cad-overlay.show { opacity: 1; pointer-events: auto }
-.cad-overlay img { max-width: 92vw; max-height: 92vh; border-radius: 10px; box-shadow: 0 8px 60px rgba(0,0,0,.5) }
-.cad-rm { position: absolute; top: 6px; right: 8px; background: rgba(180,50,50,.7); color: #fff; border: none; border-radius: 6px; font-size: 10px; padding: 3px 9px; cursor: pointer; z-index: 2 }
-.cad-rm:hover { background: rgba(210,60,60,.9) }
-
-/* ── PDF save ── */
-.pdf-btn { position: fixed; bottom: 14px; right: 14px; z-index: 9998; padding: 8px 16px; border-radius: 8px; font-size: 11px; font-weight: 600; border: 1px solid #313138; background: #1e1e22; color: #8c8c96; cursor: pointer; font-family: 'Inter',-apple-system,system-ui,sans-serif; display: flex; align-items: center; gap: 6px; transition: all .15s; backdrop-filter: blur(8px) }
-.pdf-btn:hover { color: #eeeef1; border-color: rgba(107,138,255,.3) }
-
-@media print { .wb-back, .pdf-btn, .cad-overlay { display: none !important; } }
 </style>
+<link rel="stylesheet" href="wb-ui.css">
 </head>
 <body>
 <div class="app">
-  <div class="hdr">
+  <div class="hdr wb-legacy-head">
     <div class="badge">Engineering Tool</div>
     <h1>Lee Plug Selector</h1>
     <p>Enter the passage drill size (N Dia. Ref) in your design to find the correct Lee Plug to seal it. Based on The Lee Company Technical Hydraulic Handbook, 12th Edition. Metric ream tolerances computed from ISO 286-1:2010.</p>
@@ -326,34 +90,14 @@ svg text {
     <strong>Note:</strong> Metric ream tolerances are calculated from ISO 286-1:2010 IT grade tables to 3 d.p., replacing the rounded 2 d.p. values in the Lee catalogue. Imperial ream tolerances are as published. This tool covers standard Lee Plugs in Aluminium (2024-T4) and Stainless Steel (416 CRES). For R.F.O., A.F.O., High Strength, QIP, or Monel plugs, consult the full Lee catalogue.
   </div>
 </div>
+<script src="wb-common.js"></script>
+<script src="wb-iso286.js"></script>
 <script>
 // ============================================================
-// ISO 286-1:2010 IT Grade Table (µm)
-// [maxDiam, IT6, IT7, IT8, IT9, IT10, IT11]
+// ISO 286-1 IT grades come from the shared module (wb-iso286.js)
 // ============================================================
-const IT_TBL=[
-  [3,   6,10,14,25,40,60],
-  [6,   8,12,18,30,48,75],
-  [10,  9,15,22,36,58,90],
-  [18, 11,18,27,43,70,110],
-  [30, 13,21,33,52,84,130],
-  [50, 16,25,39,62,100,160],
-  [80, 19,30,46,74,120,190],
-  [120,22,35,54,87,140,220],
-  [180,25,40,63,100,160,250],
-  [250,29,46,72,115,185,290],
-  [315,32,52,81,130,210,320],
-  [400,36,57,89,140,230,360],
-  [500,40,63,97,155,250,400]
-];
-
-function getIT(d,grade){
-  // grade 6->idx0, 7->1, ..., 11->5
-  const gi=grade-6;
-  if(gi<0||gi>5)return null;
-  for(const r of IT_TBL) if(d<=r[0]) return r[1+gi];
-  return IT_TBL[IT_TBL.length-1][1+gi];
-}
+WB.initPage({ slug: 'lee', name: 'Lee plug selector' });
+function getIT(d,grade){ return WBISO.it(d, grade); }
 
 // For H-holes: fundamental deviation = 0, so min = nominal, max = nominal + IT
 function holeReam(nominal, grade){
@@ -426,7 +170,13 @@ function calc(hole){
   const db=u==='imperial'?IMP:MET,isM=u==='metric',uL=isM?'mm':'"',pU=isM?'MPa':'psi \u00d71000';
   let bi=-1;
   for(let i=0;i<db.length;i++){if(gN(db[i],pt)>=hole){bi=i;break}}
-  if(bi===-1)bi=db.length-1;
+  if(bi===-1){
+    const maxN=gN(db[db.length-1],pt), f2=v=>isM?v.toFixed(2):v.toFixed(3);
+    document.getElementById('out').innerHTML='<div class="wb-msgs"><div class="wb-msg err"><span class="lv">Error</span><span>A '+f2(hole)+uL+' passage is larger than the biggest standard Lee Plug in this range can seal (largest passage \u00D8'+f2(maxN)+uL+', plug '+db[db.length-1].lee+'). Reduce the passage or consult the Lee catalogue for larger plugs.</span></div></div>';
+    WB.setTitle(WB.title||'Lee plug selection');
+    return;
+  }
+  WB.setTitle(WB.title||('Lee plug for '+(isM?'\u00D8':'')+hole+uL+' passage'));
   const ai=bi>0?bi-1:null;
   let h='<div class="rgrid fade">'+bCard(db[bi],pt,isM,uL,pU,'best','Best Fit',hole);
   if(ai!==null)h+=bCard(db[ai],pt,isM,uL,pU,'alt','One Size Down',hole);
@@ -484,7 +234,8 @@ function bCard(p,pt,isM,uL,pU,cls,label,hole){
 function bDia(best,alt,pt,isM,uL){
   function gD(p){let d=p[pt];if(!d)d=p.short||p.long;return d}
   const f=v=>isM?v.toFixed(2):v.toFixed(3);
-  function draw(p,label,col){
+  function draw(p,label,cssCol){
+    const col='currentColor';   // SVG attributes cannot take var(); the svg carries the theme colour
     const d=gD(p);if(!d)return '';
     const D=p.dMax,C=d.C,M=d.M,K=d.K,N=d.N,A=d.A;
     const ref=isM?9:.7,sX=140/ref,sY=100/ref;
@@ -494,29 +245,29 @@ function bDia(best,alt,pt,isM,uL){
     let gr='';for(let i=1;i<=gN;i++){const y=pT+i*gS;gr+='<line x1="'+pL+'" y1="'+y+'" x2="'+(pL+3)+'" y2="'+y+'" stroke="'+col+'" stroke-width="1.2" opacity="0.5"/><line x1="'+pR+'" y1="'+y+'" x2="'+(pR-3)+'" y2="'+y+'" stroke="'+col+'" stroke-width="1.2" opacity="0.5"/>';}
     const htW=pW*.38,hbW=pW*.12,hD=mH*.65,ch=Math.min(pW*.1,5);
     const gap=20,hT=pT+pH+gap,wW=Math.max(pW*.16,8),passH=40;
-    const dc='#8b90a5',vc='#e8eaf0',af='font-family="JetBrains Mono,monospace" font-size="8"',afs='font-family="JetBrains Mono,monospace" font-size="7"',mk='a'+label.replace(/\W/g,'');
+    const af='font-family="JetBrains Mono,monospace" font-size="8"',afs='font-family="JetBrains Mono,monospace" font-size="7"',mk='a'+label.replace(/\W/g,'');
     const svgH=hT+aH+passH+30;
-    return '<div class="dbox"><h3>'+label+'</h3><svg viewBox="0 0 '+svgW+' '+svgH+'" xmlns="http://www.w3.org/2000/svg">'
-    +'<defs><marker id="'+mk+'" markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" orient="auto"><path d="M0,1 L2.5,2.5 L0,4" fill="none" stroke="'+dc+'" stroke-width="0.6"/></marker></defs>'
-    +'<text x="'+cx+'" y="22" text-anchor="middle" fill="'+col+'" '+af+' font-weight="600" letter-spacing="1.5">PLUG</text>'
+    return '<div class="dbox"><h3>'+label+'</h3><svg viewBox="0 0 '+svgW+' '+svgH+'" xmlns="http://www.w3.org/2000/svg" style="color:'+cssCol+'">'
+    +'<defs><marker id="'+mk+'" markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" orient="auto"><path d="M0,1 L2.5,2.5 L0,4" fill="none" style="stroke:var(--wb-dim)" stroke-width="0.6"/></marker></defs>'
+    +'<text x="'+cx+'" y="22" text-anchor="middle" fill="'+col+'" '+af+' font-weight="600" letter-spacing="1.5">Plug</text>'
     +'<rect x="'+pL+'" y="'+pT+'" width="'+pW+'" height="'+pH+'" rx="1" fill="none" stroke="'+col+'" stroke-width="2"/>'+gr
     +'<path d="M'+(cx-htW/2)+','+(pT+3)+' L'+(cx-hbW/2)+','+(pT+hD)+' L'+(cx+hbW/2)+','+(pT+hD)+' L'+(cx+htW/2)+','+(pT+3)+'" fill="none" stroke="'+col+'" stroke-width="0.8" stroke-dasharray="3,2" opacity="0.45"/>'
     +'<line x1="'+pL+'" y1="'+(pT+pH)+'" x2="'+(pL+ch)+'" y2="'+(pT+pH+ch)+'" stroke="'+col+'" stroke-width="1" opacity="0.5"/>'
     +'<line x1="'+pR+'" y1="'+(pT+pH)+'" x2="'+(pR-ch)+'" y2="'+(pT+pH+ch)+'" stroke="'+col+'" stroke-width="1" opacity="0.5"/>'
-    +'<text x="'+(pR+5)+'" y="'+(pT+pH+ch)+'" fill="'+dc+'" '+afs+'>45\u00B0</text>'
-    +'<line x1="'+pL+'" y1="'+(pT-7)+'" x2="'+pR+'" y2="'+(pT-7)+'" stroke="'+dc+'" stroke-width="0.5" marker-start="url(#'+mk+')" marker-end="url(#'+mk+')"/>'
-    +'<line x1="'+pL+'" y1="'+(pT-11)+'" x2="'+pL+'" y2="'+pT+'" stroke="'+dc+'" stroke-width="0.3" stroke-dasharray="2,1"/>'
-    +'<line x1="'+pR+'" y1="'+(pT-11)+'" x2="'+pR+'" y2="'+pT+'" stroke="'+dc+'" stroke-width="0.3" stroke-dasharray="2,1"/>'
-    +'<text x="'+cx+'" y="'+(pT-12)+'" text-anchor="middle" fill="'+vc+'" '+af+'>\u00D8D '+f(D)+uL+'</text>'
-    +'<line x1="'+(pR+16)+'" y1="'+pT+'" x2="'+(pR+16)+'" y2="'+(pT+pH)+'" stroke="'+dc+'" stroke-width="0.5" marker-start="url(#'+mk+')" marker-end="url(#'+mk+')"/>'
-    +'<line x1="'+pR+'" y1="'+pT+'" x2="'+(pR+20)+'" y2="'+pT+'" stroke="'+dc+'" stroke-width="0.3" stroke-dasharray="2,1"/>'
-    +'<line x1="'+pR+'" y1="'+(pT+pH)+'" x2="'+(pR+20)+'" y2="'+(pT+pH)+'" stroke="'+dc+'" stroke-width="0.3" stroke-dasharray="2,1"/>'
-    +'<text x="'+(pR+20)+'" y="'+(pT+pH/2+3)+'" fill="'+vc+'" '+afs+'>C '+f(C)+uL+'</text>'
-    +'<line x1="'+(pL-16)+'" y1="'+pT+'" x2="'+(pL-16)+'" y2="'+(pT+mH)+'" stroke="'+dc+'" stroke-width="0.5" marker-start="url(#'+mk+')" marker-end="url(#'+mk+')"/>'
-    +'<line x1="'+(pL-20)+'" y1="'+pT+'" x2="'+pL+'" y2="'+pT+'" stroke="'+dc+'" stroke-width="0.3" stroke-dasharray="2,1"/>'
-    +'<line x1="'+(pL-20)+'" y1="'+(pT+mH)+'" x2="'+pL+'" y2="'+(pT+mH)+'" stroke="'+dc+'" stroke-width="0.3" stroke-dasharray="2,1"/>'
-    +'<text x="'+(pL-20)+'" y="'+(pT+mH/2+3)+'" text-anchor="end" fill="'+dc+'" '+afs+'>M '+f(M)+uL+'</text>'
-    +'<text x="'+cx+'" y="'+(hT-6)+'" text-anchor="middle" fill="'+col+'" '+af+' font-weight="600" letter-spacing="1">INSTALLATION HOLE</text>'
+    +'<text x="'+(pR+5)+'" y="'+(pT+pH+ch)+'" style="fill:var(--wb-dim)" '+afs+'>45\u00B0</text>'
+    +'<line x1="'+pL+'" y1="'+(pT-7)+'" x2="'+pR+'" y2="'+(pT-7)+'" style="stroke:var(--wb-dim)" stroke-width="0.5" marker-start="url(#'+mk+')" marker-end="url(#'+mk+')"/>'
+    +'<line x1="'+pL+'" y1="'+(pT-11)+'" x2="'+pL+'" y2="'+pT+'" style="stroke:var(--wb-dim)" stroke-width="0.3" stroke-dasharray="2,1"/>'
+    +'<line x1="'+pR+'" y1="'+(pT-11)+'" x2="'+pR+'" y2="'+pT+'" style="stroke:var(--wb-dim)" stroke-width="0.3" stroke-dasharray="2,1"/>'
+    +'<text x="'+cx+'" y="'+(pT-12)+'" text-anchor="middle" style="fill:var(--wb-bright)" '+af+'>\u00D8D '+f(D)+uL+'</text>'
+    +'<line x1="'+(pR+16)+'" y1="'+pT+'" x2="'+(pR+16)+'" y2="'+(pT+pH)+'" style="stroke:var(--wb-dim)" stroke-width="0.5" marker-start="url(#'+mk+')" marker-end="url(#'+mk+')"/>'
+    +'<line x1="'+pR+'" y1="'+pT+'" x2="'+(pR+20)+'" y2="'+pT+'" style="stroke:var(--wb-dim)" stroke-width="0.3" stroke-dasharray="2,1"/>'
+    +'<line x1="'+pR+'" y1="'+(pT+pH)+'" x2="'+(pR+20)+'" y2="'+(pT+pH)+'" style="stroke:var(--wb-dim)" stroke-width="0.3" stroke-dasharray="2,1"/>'
+    +'<text x="'+(pR+20)+'" y="'+(pT+pH/2+3)+'" style="fill:var(--wb-bright)" '+afs+'>C '+f(C)+uL+'</text>'
+    +'<line x1="'+(pL-16)+'" y1="'+pT+'" x2="'+(pL-16)+'" y2="'+(pT+mH)+'" style="stroke:var(--wb-dim)" stroke-width="0.5" marker-start="url(#'+mk+')" marker-end="url(#'+mk+')"/>'
+    +'<line x1="'+(pL-20)+'" y1="'+pT+'" x2="'+pL+'" y2="'+pT+'" style="stroke:var(--wb-dim)" stroke-width="0.3" stroke-dasharray="2,1"/>'
+    +'<line x1="'+(pL-20)+'" y1="'+(pT+mH)+'" x2="'+pL+'" y2="'+(pT+mH)+'" style="stroke:var(--wb-dim)" stroke-width="0.3" stroke-dasharray="2,1"/>'
+    +'<text x="'+(pL-20)+'" y="'+(pT+mH/2+3)+'" text-anchor="end" style="fill:var(--wb-dim)" '+afs+'>M '+f(M)+uL+'</text>'
+    +'<text x="'+cx+'" y="'+(hT-6)+'" text-anchor="middle" fill="'+col+'" '+af+' font-weight="600" letter-spacing="1">Installation hole</text>'
     +'<rect x="'+(pL-wW)+'" y="'+hT+'" width="'+wW+'" height="'+(aH+passH)+'" fill="'+col+'" opacity="0.08" stroke="'+col+'" stroke-width="1.5"/>'
     +'<rect x="'+pR+'" y="'+hT+'" width="'+wW+'" height="'+(aH+passH)+'" fill="'+col+'" opacity="0.08" stroke="'+col+'" stroke-width="1.5"/>'
     +'<line x1="'+pL+'" y1="'+hT+'" x2="'+pL+'" y2="'+(hT+aH)+'" stroke="'+col+'" stroke-width="1.5"/>'
@@ -527,26 +278,26 @@ function bDia(best,alt,pt,isM,uL){
     +'<line x1="'+(cx+nW/2)+'" y1="'+(hT+aH)+'" x2="'+(cx+nW/2)+'" y2="'+(hT+aH+passH)+'" stroke="'+col+'" stroke-width="1.5"/>'
     +'<line x1="'+pL+'" y1="'+hT+'" x2="'+(pL+4)+'" y2="'+(hT+4)+'" stroke="'+col+'" stroke-width="0.8" opacity="0.6"/>'
     +'<line x1="'+pR+'" y1="'+hT+'" x2="'+(pR-4)+'" y2="'+(hT+4)+'" stroke="'+col+'" stroke-width="0.8" opacity="0.6"/>'
-    +'<path d="M'+(pL+3)+','+(hT+6)+' l1.5,-3 l1.5,3" fill="none" stroke="'+dc+'" stroke-width="0.6"/>'
+    +'<path d="M'+(pL+3)+','+(hT+6)+' l1.5,-3 l1.5,3" fill="none" style="stroke:var(--wb-dim)" stroke-width="0.6"/>'
     +'<line x1="'+(pL-wW)+'" y1="'+hT+'" x2="'+pL+'" y2="'+hT+'" stroke="'+col+'" stroke-width="1.5"/>'
     +'<line x1="'+pR+'" y1="'+hT+'" x2="'+(pR+wW)+'" y2="'+hT+'" stroke="'+col+'" stroke-width="1.5"/>'
-    +'<line x1="'+(pR+wW+10)+'" y1="'+hT+'" x2="'+(pR+wW+10)+'" y2="'+(hT+aH)+'" stroke="'+dc+'" stroke-width="0.5" marker-start="url(#'+mk+')" marker-end="url(#'+mk+')"/>'
-    +'<line x1="'+(pR+wW)+'" y1="'+hT+'" x2="'+(pR+wW+14)+'" y2="'+hT+'" stroke="'+dc+'" stroke-width="0.3" stroke-dasharray="2,1"/>'
-    +'<line x1="'+(pR+wW)+'" y1="'+(hT+aH)+'" x2="'+(pR+wW+14)+'" y2="'+(hT+aH)+'" stroke="'+dc+'" stroke-width="0.3" stroke-dasharray="2,1"/>'
-    +'<text x="'+(pR+wW+14)+'" y="'+(hT+aH/2+3)+'" fill="'+vc+'" '+afs+'>A '+f(A)+uL+'</text>'
-    +'<line x1="'+pR+'" y1="'+(hT+12)+'" x2="'+(pR+wW)+'" y2="'+(hT+12)+'" stroke="'+dc+'" stroke-width="0.4" marker-start="url(#'+mk+')" marker-end="url(#'+mk+')"/>'
-    +'<text x="'+(pR+wW/2)+'" y="'+(hT+22)+'" text-anchor="middle" fill="'+dc+'" '+afs+'>W</text>'
-    +'<line x1="'+pL+'" y1="'+(hT+aH*.5)+'" x2="'+pR+'" y2="'+(hT+aH*.5)+'" stroke="'+dc+'" stroke-width="0.4" stroke-dasharray="2,2"/>'
-    +'<text x="'+(pL-4)+'" y="'+(hT+aH*.5+3)+'" text-anchor="end" fill="'+dc+'" '+afs+'>\u00D8 REAM</text>'
-    +'<line x1="'+(cx-nW/2)+'" y1="'+(hT+aH+passH*.55)+'" x2="'+(cx+nW/2)+'" y2="'+(hT+aH+passH*.55)+'" stroke="'+dc+'" stroke-width="0.5" marker-start="url(#'+mk+')" marker-end="url(#'+mk+')"/>'
-    +'<text x="'+cx+'" y="'+(hT+aH+passH*.55+14)+'" text-anchor="middle" fill="'+vc+'" '+af+' font-weight="500">\u00D8(N) '+f(N)+uL+'</text>'
-    +'<text x="'+(cx+nW/2+5)+'" y="'+(hT+aH+5)+'" fill="'+dc+'" '+afs+'>R .003</text>'
-    +'<text x="'+(cx+nW/2+5)+'" y="'+(hT+aH+13)+'" fill="'+dc+'" '+afs+'>MAX</text>'
+    +'<line x1="'+(pR+wW+10)+'" y1="'+hT+'" x2="'+(pR+wW+10)+'" y2="'+(hT+aH)+'" style="stroke:var(--wb-dim)" stroke-width="0.5" marker-start="url(#'+mk+')" marker-end="url(#'+mk+')"/>'
+    +'<line x1="'+(pR+wW)+'" y1="'+hT+'" x2="'+(pR+wW+14)+'" y2="'+hT+'" style="stroke:var(--wb-dim)" stroke-width="0.3" stroke-dasharray="2,1"/>'
+    +'<line x1="'+(pR+wW)+'" y1="'+(hT+aH)+'" x2="'+(pR+wW+14)+'" y2="'+(hT+aH)+'" style="stroke:var(--wb-dim)" stroke-width="0.3" stroke-dasharray="2,1"/>'
+    +'<text x="'+(pR+wW+14)+'" y="'+(hT+aH/2+3)+'" style="fill:var(--wb-bright)" '+afs+'>A '+f(A)+uL+'</text>'
+    +'<line x1="'+pR+'" y1="'+(hT+12)+'" x2="'+(pR+wW)+'" y2="'+(hT+12)+'" style="stroke:var(--wb-dim)" stroke-width="0.4" marker-start="url(#'+mk+')" marker-end="url(#'+mk+')"/>'
+    +'<text x="'+(pR+wW/2)+'" y="'+(hT+22)+'" text-anchor="middle" style="fill:var(--wb-dim)" '+afs+'>W</text>'
+    +'<line x1="'+pL+'" y1="'+(hT+aH*.5)+'" x2="'+pR+'" y2="'+(hT+aH*.5)+'" style="stroke:var(--wb-dim)" stroke-width="0.4" stroke-dasharray="2,2"/>'
+    +'<text x="'+(pL-4)+'" y="'+(hT+aH*.5+3)+'" text-anchor="end" style="fill:var(--wb-dim)" '+afs+'>\u00D8 ream</text>'
+    +'<line x1="'+(cx-nW/2)+'" y1="'+(hT+aH+passH*.55)+'" x2="'+(cx+nW/2)+'" y2="'+(hT+aH+passH*.55)+'" style="stroke:var(--wb-dim)" stroke-width="0.5" marker-start="url(#'+mk+')" marker-end="url(#'+mk+')"/>'
+    +'<text x="'+cx+'" y="'+(hT+aH+passH*.55+14)+'" text-anchor="middle" style="fill:var(--wb-bright)" '+af+' font-weight="500">\u00D8(N) '+f(N)+uL+'</text>'
+    +'<text x="'+(cx+nW/2+5)+'" y="'+(hT+aH+5)+'" style="fill:var(--wb-dim)" '+afs+'>R '+(isM?'0.08':'.003')+'</text>'
+    +'<text x="'+(cx+nW/2+5)+'" y="'+(hT+aH+13)+'" style="fill:var(--wb-dim)" '+afs+'>max</text>'
     +'</svg></div>';
   }
   let h='<div class="sec fade"><h2><span class="ico ig2">&#9998;</span> Plug &amp; Installation Hole Diagrams</h2><div class="dgrid">';
-  h+=draw(best,'Best Fit \u2014 '+best.lee,'#4a7cff');
-  if(alt)h+=draw(alt,'Alt \u2014 '+alt.lee,'#f5a623');
+  h+=draw(best,'Best fit \u2014 '+best.lee,'var(--wb-accent)');
+  if(alt)h+=draw(alt,'One size down \u2014 '+alt.lee,'var(--wb-warn)');
   return h+'</div></div>';
 }
 
@@ -628,7 +379,7 @@ _stReady=true;
 var _imgKey=(_stP.get('wb')&&_stP.get('item'))?('eng_wb_img_'+_stP.get('wb')+'_'+_stP.get('item')):'eng_wb_img_lee';
 setupCad("leeCadZone");initCadImage(_imgKey,"leeCadZone");
 </script>
-<button class="pdf-btn" onclick="window.print()">⎙ Save as PDF</button>
+<button class="pdf-btn" onclick="WB.print()">Print / PDF</button>
 <div id="cadOv" class="cad-overlay" onclick="this.classList.remove('show')"></div>
 </body>
 </html>
